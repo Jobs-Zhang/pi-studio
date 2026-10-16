@@ -11,10 +11,29 @@ import {
   workspaceUploadPath,
 } from "./FilesRuntime";
 import type { WorkspaceFilePreviewUrlBuilder } from "./FilesViewer";
+import {
+  clampFilesSplitSize,
+  filesSplitSizeFromDrag,
+  filesSplitSizeFromKeyboard,
+  readStoredFilesSplitSize,
+  writeStoredFilesSplitSize,
+} from "./filesSplitPreference";
 import { createWorkspaceFileViewModeStore, type WorkspaceFileViewModeStore } from "./workspaceFileViewMode";
 
 interface PendingWorkspaceUploadReview {
   files: File[];
+}
+
+const SPLIT_TAP_MOVE_TOLERANCE_PX = 4;
+const SPLIT_DOUBLE_TAP_RESET_MS = 420;
+
+interface ActiveSplitDrag {
+  pointerId: number;
+  startClientY: number;
+  startSize: number;
+  containerSize: number;
+  handle: HTMLElement;
+  moved: boolean;
 }
 
 export class WorkspaceFilesPanel extends LitElement {
@@ -23,6 +42,12 @@ export class WorkspaceFilesPanel extends LitElement {
   @property({ attribute: false }) contentRendering: ContentRenderingCapability | undefined;
   @query("#workspace-upload-input") private uploadInput?: HTMLInputElement;
   @query("dialog.upload-dialog") private uploadDialog?: HTMLDialogElement;
+  @query(".split") private splitSection?: HTMLElement;
+  @query(".list.tree") private treeList?: HTMLElement;
+  /** 文件树/预览分栏的上栏高度（px）；未设置时使用默认比例。 */
+  @state() private splitSize: number | undefined = readStoredFilesSplitSize();
+  private activeSplitDrag: ActiveSplitDrag | undefined;
+  private lastSplitTapAt = 0;
   @state() private pendingUpload: PendingWorkspaceUploadReview | undefined;
   @state() private destinationFolder = "";
   @state() private overwrite = false;
@@ -69,6 +94,7 @@ export class WorkspaceFilesPanel extends LitElement {
   }
 
   override disconnectedCallback(): void {
+    this.finishActiveSplitDrag();
     window.removeEventListener("resize", this.handleResponsiveVisibilityChange);
     this.visibilityObserver?.disconnect();
     this.unsubscribeRuntime?.();
@@ -119,10 +145,11 @@ export class WorkspaceFilesPanel extends LitElement {
         </section>
         ${scope.error === undefined ? null : html`<p class="files-error" role="alert">${scope.error}</p>`}
         ${this.renderUploadProgress(context, runtime, scope)}
-        <section class="split">
+        <section class="split" style=${this.splitStyle()}>
           <div class="list tree">
             ${scope.fileTree.length === 0 ? html`<p class="muted">No files loaded.</p>` : scope.fileTree.map((entry) => this.renderTreeEntry(context, runtime, scope, entry, 0))}
           </div>
+          ${this.renderSplitHandle()}
           <div class="viewer">
             <pi-web-files-viewer
               .contentRendering=${this.contentRendering}
@@ -352,6 +379,7 @@ export class WorkspaceFilesPanel extends LitElement {
   };
 
   private readonly handleResponsiveVisibilityChange = (): void => {
+    this.refitSplitSize();
     const dialog = this.uploadDialog;
     if ((this.pendingUpload === undefined && dialog?.open !== true) || this.isPanelVisible()) return;
     // The trigger remains connected when the compact shell CSS hides this
@@ -436,6 +464,123 @@ export class WorkspaceFilesPanel extends LitElement {
     this.dragActive = false;
   }
 
+  /* --- 文件树/预览之间的水平分隔条：拖动/键盘调整高度，双击复位。 --- */
+
+  private splitStyle(): string {
+    return this.splitSize === undefined ? "" : `--files-split-size: ${String(this.splitSize)}px;`;
+  }
+
+  private renderSplitHandle() {
+    const label = "Resize file tree and viewer";
+    return html`
+      <div
+        class="split-handle"
+        role="separator"
+        aria-orientation="horizontal"
+        aria-label=${label}
+        title=${`${label}. Double-click or double-tap to reset.`}
+        tabindex="0"
+        @pointerdown=${this.handleSplitPointerDown}
+        @pointermove=${this.handleSplitPointerMove}
+        @pointerup=${this.handleSplitPointerUp}
+        @pointercancel=${this.handleSplitPointerCancel}
+        @dblclick=${this.handleSplitDoubleClick}
+        @keydown=${this.handleSplitKeyDown}
+      ></div>
+    `;
+  }
+
+  private readonly handleSplitPointerDown = (event: PointerEvent): void => {
+    if (event.button !== 0 || this.activeSplitDrag !== undefined) return;
+    const handle = event.currentTarget;
+    const containerSize = this.splitSection?.getBoundingClientRect().height ?? 0;
+    const startSize = this.treeList?.getBoundingClientRect().height ?? 0;
+    if (!(handle instanceof HTMLElement) || containerSize <= 0) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    handle.setPointerCapture(event.pointerId);
+    this.activeSplitDrag = { pointerId: event.pointerId, startClientY: event.clientY, startSize, containerSize, handle, moved: false };
+    handle.toggleAttribute("active", true);
+  };
+
+  private readonly handleSplitPointerMove = (event: PointerEvent): void => {
+    const active = this.activeSplitDrag;
+    if (active?.pointerId !== event.pointerId) return;
+    event.preventDefault();
+    if (Math.abs(event.clientY - active.startClientY) <= SPLIT_TAP_MOVE_TOLERANCE_PX) return;
+    active.moved = true;
+    this.splitSize = filesSplitSizeFromDrag(active.startSize, active.containerSize, event.clientY - active.startClientY);
+  };
+
+  private readonly handleSplitPointerUp = (event: PointerEvent): void => {
+    const active = this.activeSplitDrag;
+    if (active?.pointerId !== event.pointerId) return;
+    event.preventDefault();
+    this.finishActiveSplitDrag();
+    if (!active.moved) this.registerSplitTap();
+  };
+
+  private readonly handleSplitPointerCancel = (event: PointerEvent): void => {
+    if (this.activeSplitDrag?.pointerId !== event.pointerId) return;
+    this.finishActiveSplitDrag();
+  };
+
+  private readonly handleSplitDoubleClick = (event: MouseEvent): void => {
+    event.preventDefault();
+    this.resetSplitSize();
+  };
+
+  private readonly handleSplitKeyDown = (event: KeyboardEvent): void => {
+    const containerSize = this.splitSection?.getBoundingClientRect().height ?? 0;
+    const currentSize = this.treeList?.getBoundingClientRect().height ?? 0;
+    if (containerSize <= 0) return;
+    const nextSize = filesSplitSizeFromKeyboard(currentSize, containerSize, event.key, { largeStep: event.shiftKey });
+    if (nextSize === undefined) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    this.splitSize = nextSize;
+    writeStoredFilesSplitSize(nextSize);
+  };
+
+  private registerSplitTap(): void {
+    const now = Date.now();
+    if (now - this.lastSplitTapAt <= SPLIT_DOUBLE_TAP_RESET_MS) {
+      this.lastSplitTapAt = 0;
+      this.resetSplitSize();
+      return;
+    }
+    this.lastSplitTapAt = now;
+  }
+
+  private resetSplitSize(): void {
+    this.splitSize = undefined;
+    writeStoredFilesSplitSize(undefined);
+  }
+
+  private finishActiveSplitDrag(): void {
+    const active = this.activeSplitDrag;
+    if (active === undefined) return;
+    try {
+      active.handle.releasePointerCapture(active.pointerId);
+    } catch {
+      // 浏览器可能已取消拖拽并释放捕获，忽略即可。
+    }
+    active.handle.toggleAttribute("active", false);
+    this.activeSplitDrag = undefined;
+    writeStoredFilesSplitSize(this.splitSize);
+  }
+
+  /** 面板高度变化（窗口缩放、上传区出现等）后把分栏尺寸重新夹回合法范围；不写回存储，保留用户偏好。 */
+  private refitSplitSize(): void {
+    if (this.splitSize === undefined) return;
+    const containerSize = this.splitSection?.getBoundingClientRect().height ?? 0;
+    if (containerSize <= 0) return;
+    const nextSize = clampFilesSplitSize(this.splitSize, containerSize);
+    if (nextSize !== this.splitSize) this.splitSize = nextSize;
+  }
+
   static override styles = css`
     :host { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; color: var(--pi-text); background: var(--pi-bg); font: 13px system-ui, sans-serif; container-type: inline-size; }
     .files-panel { position: relative; flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
@@ -448,7 +593,12 @@ export class WorkspaceFilesPanel extends LitElement {
     .files-error { flex: 0 0 auto; margin: 0; border-bottom: 1px solid var(--pi-danger); color: var(--pi-danger); padding: 8px; overflow-wrap: anywhere; }
     .capability-error { box-sizing: border-box; width: min(100%, 420px); margin: auto; display: grid; gap: 8px; color: var(--pi-danger); padding: 24px; text-align: center; }
     .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0; }
-    .split { flex: 1 1 auto; min-height: 0; display: grid; grid-template-rows: minmax(160px, 34%) minmax(0, 1fr); }
+    .split { flex: 1 1 auto; min-height: 0; display: grid; grid-template-rows: var(--files-split-size, minmax(160px, 34%)) 0 minmax(0, 1fr); }
+    /* 分隔条自身 0 高度不占布局：::before 是拖拽热区，::after 是高亮条。 */
+    .split-handle { position: relative; z-index: 3; outline: none; touch-action: none; }
+    .split-handle::before { content: ""; position: absolute; top: -4px; left: 0; right: 0; height: 9px; cursor: row-resize; }
+    .split-handle::after { content: ""; position: absolute; top: -1px; left: 0; right: 0; height: 3px; background: transparent; transition: background .12s ease; }
+    .split-handle:hover::after, .split-handle:focus-visible::after, .split-handle[active]::after { background: var(--pi-accent); opacity: .72; }
     .list { min-height: 0; overflow: auto; border-bottom: 1px solid var(--pi-border); padding: 6px; }
     .row { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 4px; width: 100%; border: 0; border-radius: 5px; background: transparent; text-align: left; padding: 4px 6px 4px calc(6px + var(--depth, 0) * 14px); }
     .row:hover, .row.selected { background: var(--pi-selection-bg); }

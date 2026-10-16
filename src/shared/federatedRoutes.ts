@@ -8,9 +8,6 @@ import {
 import { WORKSPACE_REMOVAL_FEDERATION_TIMEOUT_MS } from "./workspaceRemovalProtocol.js";
 import { MAX_INLINE_PREVIEW_BYTES } from "./workspaceFiles.js";
 
-export { PLUGIN_BACKEND_FEDERATION_TIMEOUT_MS } from "./pluginBackendProtocol.js";
-export { WORKSPACE_REMOVAL_FEDERATION_TIMEOUT_MS } from "./workspaceRemovalProtocol.js";
-
 export type FederatedHttpMethod = "GET" | "POST" | "PUT" | "DELETE";
 
 export const PI_PACKAGE_MUTATION_PROXY_TIMEOUT_MS = 5 * 60_000;
@@ -124,6 +121,7 @@ export const FEDERATED_HTTP_ROUTES = [
   { method: "POST", path: "/sessions/bulk/archive" },
   { method: "POST", path: "/sessions/bulk/delete-archived" },
   { method: "GET", path: "/sessions/:sessionId/messages" },
+  { method: "POST", path: "/sessions/:sessionId/name" },
   { method: "GET", path: "/sessions/:sessionId/media/:mediaId", propagateCancellation: true },
   { method: "GET", path: "/sessions/:sessionId/notifications" },
   { method: "POST", path: "/sessions/:sessionId/notifications/dismiss" },

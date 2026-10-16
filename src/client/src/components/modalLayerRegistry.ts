@@ -208,6 +208,18 @@ export function deepActiveElement(ownerDocument: Document): Element | null {
   return active ?? null;
 }
 
+/**
+ * True while the deepest focused element is a text entry the user can type in.
+ * A programmatic focus move (a session selection, keyboard navigation) must not
+ * pull focus out of an in-place editor such as the session rename input.
+ */
+export function textEntryHoldsFocus(ownerDocument: Document): boolean {
+  const active = deepActiveElement(ownerDocument);
+  if (active instanceof HTMLInputElement) return true;
+  if (active instanceof HTMLTextAreaElement) return true;
+  return active instanceof HTMLElement && active.isContentEditable;
+}
+
 /** Hidden/inert content is unavailable as a viable focus target. */
 export function isHiddenOrInertInComposedTree(element: HTMLElement): boolean {
   const view = element.ownerDocument.defaultView;

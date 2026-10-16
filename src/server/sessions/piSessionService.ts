@@ -76,6 +76,7 @@ import type {
   SessionNotificationDismissRequest,
   SessionNotificationInboxSnapshot,
   SessionModelScopeMode,
+  SessionRenameResponse,
   SessionUnreadAcknowledgeRequest,
   SessionUnreadCatalogSnapshot,
   SessionWarning,
@@ -404,6 +405,8 @@ export interface PiSessionManager {
   resetLeaf(): void;
   getHeader?(): { parentSession?: string; timestamp?: string } | null | undefined;
   appendCustomEntry?(customType: string, data?: unknown): string;
+  /** Append a session_info entry. Persists the display name when the file exists. */
+  appendSessionInfo?(name: string): string;
 }
 
 export interface PiSessionManagerGateway {
@@ -3145,6 +3148,37 @@ export class PiSessionService implements SessionRouteService {
     );
   }
 
+  /**
+   * Set or clear a session's display name. A loaded session is renamed in its
+   * runtime (so the change persists with its own appends); an unloaded one gets
+   * the Pi SDK's `session_info` entry appended to its transcript, which the
+   * listing reads back as the row label.
+   */
+  async rename(ref: PiSessionRef, name: string): Promise<SessionRenameResponse> {
+    await this.assertWritable(ref);
+    const sanitized = sanitizeSessionName(name);
+    const active = this.activeForRef(ref);
+    if (active !== undefined) {
+      const session = active.runtime.session;
+      session.setSessionName(sanitized);
+      const applied = appliedSessionName(session.sessionName);
+      this.publishSessionNameFor(session.sessionId, applied);
+      return sessionRenameResponse(applied);
+    }
+
+    const match = await this.sessionManager.resolveSessionFile(ref.cwd, ref.id);
+    if (match === undefined) throw new Error("Session not found");
+    const manager = this.sessionManager.open(match.path);
+    if (manager.appendSessionInfo === undefined) throw new Error("Renaming this session is not supported by the session store");
+    manager.appendSessionInfo(sanitized);
+    // The append changes what the listing summary holds for this file; identity
+    // plus size cannot always detect it, so tell the scanner memo explicitly.
+    this.sessionManager.invalidateSessionFile(match.path);
+    const applied = appliedSessionName(sanitized);
+    this.publishSessionNameFor(match.id, applied);
+    return sessionRenameResponse(applied);
+  }
+
   async archive(ref: PiSessionRef): Promise<void> {
     const session = await this.getOrOpen(ref);
     if (this.hasActiveWork(session)) throw new Error("Stop current session activity before archiving");
@@ -4486,10 +4520,14 @@ export class PiSessionService implements SessionRouteService {
   }
 
   private publishSessionName(session: PiAgentSession): void {
-    const event = session.sessionName === undefined
-      ? { type: "session.name", sessionId: session.sessionId } as const
-      : { type: "session.name", sessionId: session.sessionId, name: session.sessionName } as const;
-    this.events.publish(session.sessionId, event);
+    this.publishSessionNameFor(session.sessionId, session.sessionName);
+  }
+
+  private publishSessionNameFor(sessionId: string, name: string | undefined): void {
+    const event = name === undefined
+      ? { type: "session.name", sessionId } as const
+      : { type: "session.name", sessionId, name } as const;
+    this.events.publish(sessionId, event);
     this.events.publishGlobal(event);
   }
 
@@ -5225,6 +5263,22 @@ function clearParentSessionHeader(sessionManager: PiSessionManager): void {
 
 function clearSessionQueue(session: PiAgentSession): void {
   session.clearQueue();
+}
+
+/**
+ * Mirror the Pi SDK's session-name sanitation: a name is one line of optional
+ * text, and a blank result explicitly clears the name.
+ */
+function sanitizeSessionName(name: string): string {
+  return name.replace(/[\r\n]+/g, " ").trim();
+}
+
+function sessionRenameResponse(name: string | undefined): SessionRenameResponse {
+  return name === undefined || name === "" ? { renamed: true } : { renamed: true, name };
+}
+
+function appliedSessionName(name: string | undefined): string | undefined {
+  return name === undefined || name === "" ? undefined : name;
 }
 
 function queuedMessagesFromSession(session: PiAgentSession, extraQueuedMessages: readonly QueuedPrompt[] = []): { kind: "steer" | "followUp"; text: string }[] {

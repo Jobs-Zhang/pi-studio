@@ -58,8 +58,6 @@ tasks.named("preBuild") {
 dependencies {
     implementation("androidx.activity:activity-ktx:1.9.3")
     implementation("androidx.core:core-ktx:1.13.1")
-    // Document-start script support, used to shim the Web Notification API.
-    implementation("androidx.webkit:webkit:1.12.1")
     // Maintained JSch fork: modern KEX/ciphers plus StrictHostKeyChecking=accept-new.
     implementation("com.github.mwiede:jsch:0.2.26")
 }

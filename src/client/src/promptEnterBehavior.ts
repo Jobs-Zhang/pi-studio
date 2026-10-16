@@ -23,15 +23,6 @@ export function readPromptEnterPreference(storage = browserStorage()): PromptEnt
   }
 }
 
-export function writePromptEnterPreference(preference: PromptEnterPreference, storage = browserStorage()): void {
-  if (storage === undefined) return;
-  try {
-    storage.setItem(PROMPT_ENTER_PREFERENCE_STORAGE_KEY, preference);
-  } catch {
-    // Ignore localStorage quota/privacy errors; Auto remains the safe fallback.
-  }
-}
-
 export function shouldSendPromptOnEnter(media = createMobilePromptEnterMedia(), preference = readPromptEnterPreference()): boolean {
   if (preference === "send") return true;
   if (preference === "newline") return false;
@@ -44,11 +35,6 @@ export function shouldUsePromptEnterShiftShortcut(shiftKey: boolean, explicitShi
   if (!shiftKey) return false;
   if (media?.matches === true) return explicitShiftKeyActive;
   return true;
-}
-
-export function shouldSendPromptOnEnterShortcut(shiftKey: boolean, media = createMobilePromptEnterMedia(), preference = readPromptEnterPreference()): boolean {
-  const plainEnterSends = shouldSendPromptOnEnter(media, preference);
-  return shiftKey ? !plainEnterSends : plainEnterSends;
 }
 
 function browserStorage(): PromptEnterPreferenceStorage | undefined {

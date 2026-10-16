@@ -10,9 +10,12 @@ files:
   - tunnel.cjs
   - history.cjs
   - icon.png
+  - icon.ico
 win:
-  signAndEditExecutable: false
-  icon: icon.png
+  # Only code signing is skipped; resource editing must stay enabled or the
+  # exe keeps Electron's default icon and version metadata.
+  signExecutable: false
+  icon: icon.ico
   target:
     - target: nsis
       arch:

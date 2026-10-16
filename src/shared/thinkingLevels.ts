@@ -9,9 +9,8 @@ export type { ThinkingLevel };
 /**
  * Known levels in increasing intensity, derived from pi's `ThinkingLevel` union.
  * The `satisfies` clause makes this fail to compile if pi removes or renames a
- * level; thinkingLevels.test.ts adds a compile-time check for additions too. When
- * either breaks, update this list and give the new level a label/description
- * where thinking levels are presented.
+ * level. When it breaks, update this list and give the new level a
+ * label/description where thinking levels are presented.
  */
 export const KNOWN_THINKING_LEVELS = ["off", "minimal", "low", "medium", "high", "xhigh", "max"] as const satisfies readonly ThinkingLevel[];
 

@@ -75,7 +75,7 @@ If the content needs multiple sentences of caveats, explains how an internal mec
 3. Keep the README unchanged unless its quick-start path or high-level product story must change.
 4. If discovery is important, add a short link from the README or relevant docs index instead of duplicating the detail.
 5. Check nearby pages for stale or contradictory claims.
-6. Keep commands, names, defaults, and platform statements consistent with the implementation and tests.
+6. Keep commands, names, defaults, and platform statements consistent with the implementation.
 7. Review the final diff specifically for README growth and duplicated prose.
 
 ## Writing principles
@@ -85,7 +85,7 @@ If the content needs multiple sentences of caveats, explains how an internal mec
 - Prefer concrete guidance over internal type, module, or orchestration terminology.
 - Explain implementation details only when they help users make a decision or recover from a failure.
 - Distinguish supported behavior from recommendations and prospective behavior.
-- Avoid promises broader than the tested platform and compatibility contract.
+- Avoid promises broader than the supported platform and compatibility contract.
 - Keep examples copyable and make destructive or security-sensitive effects explicit.
 - Link to one canonical source instead of maintaining subtly different versions of the same guidance.
 
@@ -96,7 +96,7 @@ Use `.agents/skills/changeset-changelog/SKILL.md` when a documentation change is
 Run the narrowest checks that cover the edited documentation. At minimum:
 
 - inspect links and referenced paths;
-- run any focused docs, packaging, or build-content tests associated with the changed files;
+- run any focused docs, packaging, or build-content checks associated with the changed files;
 - use `git diff --check`;
 - confirm the README remains a concise entry point rather than a second documentation site.
 

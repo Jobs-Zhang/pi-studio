@@ -201,7 +201,7 @@ async function createTunnel(spec, target, deps = {}) {
   const execPath = deps.execPath ?? process.execPath;
   const probeTimeoutMs = deps.probeTimeoutMs ?? PROBE_TIMEOUT_MS;
 
-  const localPort = await allocatePort(spec, target);
+  const localPort = deps.localPort ?? await allocatePort(spec, target);
   const args = buildSshArgs(localPort, spec, target);
 
   let askpassCleanup;
@@ -237,8 +237,10 @@ async function createTunnel(spec, target, deps = {}) {
   });
   childFailure.catch(() => undefined);
 
+  let alive = true;
   let settled = false;
   const fail = (reason) => {
+    alive = false;
     if (settled) return;
     settled = true;
     const summary = stderrTail.slice(-STDERR_SUMMARY_LINES).join("\n").trim();
@@ -259,7 +261,9 @@ async function createTunnel(spec, target, deps = {}) {
 
   return {
     localPort,
+    get alive() { return alive; },
     close: async () => {
+      alive = false;
       if (!child.killed) child.kill();
       await askpassCleanup?.();
     },

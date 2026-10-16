@@ -7,8 +7,7 @@ const WILDCARD_PATTERN = /[*?]/u;
 
 /**
  * Extracts usable host aliases (no wildcards, no negations, no inline comments)
- * from an ssh config `Host` directive argument. Shared by the pure parser and the
- * file walker so both agree on alias rules.
+ * from an ssh config `Host` directive argument.
  */
 function hostAliases(directiveArgument: string): string[] {
   const tokens = directiveArgument.split(/[ \t]+/u).filter((token) => token !== "");
@@ -19,22 +18,6 @@ function hostAliases(directiveArgument: string): string[] {
     if (!aliases.includes(token)) aliases.push(token);
   }
   return aliases;
-}
-
-/**
- * Extracts usable host aliases (no wildcards, no negations) from `~/.ssh/config`
- * file content. Pure so callers can test parsing without touching the filesystem.
- */
-export function parseSshConfigHosts(content: string): string[] {
-  const hosts: string[] = [];
-  for (const line of content.split(/\r?\n/u)) {
-    const aliases = hostAliasesFromLine(line);
-    if (aliases === undefined) continue;
-    for (const alias of aliases) {
-      if (!hosts.includes(alias)) hosts.push(alias);
-    }
-  }
-  return hosts;
 }
 
 /**

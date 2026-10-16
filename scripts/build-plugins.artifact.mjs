@@ -322,8 +322,18 @@ function execUtf8(file, args, cwd, timeoutMs) {
 }
 function packageFilePaths(output) {
   const parsed = JSON.parse(output);
-  if (!Array.isArray(parsed) || parsed.length !== 1) throw new Error("npm pack returned an unexpected result");
-  const packResult = parsed[0];
+  // npm 11 and earlier emit a one-element array; npm 12 emits an object keyed by package name.
+  let packResult;
+  if (Array.isArray(parsed)) {
+    if (parsed.length !== 1) throw new Error("npm pack returned an unexpected result");
+    packResult = parsed[0];
+  } else if (isRecord(parsed)) {
+    const entries = Object.values(parsed);
+    if (entries.length !== 1) throw new Error("npm pack returned an unexpected result");
+    packResult = entries[0];
+  } else {
+    throw new Error("npm pack returned an unexpected result");
+  }
   if (!isRecord(packResult)) throw new Error("npm pack result was not an object");
   const filesValue = packResult["files"];
   if (!Array.isArray(filesValue)) throw new Error("npm pack result did not include files");

@@ -71,16 +71,22 @@ npm run build
 
 输出：`dist/PI Desktop Setup.exe`
 
+只想检查打包结果里的 `PI Desktop.exe`、不生成安装包时，可以只做目录构建：`npx electron-builder --win --dir --config electron-builder.yml`。
+
 ## 开发
 
 ```bash
 cd desktop
 npm start           # 打开启动页
 npm start:local     # 直接连接 http://127.0.0.1:8504
-npm test            # 运行 ssh config 解析与隧道参数的单元测试
 ```
 
 限制：Windows 开发模式（未打包）下暂不支持密码认证，请使用密钥认证；开发模式也未注册系统通知所需的快捷方式，系统通知请用安装版验证。
+
+## 常见问题
+
+- **任务栏、桌面快捷方式仍显示 Electron 默认图标**：安装器升级时不会重建已有快捷方式，加上 Windows 按路径缓存图标，旧图标会留下来。步骤：从任务栏取消固定 → 执行 `ie4uinit.exe -show`（不够就结束 explorer 后删除 `%LocalAppData%\Microsoft\Windows\Explorer\iconcache_*.db`，再启动 explorer）→ 卸载后重新安装，让快捷方式重建 → 重新固定。可在资源管理器里先确认 `%LocalAppData%\Programs\PI Desktop\PI Desktop.exe` 的图标已是 π。
+- **Linux/WSL 上 `npm run build` 在 NSIS 阶段失败（`wine process failed`，`wow64.dll` 加载失败）**：electron-builder 会用 wine 跑安装器 stub 提取卸载程序，32 位 wine prefix 损坏时就会卡在这里。判断：`ls ~/.wine/drive_c/windows/syswow64 | wc -l` 为 0（正常约 835）；重建：`rm -rf ~/.wine && wine cmd /c echo ok`（约 1 分钟）。Windows 上构建走原生执行，不受影响。
 
 ## License
 

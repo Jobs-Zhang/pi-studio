@@ -79,7 +79,7 @@ import "./AuthDialog";
 import "./ProjectDialog";
 import "./MachineDialog";
 import type { MachineDialogSubmit } from "./MachineDialog";
-import { deepActiveElement, focusElement, hasRenderedModal } from "./modalLayerRegistry";
+import { deepActiveElement, focusElement, hasRenderedModal, textEntryHoldsFocus } from "./modalLayerRegistry";
 import "./SettingsDialog";
 import "./WorkspacePanel";
 import type { WorkspacePanelEmptyState, WorkspaceToolPanel } from "./WorkspacePanel";
@@ -1210,7 +1210,9 @@ export class PiWebApp extends LitElement {
   }
 
   private shouldAutoFocusPrompt(): boolean {
-    return !this.isRenderedModalOpen() && this.appShell.shouldAutoFocusPrompt();
+    // An in-place edit owns focus until the user finishes it: auto-focusing the
+    // composer after a selection settles must not close the session rename editor.
+    return !this.isRenderedModalOpen() && this.appShell.shouldAutoFocusPrompt() && !textEntryHoldsFocus(this.ownerDocument);
   }
 
   private async withChatPrependTransition(action: () => Promise<void>) {
@@ -1642,13 +1644,13 @@ export class PiWebApp extends LitElement {
   }
 
   private handleMachineActivityEvent(machineId: string, event: BrowserRealtimeEvent): void {
-    this.desktopNotifications.handleEvent(machineId, event, this.desktopNotificationContext(event));
+    this.desktopNotifications.handleEvent(machineId, event, this.desktopNotificationContext(machineId, event));
     if (event.type === "sessions.unread") this.sessionUnread.applyEvent(machineId, event);
     else if (event.type === "machine.status") this.machineStatus.apply(machineId, event.status);
   }
 
   private handleRealtimeEvent(machineId: string, event: BrowserRealtimeEvent): void {
-    this.desktopNotifications.handleEvent(machineId, event, this.desktopNotificationContext(event));
+    this.desktopNotifications.handleEvent(machineId, event, this.desktopNotificationContext(machineId, event));
     if (event.type === "sessions.unread") this.sessionUnread.applyEvent(machineId, event);
     else if (event.type === "notices.updated") this.serverNotices.applyEvent(machineId, event);
     else if (event.type === "machine.status") this.machineStatus.apply(machineId, event.status);
@@ -1691,11 +1693,18 @@ export class PiWebApp extends LitElement {
     }
   }
 
-  private desktopNotificationContext(event: BrowserRealtimeEvent): { sessionLabel?: string } {
+  private desktopNotificationContext(machineId: string, event: BrowserRealtimeEvent): { sessionLabel?: string; lastAssistantMessage?: string } {
     const sessionId = desktopNotificationSessionId(event);
     if (sessionId === undefined) return {};
     const label = this.sessionDisplayLabel(sessionId);
-    return label === undefined ? {} : { sessionLabel: label };
+    const context: { sessionLabel?: string; lastAssistantMessage?: string } = label === undefined ? {} : { sessionLabel: label };
+    // The settled-run notification shows what the agent last said, when this
+    // browser still has that session's transcript cached.
+    if (event.type === "status.update" && !event.status.isStreaming) {
+      const summary = this.sessions.lastAssistantMessage(machineId, sessionId);
+      if (summary !== undefined) context.lastAssistantMessage = summary;
+    }
+    return context;
   }
 
   private sessionDisplayLabel(sessionId: string): string | undefined {
@@ -1707,7 +1716,12 @@ export class PiWebApp extends LitElement {
   }
 
   private async activateDesktopNotification(activation: DesktopNotificationActivation): Promise<void> {
-    window.focus();
+    // In the Electron shell the main process can really raise the window
+    // (restore from tray/minimize and focus); plain browsers fall back to the
+    // best-effort window.focus().
+    const desktop = window.piWebDesktop;
+    void desktop?.focusWindow?.();
+    if (desktop?.focusWindow === undefined) window.focus();
     if (selectedMachineId(this.state) !== activation.machineId) {
       const machine = this.state.machines.find((candidate) => candidate.id === activation.machineId);
       if (machine === undefined) return;
@@ -1949,6 +1963,19 @@ export class PiWebApp extends LitElement {
     toggleProjects: () => { this.navigationSections.toggle("projects"); },
     toggleWorkspaces: () => { this.navigationSections.toggle("workspaces"); },
     toggleSessions: () => { this.navigationSections.toggle("sessions"); },
+    loadProjectWorkspaces: (project: Project, signal: AbortSignal) => workspacesApi.workspaces(project.id, selectedMachineId(this.state), { signal }),
+    loadWorkspaceSessions: (workspace: Workspace, signal: AbortSignal) => sessionsApi.sessions(workspace.path, selectedMachineId(this.state), { signal }),
+    selectWorkspaceSession: (workspace: Workspace, session: SessionInfo) => this.selectNavigationItem("sessions", "chat", async () => {
+      const current = machineNavigationSnapshotFromState(this.state, this.currentContributionQueryForState());
+      const destination: MachineNavigationSnapshot = { ...current, projectId: workspace.projectId, workspaceId: workspace.id, sessionId: session.id, surface: {} };
+      if (!await this.commitAndRestoreNavigation(destination)) return false;
+      this.replaceNavigationUrl();
+      return true;
+    }),
+    startWorkspaceSession: async (workspace: Workspace) => {
+      if (this.state.selectedWorkspace?.id !== workspace.id && !await this.navigateToWorkspaceFromController(workspace)) return;
+      await this.startSessionFromNavigation();
+    },
     selectProject: (project: Project) => this.selectNavigationItem("projects", "workspaces", () => this.selectProjectFromNavigation(project)),
     closeProject: (project: Project) => this.projects.closeProject(project.id),
     selectWorkspace: (workspace: Workspace) => this.selectNavigationItem("workspaces", "sessions", () => this.selectWorkspaceFromNavigation(workspace)),
@@ -1966,6 +1993,7 @@ export class PiWebApp extends LitElement {
     deleteArchivedSession: (session: SessionInfo) => this.sessions.deleteArchivedSessions([session]),
     deleteArchivedSessions: (sessions: SessionInfo[]) => this.sessions.deleteArchivedSessions(sessions),
     detachParentSession: (session: SessionInfo) => this.sessions.detachParent(session),
+    renameSession: async (session: SessionInfo, name: string) => { await this.sessions.renameSession(session, name); },
     reloadSession: (session: SessionInfo) => this.sessions.reloadSession(session),
     cleanupSessions: () => { this.openSessionCleanupDialog(); },
     focusNavigationTarget: (target: NavigationFocusTarget) => { void this.focusNavigationTarget(target); },
@@ -1994,6 +2022,7 @@ export class PiWebApp extends LitElement {
         .projects=${this.state.projects}
         .selectedProject=${this.state.selectedProject}
         .workspaces=${this.state.workspaces}
+        .workspacesByProjectId=${this.state.workspacesByProjectId}
         .selectedWorkspace=${this.state.selectedWorkspace}
         .deletingWorkspaceIds=${this.deletingWorkspaceIds}
         .sessions=${this.state.sessions}
@@ -2015,6 +2044,10 @@ export class PiWebApp extends LitElement {
         .onToggleProjects=${this.navigationActions.toggleProjects}
         .onToggleWorkspaces=${this.navigationActions.toggleWorkspaces}
         .onToggleSessions=${this.navigationActions.toggleSessions}
+        .loadProjectWorkspaces=${this.navigationActions.loadProjectWorkspaces}
+        .loadWorkspaceSessions=${this.navigationActions.loadWorkspaceSessions}
+        .onSelectWorkspaceSession=${this.navigationActions.selectWorkspaceSession}
+        .onStartWorkspaceSession=${this.navigationActions.startWorkspaceSession}
         .onSelectProject=${this.navigationActions.selectProject}
         .onCloseProject=${this.navigationActions.closeProject}
         .onSelectWorkspace=${this.navigationActions.selectWorkspace}
@@ -2032,6 +2065,7 @@ export class PiWebApp extends LitElement {
         .onDeleteArchivedSession=${this.navigationActions.deleteArchivedSession}
         .onDeleteArchivedSessions=${this.navigationActions.deleteArchivedSessions}
         .onDetachParentSession=${this.navigationActions.detachParentSession}
+        .onRenameSession=${this.navigationActions.renameSession}
         .onReloadSession=${this.navigationActions.reloadSession}
         .onCleanupSessions=${this.navigationActions.cleanupSessions}
         .onFocusNavigationTarget=${this.navigationActions.focusNavigationTarget}
@@ -2126,6 +2160,9 @@ export class PiWebApp extends LitElement {
     // Recheck the rendered boundary at the final side-effect point so a newer
     // or surviving modal keeps visual and keyboard focus ownership.
     if (!isCurrent() || this.isRenderedModalOpen()) return;
+    // A selection- or keyboard-driven focus move must not pull focus out of a
+    // text field the user is editing in place, such as the session rename editor.
+    if (textEntryHoldsFocus(this.ownerDocument)) return;
     if (this.unacknowledgedActivitySessionKey() !== undefined) {
       this.renderRoot.querySelector<HTMLButtonElement>(".composer-activity-notice button")?.focus();
       return;
@@ -4054,5 +4091,14 @@ function thinkingDescription(level: string): string | undefined {
     case "high": return "Deep reasoning (~16k tokens)";
     case "xhigh": return "Maximum reasoning (~32k tokens)";
     default: return undefined; // unknown level from a newer pi: no description
+  }
+}
+
+/** Surface of the Electron desktop shell preload, when the app runs inside PI Desktop. */
+declare global {
+  interface Window {
+    piWebDesktop?: {
+      focusWindow?: () => Promise<void>;
+    };
   }
 }

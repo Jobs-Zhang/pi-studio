@@ -1,11 +1,9 @@
 package dev.pi.web
 
-import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Color
-import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -22,18 +20,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import androidx.webkit.WebViewCompat
-import androidx.webkit.WebViewFeature
-import org.json.JSONObject
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 private const val CONNECT_PAGE_URL = "file:///android_asset/connect.html"
 private const val BRIDGE_NAME = "AndroidBridge"
-private const val NOTIFICATION_SHIM_ASSET = "pi-web-notification-shim.js"
 private const val TAG = "PiWeb"
 
 /**
@@ -46,12 +39,10 @@ class MainActivity : ComponentActivity() {
     private lateinit var service: ConnectionService
     private lateinit var webView: WebView
     private lateinit var bridge: ConnectBridge
-    private lateinit var notifications: SystemNotifications
     private var showingConnectPage = true
-    private var pendingNotificationClick: String? = null
+    private var reconnectFailures = 0
 
-    private val notificationPermissionLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { deliverNotificationPermission() }
+    private val watchdogHandler = android.os.Handler(android.os.Looper.getMainLooper())
 
     /**
      * Closing a JSch session writes to its socket, which must not happen on the
@@ -63,11 +54,8 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // The connect page is dark, so system bars always need light icons.
-        enableEdgeToEdge(
-            statusBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
-            navigationBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
-        )
+        applySystemBarTheme()
+
 
         service = ConnectionService(ConnectionStore(this))
         webView = createWebView()
@@ -75,9 +63,6 @@ class MainActivity : ComponentActivity() {
         // injects Java interfaces that were added before the page started.
         bridge = ConnectBridge(webView, service)
         webView.addJavascriptInterface(bridge, BRIDGE_NAME)
-        notifications = SystemNotifications(this)
-        webView.addJavascriptInterface(notifications, SystemNotifications.BRIDGE_NAME)
-        installNotificationShim()
         // WebView padding does not shrink the web viewport, so the system bar
         // insets are applied to a wrapper the WebView is laid out inside.
         val content = FrameLayout(this).apply {
@@ -96,17 +81,36 @@ class MainActivity : ComponentActivity() {
             },
         )
 
-        loadConnectPage()
-        handleNotificationIntent(intent)
+        webView.loadUrl(CONNECT_PAGE_URL)
+    }
+
+    override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
+        super.onConfigurationChanged(newConfig)
+        applySystemBarTheme()
+    }
+
+    private fun applySystemBarTheme() {
+        val dark = (resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) == android.content.res.Configuration.UI_MODE_NIGHT_YES
+        enableEdgeToEdge(
+            statusBarStyle = if (dark) SystemBarStyle.dark(Color.TRANSPARENT) else SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT),
+            navigationBarStyle = if (dark) SystemBarStyle.dark(Color.TRANSPARENT) else SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT),
+        )
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        handleNotificationIntent(intent)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        applySystemBarTheme()
+        resumeTunnelIfNeeded()
+        watchdogHandler.postDelayed(tunnelWatchdog, TUNNEL_WATCHDOG_INTERVAL_MS)
     }
 
     override fun onDestroy() {
+        watchdogHandler.removeCallbacks(tunnelWatchdog)
         tunnelExecutor.execute { service.shutdown() }
         tunnelExecutor.shutdown()
         bridge.shutdown()
@@ -147,64 +151,9 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    /**
-     * Gives the page the Web Notification API it cannot have natively. Registered
-     * for every origin, because the gateway runs on the user's own address.
-     */
-    private fun installNotificationShim() {
-        if (!WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
-            Log.w(TAG, "WebView does not support document-start scripts; system notifications are unavailable")
-            return
-        }
-        val script = runCatching {
-            assets.open(NOTIFICATION_SHIM_ASSET).bufferedReader().use { it.readText() }
-        }.getOrElse { error ->
-            Log.w(TAG, "Could not read the notification shim", error)
-            return
-        }
-        runCatching { WebViewCompat.addDocumentStartJavaScript(webView, script, setOf("*")) }
-            .onFailure { error -> Log.w(TAG, "Could not install the notification shim", error) }
-    }
-
-    /** Called by the page's shim when it wants the Android 13+ notification grant. */
-    fun requestNotificationPermission() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU || notifications.isGranted()) {
-            deliverNotificationPermission()
-            return
-        }
-        notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-    }
-
-    private fun deliverNotificationPermission() {
-        val result = if (notifications.isGranted()) "granted" else "denied"
-        webView.post {
-            webView.evaluateJavascript(
-                "window.__piWebNotifyPermission && window.__piWebNotifyPermission(${JSONObject.quote(result)})",
-                null,
-            )
-        }
-    }
-
-    /** Routes a notification tap back to the page instance that raised it. */
-    private fun handleNotificationIntent(intent: Intent?) {
-        val id = intent?.getStringExtra(EXTRA_NOTIFICATION_ID) ?: return
-        intent.removeExtra(EXTRA_NOTIFICATION_ID)
-        pendingNotificationClick = id
-        dispatchNotificationClick()
-    }
-
-    private fun dispatchNotificationClick() {
-        val id = pendingNotificationClick ?: return
-        webView.post {
-            webView.evaluateJavascript(
-                "window.__piWebNotifyClick && window.__piWebNotifyClick(${JSONObject.quote(id)})",
-            ) { pendingNotificationClick = null }
-        }
-    }
-
     private fun loadConnectPage() {
         showingConnectPage = true
-        webView.loadUrl(CONNECT_PAGE_URL)
+        webView.loadUrl("$CONNECT_PAGE_URL?manual=1")
     }
 
     /** Back leaves the gateway; the connect page itself is the app's root. */
@@ -215,6 +164,68 @@ class MainActivity : ComponentActivity() {
         }
         loadConnectPage()
         tunnelExecutor.execute { service.closeTunnel() }
+    }
+
+    /**
+     * Foreground resume: the tunnel may have died in the background (Doze, NAT
+     * timeout, process standby). Redial the same loopback port when needed so the
+     * already-loaded gateway page — and its reconnect button — works again.
+     * Direct connections have no tunnel to redial; the page's own WebSocket
+     * retry loop recovers them as soon as the network is back.
+     */
+    private fun resumeTunnelIfNeeded() {
+        if (showingConnectPage) return
+        tunnelExecutor.execute {
+            val status = runCatching { service.tunnelStatus() }.getOrNull() ?: return@execute
+            if (status.optBoolean("hasTunnel", false) == false) return@execute
+            if (status.optBoolean("connected", true)) return@execute
+            redialTunnel()
+        }
+    }
+
+    /** Redials the remembered SSH tunnel and refreshes the page on success. */
+    private fun redialTunnel() {
+        val result = runCatching { service.reconnect() }.getOrNull() ?: return
+        if (result.optBoolean("ok", false)) {
+            reconnectFailures = 0
+        } else {
+            reconnectFailures += 1
+            val message = result.optString("error", "重连失败，请返回重新连接")
+            webView.post {
+                Toast.makeText(this@MainActivity, message, Toast.LENGTH_LONG).show()
+                if (reconnectFailures >= 3) {
+                    loadConnectPage()
+                    tunnelExecutor.execute { service.closeTunnel() }
+                }
+            }
+        }
+    }
+
+    /**
+     * While resumed, keeps checking the SSH session: ServerAlive marks a dead
+     * path disconnected within ~90s, and this redials shortly after, so a tunnel
+     * that dies mid-use heals without the user leaving the page.
+     */
+    private val tunnelWatchdog = object : Runnable {
+        override fun run() {
+            if (showingConnectPage) {
+                watchdogHandler.postDelayed(this, TUNNEL_WATCHDOG_INTERVAL_MS)
+                return
+            }
+            tunnelExecutor.execute {
+                val status = runCatching { service.tunnelStatus() }.getOrNull() ?: return@execute
+                if (status.optBoolean("hasTunnel", false) && status.optBoolean("connected", true) == false) {
+                    redialTunnel()
+                }
+            }
+            watchdogHandler.postDelayed(this, TUNNEL_WATCHDOG_INTERVAL_MS)
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+        // Background is allowed to die; stop checking until the next resume.
+        watchdogHandler.removeCallbacks(tunnelWatchdog)
     }
 
     private inner class PiWebViewClient : WebViewClient() {
@@ -228,11 +239,7 @@ class MainActivity : ComponentActivity() {
         override fun onReceivedError(view: WebView, request: WebResourceRequest, error: WebResourceError) {
             if (!request.isForMainFrame) return
             Toast.makeText(this@MainActivity, "无法打开页面：${error.description}", Toast.LENGTH_LONG).show()
-        }
-
-        override fun onPageFinished(view: WebView, url: String?) {
-            // A tap that started the app has no live page instance until now.
-            dispatchNotificationClick()
+            if (!showingConnectPage) loadConnectPage()
         }
 
         override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
@@ -246,7 +253,7 @@ class MainActivity : ComponentActivity() {
     }
 
     companion object {
-        /** Set on a notification's pending intent so a tap can be replayed into the page. */
-        const val EXTRA_NOTIFICATION_ID = "dev.pi.web.notificationId"
+        /** Foreground tunnel health-check cadence; see [tunnelWatchdog]. */
+        private const val TUNNEL_WATCHDOG_INTERVAL_MS = 10_000L
     }
 }

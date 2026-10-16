@@ -4,11 +4,7 @@ Keep the frequent feedback loop focused on application behavior. Compilation and
 
 ## During development
 
-Run the smallest relevant test first:
-
-```sh
-npm test -- src/server/plugins/serverPluginRuntime.test.ts
-```
+This project has no automated test suite. Verify behavior by exercising the affected feature in a real running environment, and review the change by hand.
 
 Before merging cross-cutting changes, run:
 
@@ -16,7 +12,7 @@ Before merging cross-cutting changes, run:
 npm run verify
 ```
 
-This runs typechecking, lint, unused-code analysis, and the ordinary test suite. Use the [testing guide](../.agents/skills/testing-guide/SKILL.md#decide-whether-a-test-adds-protection) to decide which behaviors merit automation and choose their smallest sufficient boundary.
+This runs typechecking, lint, and unused-code analysis. See [AGENTS.md](../AGENTS.md) for the project's verification policy.
 
 ## Before delivery
 
@@ -25,7 +21,7 @@ npm run build
 npm run check:artifacts
 ```
 
-`check:artifacts` consumes the current `dist` output; it does not build or refresh it. Always run the build first after changing source or packaging inputs. Artifact checks cover emitted public declarations, package contents, deployment-relative client URLs, and plugin bundle contracts such as self-containment and size limits. They are separate from `npm test` and `npm run verify`.
+`check:artifacts` consumes the current `dist` output; it does not build or refresh it. Always run the build first after changing source or packaging inputs. Artifact checks cover emitted public declarations, package contents, deployment-relative client URLs, and plugin bundle contracts such as self-containment and size limits. They are functional checks against real build output, separate from `npm run verify`.
 
 CI and the publish workflow run artifact checks after their build. On Linux they also run `npm run smoke:package-install`, which checks an actual global installation, public API consumer resolution, native PTY execution, and the [server-only TypeBox boundary](#server-only-typebox). That installed-package boundary is distinct from inspecting build output.
 
@@ -35,7 +31,7 @@ CI and the publish workflow run artifact checks after their build. On Linux they
 
 PI WEB has two execution environments: its `/pi-web` extension runs inside Pi, while its CLI and session daemon run independently. Pi supplies TypeBox to extensions through its module mapping, but that mapping is not available to a standalone Node process. Depending on Pi's private TypeBox files or npm hoisting would make server resolution depend on the installation layout. Making TypeBox peer-only is also insufficient: Pi-managed installs suppress automatic peer installation.
 
-Pi warns when an extension package lists `typebox` in `dependencies`, even if only its standalone server imports it ([#277](https://github.com/jmfederico/pi-web/issues/277)). The server-only alias retains an explicit runtime dependency without triggering that extension diagnostic. Server tool schemas and their tests import `pi-web-typebox`; code under `extensions/` must not import this alias or the server tools. Extensions that need TypeBox should use Pi's host-provided `typebox` instead.
+Pi warns when an extension package lists `typebox` in `dependencies`, even if only its standalone server imports it ([#277](https://github.com/jmfederico/pi-web/issues/277)). The server-only alias retains an explicit runtime dependency without triggering that extension diagnostic. Server tool schemas import `pi-web-typebox`; code under `extensions/` must not import this alias or the server tools. Extensions that need TypeBox should use Pi's host-provided `typebox` instead.
 
 The installed-package smoke checks native Node schema creation/validation and imports all three built server tool modules after a normal global npm install. It also installs the tarball with Pi's `--legacy-peer-deps` policy and verifies native alias resolution without the Pi SDK peer present. Both installations load `/pi-web` through the real Pi resource loader with no dependency warning. The managed check covers TypeBox, not standalone provisioning of the server's separate Pi SDK peers.
 

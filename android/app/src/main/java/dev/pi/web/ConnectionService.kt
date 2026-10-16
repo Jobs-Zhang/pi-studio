@@ -3,7 +3,7 @@ package dev.pi.web
 import org.json.JSONArray
 import org.json.JSONObject
 
-private const val APP_TITLE = "PI Web"
+private const val APP_TITLE = "Pi 工作台"
 
 /**
  * Connect-page backend: history, feature negotiation and the tunnel lifecycle.
@@ -16,6 +16,10 @@ class ConnectionService(private val store: ConnectionStore) {
 
     private val tunnelLock = Any()
     private var activeTunnel: SshTunnel? = null
+    /** Last successful SSH dial, kept so a foreground resume can redial it. */
+    private var activeSpec: SshSpec? = null
+    private var activeTarget: GatewayTarget? = null
+    private var activeTargetUrl: String = ""
 
     /** Feature negotiation with the shared connect page. */
     fun capabilities(): JSONObject = JSONObject().apply {
@@ -87,9 +91,60 @@ class ConnectionService(private val store: ConnectionStore) {
     /** Closes the single active tunnel, if any (used when leaving the gateway page). */
     fun closeTunnel() {
         val tunnel = synchronized(tunnelLock) {
+            activeSpec = null
+            activeTarget = null
+            activeTargetUrl = ""
             activeTunnel.also { activeTunnel = null }
         }
         tunnel?.close()
+    }
+
+    /** Whether the current tunnel (if any) is still up. No I/O is performed. */
+    fun tunnelStatus(): JSONObject {
+        val tunnel = synchronized(tunnelLock) { activeTunnel }
+        val alive = tunnel?.isAlive == true
+        return JSONObject().apply {
+            put("ok", true)
+            put("connected", alive)
+            put("hasTunnel", tunnel != null)
+        }
+    }
+
+    /**
+     * Redials the last SSH tunnel on the same loopback port so the already-loaded
+     * gateway page keeps working. Called when the app returns to the foreground.
+     * Background death is expected and cheap: this just rebuilds on demand.
+     */
+    fun reconnect(): JSONObject {
+        synchronized(tunnelLock) {
+            val current = activeTunnel
+            if (current?.isAlive == true && activeTargetUrl.isNotEmpty()) {
+                return JSONObject().apply {
+                    put("ok", true)
+                    put("url", ConnectPayloads.tunnelDisplayUrl(activeTargetUrl.trim(), current.localPort))
+                }
+            }
+        }
+        val spec: SshSpec
+        val target: GatewayTarget
+        val targetUrl: String
+        val reusePort: Int
+        synchronized(tunnelLock) {
+            spec = activeSpec ?: return failure("没有可重连的隧道，请返回重新连接")
+            target = activeTarget ?: return failure("没有可重连的隧道，请返回重新连接")
+            targetUrl = activeTargetUrl
+            reusePort = activeTunnel?.localPort ?: 0
+        }
+        if (targetUrl.isEmpty()) return failure("没有可重连的隧道，请返回重新连接")
+        val tunnel = try {
+            replaceActiveTunnel(spec, target, reusePort, targetUrl)
+        } catch (error: Throwable) {
+            return failure("重连失败：${describeSshError(error)}，请返回重新连接")
+        }
+        return JSONObject().apply {
+            put("ok", true)
+            put("url", ConnectPayloads.tunnelDisplayUrl(targetUrl.trim(), tunnel.localPort))
+        }
     }
 
     fun shutdown() {
@@ -103,6 +158,8 @@ class ConnectionService(private val store: ConnectionStore) {
     private fun connectDirect(input: String): JSONObject {
         val url = ConnectPayloads.normalizeDirectUrl(input) ?: return failure("请输入 PI WEB 网关地址")
         if (ConnectPayloads.parseGatewayTarget(url) == null) return failure("网关地址无效，请填写 http(s)://host:port")
+        try { probeGateway(url) } catch (error: Exception) { return failure("无法连接网关：${error.message}") }
+        closeTunnel()
         record(ConnectionEntry(type = ConnectionEntry.TYPE_DIRECT, url = url))
         return JSONObject().apply {
             put("ok", true)
@@ -137,11 +194,17 @@ class ConnectionService(private val store: ConnectionStore) {
             password = password,
         )
         val tunnel = try {
-            replaceActiveTunnel(spec, target)
+            replaceActiveTunnel(spec, target, targetUrl = targetUrl.trim())
         } catch (error: Throwable) {
             return failure("SSH 隧道建立失败：${describeSshError(error)}")
         }
 
+        try {
+            probeGateway(ConnectPayloads.tunnelDisplayUrl(targetUrl.trim(), tunnel.localPort))
+        } catch (error: Exception) {
+            closeTunnel()
+            return failure("SSH 已连接，但网关不可用：${error.message}")
+        }
         // A fresh password persists only on request; reconnecting keeps what is already stored.
         val persistedSecret = storedSecret ?: if (rememberPassword) PasswordCipher.encrypt(password) else null
         record(
@@ -163,16 +226,39 @@ class ConnectionService(private val store: ConnectionStore) {
         }
     }
 
-    private fun replaceActiveTunnel(spec: SshSpec, target: GatewayTarget): SshTunnel {
+    private fun replaceActiveTunnel(spec: SshSpec, target: GatewayTarget, reuseLocalPort: Int = 0, targetUrl: String = ""): SshTunnel {
         closeTunnel()
-        val tunnel = SshTunnelFactory.open(spec, target)
-        synchronized(tunnelLock) { activeTunnel = tunnel }
+        val tunnel = SshTunnelFactory.open(spec, target, SshTunnelFactory.DEFAULT_TIMEOUT_MS, reuseLocalPort)
+        synchronized(tunnelLock) {
+            activeTunnel = tunnel
+            activeSpec = spec.copy(password = spec.password)
+            activeTarget = target
+            if (targetUrl.isNotEmpty()) activeTargetUrl = targetUrl
+        }
         return tunnel
     }
 
     // ------------------------------------------------------------------
     // Helpers
     // ------------------------------------------------------------------
+
+    private fun probeGateway(url: String) {
+        val base = java.net.URI(url)
+        require(base.userInfo == null && base.rawQuery == null && base.rawFragment == null) { "网关地址不能包含凭据或查询参数" }
+        val target = java.net.URL(url.trimEnd('/') + "/api/pi-web/status")
+        val connection = target.openConnection() as java.net.HttpURLConnection
+        try {
+            connection.connectTimeout = 6000
+            connection.readTimeout = 6000
+            connection.instanceFollowRedirects = false
+            val status = connection.responseCode
+            require(status == 200 || status == 401 || status == 403) { "网关返回 HTTP $status" }
+            if (status == 200) {
+                val body = connection.inputStream.bufferedReader().use { it.readText() }
+                require(JSONObject(body).optJSONObject("components")?.has("web") == true) { "该地址不是可识别的 Pi 工作台网关" }
+            }
+        } finally { connection.disconnect() }
+    }
 
     private fun historyArray(): JSONArray = JSONArray(config.recentConnections.map { it.toPublicJson() })
 

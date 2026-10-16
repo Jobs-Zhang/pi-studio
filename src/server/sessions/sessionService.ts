@@ -12,6 +12,7 @@ import type {
   SessionNotificationDismissRequest,
   SessionNotificationInboxSnapshot,
   SessionModelScopeMode,
+  SessionRenameResponse,
   SessionDefaults,
   SessionDefaultsUpdate,
   SessionUnreadAcknowledgeRequest,
@@ -104,6 +105,8 @@ export interface SessionRouteService {
   abort(ref: SessionRouteRef): Promise<void>;
   stop(ref: SessionRouteRef): void | Promise<void>;
   archive(ref: SessionRouteRef): Promise<void>;
+  /** Set or clear a session's display name. Works for loaded and unloaded sessions. */
+  rename(ref: SessionRouteRef, name: string): Promise<SessionRenameResponse>;
   archiveTree(ref: SessionRouteRef): Promise<ClientArchiveSessionsResponse>;
   restore(ref: SessionRouteRef): Promise<void>;
   reload(ref: SessionRouteRef): Promise<void>;

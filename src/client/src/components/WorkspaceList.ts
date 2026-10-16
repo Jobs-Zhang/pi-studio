@@ -23,6 +23,7 @@ interface WorkspaceTrustState {
 @customElement("workspace-list")
 export class WorkspaceList extends LitElement implements KeyboardNavigableSection {
   @property({ attribute: false }) workspaces: Workspace[] = [];
+  @property({ type: Boolean, reflect: true, attribute: "menu-only" }) menuOnly = false;
   @property({ attribute: false }) selected?: Workspace;
   /** Machine the listed workspaces belong to; targets the trust API. */
   @property({ attribute: false }) machineId = "local";
@@ -59,6 +60,10 @@ export class WorkspaceList extends LitElement implements KeyboardNavigableSectio
   }
 
   protected override updated(changed: PropertyValues<this>): void {
+    if (changed.has("machineId")) {
+      this.openMenuWorkspaceId = undefined;
+      this.trustByWorkspaceId = {};
+    }
     if (changed.has("workspaces") && this.openMenuWorkspaceId !== undefined && !this.workspaces.some((workspace) => workspace.id === this.openMenuWorkspaceId)) this.openMenuWorkspaceId = undefined;
     if (changed.has("collapsed") && this.collapsed) this.openMenuWorkspaceId = undefined;
     if (this.shouldRevealSelectedRow(changed)) this.scrollSelectedIntoView();
@@ -82,6 +87,7 @@ export class WorkspaceList extends LitElement implements KeyboardNavigableSectio
   }
 
   override render() {
+    if (this.menuOnly) return html`${this.workspaces.map((workspace) => this.renderWorkspaceMenu(workspacePrimaryLabel(workspace), this.workspaceLabelItems(workspace), workspace))}`;
     return html`
       <section>
         <h2>${this.renderHeading()}</h2>
@@ -316,6 +322,8 @@ export class WorkspaceList extends LitElement implements KeyboardNavigableSectio
   }
 
   static override styles = [listStyles, css`
+    :host([menu-only]) { display: block; flex: 0 0 26px; overflow: visible; }
+    :host([menu-only]) .action-menu-toggle { width: 26px; min-width: 26px; height: 26px; border: 0; border-radius: 6px; background: transparent; }
     .workspace-menu-trust { display: flex; flex-direction: column; gap: 3px; padding: 4px 2px; }
     .workspace-menu-trust-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
     .workspace-menu-trust label { display: flex; align-items: center; gap: 6px; cursor: pointer; }

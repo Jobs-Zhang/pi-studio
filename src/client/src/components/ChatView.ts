@@ -10,7 +10,7 @@ import { canonicalEntryActionHeaders, chatMessageHasHeader, groupChatMessages, s
 import { capturePrependScrollAnchor, PREPEND_RESTORE_SETTLE_FRAMES, restorePrependScrollAnchor, type PrependScrollAnchor } from "../chatScrollAnchoring";
 import { shouldRequestEarlierMessages } from "../chatHistoryLoading";
 import { ChatScrollController, distanceFromScrollBottom, findFirstVisibleArticle, isNearScrollBottom, type ChatAnchorScrollPosition, type ChatScrollRestoreResult } from "../chatScrollPosition";
-import type { AskUserSubmission, PendingAskUser, PendingExtensionDialog, QueuedSessionMessage, SessionActivity, SessionRef, SessionStatus, SessionWarningSeverity } from "../api";
+import type { AskUserSubmission, PendingAskUser, PendingExtensionDialog, QueuedSessionMessage, SessionActivity, SessionStatus, SessionWarningSeverity } from "../api";
 import type { ClosedExtensionDialog } from "../appState";
 import {
   notificationAnnouncementLabel,
@@ -38,7 +38,7 @@ import "./ConversationMeter";
 import "./FormattedText";
 import type { MarkdownWorkspaceContext } from "../formatting/workspaceLinks";
 import "./ToolExecutionView";
-import { transcriptImageSource } from "./TranscriptImage";
+import "./TranscriptImage";
 import type { ImageOpenDetail } from "./ImagePresentation";
 import { ImageLayoutScrollController } from "./ImageLayoutScrollController";
 
@@ -96,13 +96,6 @@ export function chatQueuedMessageSections(clientQueued: QueuedSessionMessage[], 
     clientQueued.length === 0 ? undefined : { source: "client", heading: "Queued until session starts", detail: "Will send once the backend session is ready", messages: clientQueued },
     serverQueued.length === 0 ? undefined : { source: "server", heading: "Queued messages", detail: `${String(serverQueued.length)} pending`, messages: serverQueued },
   ].filter((section): section is QueuedMessageSection => section !== undefined);
-}
-
-export type ChatImagePart = Extract<ChatPart, { type: "image" }>;
-
-/** Derive the `<img>` source URL and alt text for a rendered image part. */
-export function chatImagePartSource(part: ChatImagePart, session?: SessionRef, machineId = "local"): { src: string; alt: string } | undefined {
-  return transcriptImageSource(part, session, machineId);
 }
 
 /** The message-header label used when a tool message renders as an image output. */

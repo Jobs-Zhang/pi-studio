@@ -1,10 +1,13 @@
 import type { PendingAskUser, PendingExtensionDialog, SessionActivity, SessionStatus } from "../../shared/apiTypes";
+import type { ChatLine, ChatPart } from "./components/shared";
 import type { BrowserRealtimeEvent } from "./sessionSocket";
 
 /**
  * Desktop (OS-level) notifications for signals that need the user's attention:
- * an open `ask_user` question, an extension dialog waiting for confirmation, a
- * finished run, and a failed run.
+ * an open `ask_user` question, an extension dialog waiting for confirmation,
+ * a finished run, and a run that failed and stopped. Transient failures during
+ * a run (tool errors) are not notified; the user is alerted when the run
+ * actually stops, successfully or not.
  *
  * The mapping is a pure function of the global realtime stream; everything with
  * a side effect (the `Notification` constructor, permissions, persistence, and
@@ -66,14 +69,20 @@ export async function requestDesktopNotificationPermission(): Promise<DesktopNot
   return Notification.requestPermission();
 }
 
-export function desktopNotificationsSupported(): boolean {
-  return desktopNotificationPermission() !== "unsupported";
-}
-
-/** One OS notification, deduplicated by `tag`. */
+/**
+ * One OS notification, deduplicated by `dedupeKey` (defaulting to `tag`).
+ *
+ * `tag` is the browser display identity: notifications that share a tag
+ * replace each other on screen. Attention signals that recur per session
+ * (a new `ask_user` round replacing the previous one) therefore use a
+ * session-scoped `tag` plus a unique `dedupeKey`, so each occurrence is
+ * delivered while the screen keeps at most one per session.
+ */
 export interface DesktopNotification {
-  /** Stable identity of the underlying attention signal; the same signal never notifies twice. */
+  /** Stable display identity; notifications sharing it replace each other. */
   tag: string;
+  /** Delivery identity used for dedupe; defaults to `tag`. */
+  dedupeKey?: string;
   title: string;
   body: string;
   machineId: string;
@@ -83,6 +92,12 @@ export interface DesktopNotification {
 export interface DesktopNotificationEventOptions {
   /** Human label for the session, when the browser already knows one. */
   sessionLabel?: string | undefined;
+  /**
+   * Best-effort opening text of the session's last assistant message, for the
+   * settled-run notification. Background sessions only have it when their
+   * transcript is still cached locally; without it the generic body is used.
+   */
+  lastAssistantMessage?: string | undefined;
 }
 
 /** Cap on remembered dedupe tags, so a long session cannot grow memory without bound. */
@@ -106,7 +121,10 @@ export function desktopNotificationForEvent(
   const subject = subjectLabel(options);
   if (event.type === "session.ask.opened") {
     return {
-      tag: `${machineId}:ask:${event.ask.askId}`,
+      // Session-scoped tag: the next ask round for this session replaces this
+      // notification on screen instead of stacking a second one.
+      tag: `${machineId}:ask:${event.sessionId}`,
+      dedupeKey: `${machineId}:ask:${event.ask.askId}`,
       title: `${subject} needs your answer`,
       body: askBody(event.ask),
       machineId,
@@ -115,15 +133,42 @@ export function desktopNotificationForEvent(
   }
   if (event.type === "session.dialog.opened") {
     return {
-      tag: `${machineId}:dialog:${event.dialog.dialogId}`,
+      tag: `${machineId}:dialog:${event.sessionId}`,
+      dedupeKey: `${machineId}:dialog:${event.dialog.dialogId}`,
       title: `${subject} needs your ${event.dialog.kind === "confirm" ? "confirmation" : "input"}`,
       body: dialogBody(event.dialog),
       machineId,
       sessionId: event.sessionId,
     };
   }
-  if (event.type === "activity.update") return activityNotification(machineId, event.activity, subject);
+  if (event.type === "activity.update") return runFailureNotification(machineId, event.activity, subject);
   return undefined;
+}
+
+/**
+ * A run that settled because it failed (for example `Model response failed:
+ * Connection error.`) stops the agent, so the user must intervene — the
+ * notification carries the failure message.
+ *
+ * Only the run-level failure notifies (`label === "error"`, published when the
+ * prompt run rejects). Tool and feature-level failures (`bash complete`,
+ * `bash failed`, `compaction failed`, …) stay silent: the agent handles them
+ * and keeps working.
+ */
+function runFailureNotification(machineId: string, activity: SessionActivity, subject: string): DesktopNotification | undefined {
+  if (activity.phase !== "error" || activity.label !== "error") return undefined;
+  const detail = activity.detail ?? "The agent run failed and stopped.";
+  return {
+    // Session-scoped tag shared with the settled-run notification (see
+    // {@link sessionRunCompletionNotification}): the failure replaces the
+    // completion toast when it trails the settle edge.
+    tag: `${machineId}:settled:${activity.sessionId}`,
+    dedupeKey: `${machineId}:run-failed:${activity.sessionId}:${activity.at}`,
+    title: `${subject} run failed`,
+    body: truncate(detail, DESKTOP_NOTIFICATION_BODY_LIMIT),
+    machineId,
+    sessionId: activity.sessionId,
+  };
 }
 
 /** A machine that stopped answering health checks, reported once per outage. */
@@ -145,6 +190,10 @@ export function machineUnavailableNotification(machineId: string, machineName: s
  * is one turn), while `isStreaming` stays true for the whole run and flips once
  * when it settles. `runId` is a per-session counter so successive runs in one
  * page load stay distinct in the dedupe set.
+ *
+ * A run that settled because it is waiting on the user (an open `ask_user`
+ * question set or extension dialog) does not notify: the ask/dialog signal
+ * already raised the attention notification for that same stop.
  */
 export function sessionRunCompletionNotification(
   machineId: string,
@@ -153,12 +202,43 @@ export function sessionRunCompletionNotification(
   options: DesktopNotificationEventOptions = {},
 ): DesktopNotification {
   return {
-    tag: `${machineId}:complete:${sessionId}:${String(runId)}`,
+    // Session-scoped tag shared with the run-failure notification: whichever
+    // signal arrives second (failure detail typically trails the settle edge)
+    // replaces the other on screen, so one stop shows one notification.
+    tag: `${machineId}:settled:${sessionId}`,
+    dedupeKey: `${machineId}:settled:${sessionId}:${String(runId)}`,
     title: `${subjectLabel(options)} finished working`,
-    body: "The agent completed its turn and is waiting for you.",
+    body: options.lastAssistantMessage === undefined
+      ? "The agent completed its turn and is waiting for you."
+      : truncate(options.lastAssistantMessage, DESKTOP_NOTIFICATION_BODY_LIMIT),
     machineId,
     sessionId,
   };
+}
+
+/**
+ * Opening text of the last assistant message in a transcript, for the
+ * settled-run notification body. Returns `undefined` when the transcript has
+ * no assistant text (never streamed here, or the message is empty).
+ */
+export function lastAssistantTranscriptSummary(messages: readonly ChatLine[]): string | undefined {
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    const line = messages[index];
+    if (line?.role !== "assistant") continue;
+    const textPart = line.parts.find((part): part is Extract<ChatPart, { type: "text" }> => part.type === "text");
+    const collapsed = (textPart?.displayText ?? textPart?.text)?.replace(/\s+/gu, " ").trim() ?? "";
+    if (collapsed === "") continue;
+    return collapsed;
+  }
+  return undefined;
+}
+
+/**
+ * True when a settled run stopped because it is waiting on the user (an open
+ * `ask_user` question set or extension dialog) rather than finishing its work.
+ */
+export function sessionSettledWaitingForUser(status: SessionStatus): boolean {
+  return status.pendingAsk !== undefined || (status.pendingDialogs?.length ?? 0) > 0;
 }
 
 export interface SessionOnScreenContext {
@@ -179,25 +259,6 @@ export function isSessionAlreadyOnScreen(notification: DesktopNotification, cont
     && notification.machineId === context.machineId;
 }
 
-/**
- * Only a failed activity notifies here. Completion is not an activity label:
- * the daemon reports `turn complete` on every turn, so it cannot distinguish a
- * finished run from an intermediate tool round. See
- * {@link sessionRunCompletionNotification}.
- */
-function activityNotification(machineId: string, activity: SessionActivity, subject: string): DesktopNotification | undefined {
-  if (activity.phase !== "error") return undefined;
-  const detail = activity.detail === undefined ? "" : ` (${activity.detail})`;
-  return {
-    tag: `${machineId}:error:${activity.sessionId}:${activity.at}`,
-    title: `${subject} reported an error`,
-    body: `${activity.label}${detail}`,
-    machineId,
-    sessionId: activity.sessionId,
-  };
-}
-
-/** Human label for the session in a title, falling back to the generic subject. */
 function subjectLabel(options: DesktopNotificationEventOptions): string {
   return truncate(options.sessionLabel ?? "Agent", DESKTOP_NOTIFICATION_SUBJECT_LIMIT);
 }
@@ -363,14 +424,16 @@ export class DesktopNotificationCenter {
     const settled = previous?.streaming === true && !status.isStreaming;
     const runs = (previous?.runs ?? 0) + (settled ? 1 : 0);
     this.sessionRunState.set(key, { streaming: status.isStreaming, runs });
-    return settled && this.notify(sessionRunCompletionNotification(machineId, status.sessionId, runs, options));
+    if (!settled || sessionSettledWaitingForUser(status)) return false;
+    return this.notify(sessionRunCompletionNotification(machineId, status.sessionId, runs, options));
   }
 
   /** Raise a notification for a direct signal that is not part of the realtime stream. */
   notify(notification: DesktopNotification): boolean {
     if (!this.enabledState) return false;
-    if (this.seenTags.has(notification.tag)) return false;
-    this.rememberTag(notification.tag);
+    const dedupeKey = notification.dedupeKey ?? notification.tag;
+    if (this.seenTags.has(dedupeKey)) return false;
+    this.rememberTag(dedupeKey);
     if (this.shouldSuppress?.(notification) === true) return false;
     try {
       this.sink.show(notification, () => { this.onActivate?.(activationFor(notification)); });

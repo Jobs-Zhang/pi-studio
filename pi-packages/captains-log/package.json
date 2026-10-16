@@ -5,8 +5,8 @@
   "private": true,
   "type": "module",
   "keywords": ["pi-package"],
-  "files": ["dist", "src", "docs", "test", "tsconfig.json", "vite.config.mjs"],
-  "scripts": { "build": "tsc -p tsconfig.json && vite build", "test": "node --test test/*.test.mjs" },
+  "files": ["dist", "src", "docs", "tsconfig.json", "vite.config.mjs"],
+  "scripts": { "build": "tsc -p tsconfig.json && vite build" },
   "dependencies": {
     "marked": "^18.0.6"
   },

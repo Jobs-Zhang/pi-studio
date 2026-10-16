@@ -13,8 +13,6 @@ import {
   type SessionNotificationSummaryEvent,
 } from "../../shared/apiTypes.js";
 
-export { SESSION_NOTIFICATION_LIMIT, SESSION_NOTIFICATION_MESSAGE_BYTES } from "../../shared/apiTypes.js";
-
 export type SessionNotificationGeneration = symbol;
 
 export interface SessionNotificationMutation {

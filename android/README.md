@@ -16,16 +16,6 @@
 
 Android 上不读取 `~/.ssh/config`，也不支持密钥文件与 ssh agent：**只支持账号密码认证**。
 
-## 通知
-
-代理提问、扩展对话框、回合完成或失败时，应用会发系统通知 —— 与桌面端是同一套逻辑（事件映射、去重、opt-in 都存在网页里）。
-
-启用方式：打开操作面板，搜索 **Enable Desktop Notifications** 并打开。首次启用会弹出系统通知权限请求（Android 13+）。点击通知会回到应用并切到对应会话。
-
-实现上，Android WebView 没有 Web Notification API（`Notification` 是 `undefined`），所以应用在文档开始时注入一个 shim（`app/src/main/assets/pi-web-notification-shim.js`），把网页的 `new Notification(...)` 转发到系统通知栏，并把点击回传成 `onclick`。网页侧不需要任何改动。
-
-通知依赖网页里的实时连接，因此应用在前台或刚退到后台时最可靠；应用被系统回收后收不到通知（当前没有常驻前台服务）。
-
 ## 环境要求
 
 - Android 8.0（API 26）或更高
@@ -51,9 +41,7 @@ export ANDROID_HOME=~/Android/sdk
 
 | 文件 | 职责 |
 | --- | --- |
-| `app/src/main/java/dev/pi/web/MainActivity.kt` | WebView 壳：加载连接页、返回键、系统栏 insets、通知点击回传 |
-| `.../SystemNotifications.kt` | 系统通知：渠道、权限、发布与取消 |
-| `app/src/main/assets/pi-web-notification-shim.js` | 给网页补上 Web Notification API，并转发到原生 |
+| `app/src/main/java/dev/pi/web/MainActivity.kt` | WebView 壳：加载连接页、返回键、系统栏 insets |
 | `.../ConnectionService.kt` | 历史、能力协商、隧道生命周期（对应 `desktop/main.cjs` 的 IPC 处理器） |
 | `.../ConnectBridge.kt` | 把 `window.piWebDesktop` 契约暴露给连接页 |
 | `.../SshTunnel.kt` | JSch 隧道：认证 + `direct-tcpip` 本地转发 |
@@ -67,7 +55,6 @@ export ANDROID_HOME=~/Android/sdk
 - 隧道由 JSch 库实现，不依赖设备上的 OpenSSH 客户端。
 - 只支持密码认证（无 `~/.ssh/config`、无密钥文件）。
 - 隧道跟随应用前台生命周期：返回连接页或退出应用即关闭。
-- 通知由 Web Notification shim 驱动（桌面端用 Electron 窗口里的原生 Web API）。
 
 ## License
 

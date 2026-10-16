@@ -3,15 +3,15 @@
 /**
  * Recent-connection history shaping for the desktop connect page.
  *
- * Pure so migration and dedupe rules can be tested without the filesystem or
- * Electron; main.cjs owns the file I/O and password encryption around it.
+ * Pure so dedupe rules can be tested without the filesystem or Electron;
+ * main.cjs owns the file I/O and password encryption around it.
  */
 
 const MAX_HISTORY = 10;
 
 /**
- * Normalizes a raw config object: legacy string entries become direct entries,
- * malformed entries are dropped, and unknown config keys are preserved.
+ * Normalizes a raw config object, drops malformed entries, and preserves
+ * unknown config keys.
  */
 function normalizeConfig(raw, maxHistory = MAX_HISTORY) {
   const recent = Array.isArray(raw.recentConnections) ? raw.recentConnections.map(normalizeEntry).filter((entry) => entry !== undefined) : [];
@@ -23,7 +23,6 @@ function normalizeConfig(raw, maxHistory = MAX_HISTORY) {
 }
 
 function normalizeEntry(entry) {
-  if (typeof entry === "string" && entry !== "") return { type: "direct", url: entry };
   if (entry === null || typeof entry !== "object") return undefined;
   if (entry.type === "direct" && typeof entry.url === "string" && entry.url !== "") {
     return { type: "direct", url: entry.url, ...(typeof entry.lastUsedAt === "string" ? { lastUsedAt: entry.lastUsedAt } : {}) };

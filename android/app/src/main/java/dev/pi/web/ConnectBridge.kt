@@ -37,6 +37,8 @@ class ConnectBridge(private val webView: WebView, private val service: Connectio
         "saveMode" -> JSONObject().put("lastMode", service.saveMode(args.optString("mode")))
         "connect" -> service.connect(args.optJSONObject("payload") ?: JSONObject())
         "connectRecent" -> service.connectRecent(args.optInt("index", -1))
+        "tunnelStatus" -> service.tunnelStatus()
+        "reconnect" -> service.reconnect()
         "deleteConnection" -> service.deleteConnection(args.optInt("index", -1))
         "clearHistory" -> service.clearHistory()
         "detectEnvironment" -> service.detectEnvironment()

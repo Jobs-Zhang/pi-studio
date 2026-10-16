@@ -4,6 +4,7 @@ import { NetworkRequestError } from "../api/http";
 import { BrowserErrorReporter, sessionBrowserErrorScope, workspaceBrowserErrorScope, type SessionBrowserErrorOwner } from "../browserErrors";
 import { forgetCachedNewSession, isCachedNewSessionInfo, markCachedNewSessionInfo, mergeCachedNewSessions, rememberCachedNewSession, stripCachedNewSessionMarker } from "../cachedNewSessions";
 import { textMessage } from "../chatMessages";
+import { lastAssistantTranscriptSummary } from "../desktopNotifications";
 import { machineSessionKey } from "../machineKeys";
 import { samePromptChipTarget, type PromptChipTarget } from "../promptChips";
 import { isCreatingSessionId } from "../route";
@@ -1052,6 +1053,25 @@ export class SessionController {
     }
   }
 
+  /**
+   * Rename a session row. A blank name clears the display name and the row
+   * falls back to its first message. Resolves false when the server rejected
+   * the rename, which is already reported through the session error surface.
+   */
+  async renameSession(session: SessionInfo, name: string): Promise<boolean> {
+    if (session.archived === true) return false;
+    const machineId = selectedMachineId(this.getState());
+    const errorOwner = this.captureSessionErrorOwner(session);
+    try {
+      const response = await this.api.renameSession(session, name, machineId);
+      this.applySessionName(session.id, response.name);
+      return true;
+    } catch (error) {
+      this.reportSessionError(session, machineId, error, errorOwner);
+      return false;
+    }
+  }
+
   async reloadSession(session = this.getState().selectedSession) {
     if (session === undefined || !isArchivableSessionInfo(session, this.statusForSession(session))) return;
     const machineId = selectedMachineId(this.getState());
@@ -1607,6 +1627,16 @@ export class SessionController {
 
   private sessionCacheKey(sessionId: string): string {
     return machineSessionKey(selectedMachineId(this.getState()), sessionId);
+  }
+
+  /**
+   * Best-effort opening text of a session's last assistant message, from the
+   * locally cached transcript. Background sessions the browser never opened
+   * (or whose cache was dropped) have no transcript here and yield undefined.
+   */
+  lastAssistantMessage(machineId: string, sessionId: string): string | undefined {
+    const view = this.transcripts.cachedView(machineSessionKey(machineId, sessionId));
+    return lastAssistantTranscriptSummary(view.messages);
   }
 
   private statusForSession(session: SessionInfo | undefined): SessionStatus | undefined {

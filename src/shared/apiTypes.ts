@@ -664,6 +664,15 @@ export interface ArchiveSessionsResponse {
   skippedAlreadyArchivedCount?: number;
 }
 
+/** Upper bound for a user-set session display name, enforced at the API edge. */
+export const SESSION_NAME_MAX_LENGTH = 512;
+
+export interface SessionRenameResponse {
+  renamed: true;
+  /** The applied display name, absent when the rename cleared it. */
+  name?: string;
+}
+
 export interface SessionBulkMutationRef {
   id: string;
   cwd: string;

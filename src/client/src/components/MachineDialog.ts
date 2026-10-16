@@ -22,6 +22,7 @@ export class MachineDialog extends LitElement {
   @state() private name = "";
   @state() private token = "";
   @state() private mode: "direct" | "ssh" = "direct";
+  @state() private sshVia: "config" | "manual" = "config";
   @state() private sshHost = "";
   @state() private sshPort = "";
   @state() private sshUser = "";
@@ -40,7 +41,11 @@ export class MachineDialog extends LitElement {
     if (mode === "ssh" && !this.sshHostsRequested) {
       this.sshHostsRequested = true;
       void this.onLoadSshHosts?.().then((hosts) => {
-        if (this.isConnected) this.sshHosts = hosts;
+        if (this.isConnected) {
+          this.sshHosts = hosts;
+          if (hosts.length > 0 && this.sshHost === "") this.sshHost = hosts[0] ?? "";
+          if (hosts.length === 0) this.sshVia = "manual";
+        }
       });
     }
   }
@@ -95,7 +100,7 @@ export class MachineDialog extends LitElement {
 
   private validInput(): MachineDialogSubmit | undefined {
     const baseUrl = this.url.trim();
-    const name = this.name.trim();
+    const name = this.name.trim() || (this.mode === "ssh" ? this.sshHost.trim() : suggestedMachineNameFromUrl(baseUrl));
     if (baseUrl === "" || name === "" || machineBaseUrlValidationMessage(baseUrl) !== undefined) return undefined;
     const connection = this.validConnection();
     if (connection === undefined) return undefined;
@@ -106,7 +111,9 @@ export class MachineDialog extends LitElement {
   private validConnection(): MachineConnectionInput | undefined {
     if (this.mode === "direct") return { mode: "direct" };
     if (this.sshHost.trim() === "") return undefined;
+    if (this.sshVia === "config") return { mode: "ssh", ssh: { host: this.sshHost.trim() } };
     if (this.sshIdentityFile.trim() !== "" && this.sshPassword !== "") return undefined;
+    if (this.sshPort !== "" && (!Number.isInteger(Number(this.sshPort)) || Number(this.sshPort) < 1 || Number(this.sshPort) > 65535)) return undefined;
     return {
       mode: "ssh",
       ssh: {
@@ -138,36 +145,45 @@ export class MachineDialog extends LitElement {
       <modal-surface
         .onClose=${() => this.onCancel?.()}
         .initialFocus=${"input[name='baseUrl']"}
-        .label=${"Add machine"}
+        .label=${"添加机器"}
         @keydown=${(event: KeyboardEvent) => { this.handleKeyDown(event); }}
       >
         <form @submit=${(event: SubmitEvent) => { this.handleSubmit(event); }}>
           <header>
-            <strong>Add machine</strong>
+            <strong>添加机器</strong>
             <button type="button" @click=${() => { this.onCancel?.(); }} aria-label="Close">×</button>
           </header>
           <div class="body">
             ${this.error === "" ? null : html`<div class="dialog-error" role="alert">${this.error}</div>`}
             <label>
-              Remote PI WEB URL
+              远程网关地址
               <input name="baseUrl" type="url" .value=${this.url} @input=${(event: InputEvent) => { this.handleUrlInput(event); }} placeholder=${this.mode === "ssh" ? "http://127.0.0.1:8505" : "http://dev-box.local:8504"} autocomplete="url" inputmode="url" />
             </label>
             <small class=${urlError === undefined ? "hint" : "field-error"}>${urlError ?? (this.mode === "ssh" ? "Address of the remote PI WEB as reachable from the SSH host; usually its localhost." : "Enter the reachable base URL first, including http:// or https://.")}</small>
             <fieldset class="connection-mode">
-              <legend>Connection</legend>
+              <legend>连接方式</legend>
               <label class="mode-option">
                 <input type="radio" name="connectionMode" value="direct" .checked=${this.mode === "direct"} @change=${() => { this.switchMode("direct"); }} />
-                <span>Direct — the URL above is reachable from this machine</span>
+                <span>直连 — 从当前 Gateway 访问</span>
               </label>
               <label class="mode-option">
                 <input type="radio" name="connectionMode" value="ssh" .checked=${this.mode === "ssh"} @change=${() => { this.switchMode("ssh"); }} />
-                <span>SSH — reach the URL through an SSH tunnel</span>
+                <span>SSH — 通过安全隧道访问</span>
               </label>
             </fieldset>
             ${this.mode === "ssh" ? html`
-              <datalist id="ssh-config-hosts">
-                ${this.sshHosts.map((host) => html`<option value=${host}></option>`)}
-              </datalist>
+              <div class="ssh-grid">
+                <button type="button" @click=${() => { this.sshVia = "config"; this.sshHost = this.sshHosts[0] ?? ""; }}>SSH 配置</button>
+                <button type="button" @click=${() => { this.sshVia = "manual"; this.sshHost = ""; }}>手动连接</button>
+              </div>
+              ${this.sshVia === "config" ? html`
+                <label>SSH 主机配置
+                  <select .value=${this.sshHost} @change=${(event: Event) => { if (event.target instanceof HTMLSelectElement) this.sshHost = event.target.value; }}>
+                    ${this.sshHosts.map((host) => html`<option value=${host}>${host}</option>`)}
+                  </select>
+                </label>
+                <small class="hint">读取当前 Gateway 所在机器的 ~/.ssh/config，自动使用其中的端口、用户和密钥。</small>
+              ` : html`
               <label>
                 SSH host <span class="optional">required</span>
                 <input name="sshHost" type="text" list="ssh-config-hosts" .value=${this.sshHost} @input=${(event: InputEvent) => { this.handleSshInput(event, "host"); }} placeholder="~/.ssh/config alias or user@host" autocomplete="off" />
@@ -191,7 +207,8 @@ export class MachineDialog extends LitElement {
                 Password <span class="optional">optional</span>
                 <input name="sshPassword" type="password" .value=${this.sshPassword} @input=${(event: InputEvent) => { this.handleSshInput(event, "password"); }} placeholder="Prefer a key; stored like the machine token" autocomplete="off" />
               </label>
-              <small class=${authConflict ? "field-error" : "hint"}>${authConflict ? "Set either an identity file or a password, not both." : "Authentication priority: ssh config and keys first; password only when key auth is unavailable."}</small>
+              <small class=${authConflict ? "field-error" : "hint"}>${authConflict ? "私钥和密码只能选择一种。" : "密码加密保存在当前 Gateway 所在机器，用于后续重新连接。"}</small>
+              `}
             ` : null}
             ${hasUrl ? html`
               <label>
@@ -207,8 +224,8 @@ export class MachineDialog extends LitElement {
             ` : html`<p class="hint intro">After you enter a URL, PI WEB will suggest a machine name and let you add an optional bearer token.</p>`}
           </div>
           <footer>
-            <button type="button" @click=${() => { this.onCancel?.(); }}>Cancel</button>
-            <button class="primary" type="submit" ?disabled=${!canSubmit}>${this.submitting ? "Adding…" : "Add machine"}</button>
+            <button type="button" @click=${() => { this.onCancel?.(); }}>取消</button>
+            <button class="primary" type="submit" ?disabled=${!canSubmit}>${this.submitting ? "正在添加…" : "添加机器"}</button>
           </footer>
         </form>
       </modal-surface>
@@ -225,6 +242,7 @@ export class MachineDialog extends LitElement {
     footer { border-top: 1px solid var(--pi-border); border-bottom: 0; justify-content: end; }
     .body { display: grid; gap: 8px; padding: 12px; min-height: 0; overflow: auto; }
     label { display: grid; gap: 6px; color: var(--pi-muted); }
+    select { width: 100%; border: 1px solid var(--pi-border); border-radius: 8px; background: var(--pi-bg); color: var(--pi-text); padding: 9px; font: inherit; }
     input { box-sizing: border-box; width: 100%; border: 1px solid var(--pi-border); border-radius: 8px; background: var(--pi-bg); color: var(--pi-text); padding: 9px; font: var(--pi-control-font-size, 16px) var(--pi-control-monospace-font-family, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace); }
     input:focus-visible { outline: 2px solid var(--pi-accent); outline-offset: 1px; }
     .hint { color: var(--pi-muted); }

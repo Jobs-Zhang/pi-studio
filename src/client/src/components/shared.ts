@@ -106,11 +106,12 @@ export const appStyles = css`
     :host { --pi-app-safe-area-bottom: env(safe-area-inset-bottom); }
   }
   .shell { --navigation-panel-size: 340px; --workspace-panel-size: minmax(360px, 42vw); --navigation-panel-width: var(--navigation-panel-size); --workspace-panel-width: var(--workspace-panel-size); display: grid; grid-template-columns: var(--navigation-panel-width) 1px minmax(320px, 1fr) 1px var(--workspace-panel-width); height: 100%; min-height: 0; }
-  aside { grid-column: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+  aside { grid-column: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden; padding: 8px 0 8px 8px; }
   aside app-navigation-panel { flex: 1 1 auto; min-height: 0; }
   header { flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px; border-bottom: 1px solid var(--pi-border); }
   .header-actions { display: flex; align-items: center; gap: 8px; }
-  main { grid-column: 3; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+  main { grid-column: 3; display: flex; flex-direction: column; min-width: 0; min-height: 0; margin: 8px 0; border: 1px solid var(--pi-border); border-radius: 12px; background: var(--pi-surface); box-shadow: 0 1px 2px var(--pi-shadow-soft), 0 8px 24px var(--pi-shadow); overflow: hidden; }
+  workspace-panel { margin: 8px 8px 8px 0; border: 1px solid var(--pi-border); border-radius: 12px; background: var(--pi-surface); box-shadow: 0 1px 2px var(--pi-shadow-soft), 0 8px 24px var(--pi-shadow); }
   .context-bar { position: relative; flex: 0 0 auto; min-width: 0; display: none; align-items: center; gap: 0; padding: 6px 0; border-bottom: 1px solid var(--pi-border-muted); background: var(--pi-bg); }
   .context-bar::before, .context-bar::after { content: ""; position: absolute; top: 0; bottom: 0; z-index: 2; width: 20px; opacity: 0; pointer-events: none; transition: opacity .15s ease; }
   .context-bar::before { left: 0; background: linear-gradient(90deg, color-mix(in srgb, var(--pi-shadow-strong) 55%, transparent) 0%, transparent 100%); }
@@ -148,6 +149,15 @@ export const appStyles = css`
   .shell.workspace-panel-collapsed .workspace-panel-edge-button { transform: translateX(calc(-50% + .5px)); }
   .navigation-panel-edge-icon, .workspace-panel-edge-icon { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
   workspace-panel { grid-column: 5; min-width: 0; min-height: 0; overflow: hidden; }
+  :host-context([data-pi-web-theme$="pi-web-dark"]) main,
+  :host-context([data-pi-web-theme$="classic"]) main,
+  :host-context([data-pi-web-theme$="pi-web-dark"]) workspace-panel,
+  :host-context([data-pi-web-theme$="classic"]) workspace-panel { margin: 0; border: 0; border-radius: 0; box-shadow: none; }
+  :host-context([data-pi-web-theme$="classic"]) aside { padding: 0; }
+  @media (max-width: 1180px) {
+    main { margin: 0; border: 0; border-radius: 0; box-shadow: none; }
+    workspace-panel { margin: 0; border: 0; border-radius: 0; box-shadow: none; }
+  }
   @media (min-width: 1181px) {
     .shell.navigation-panel-collapsed { --navigation-panel-width: 0px; }
     .shell.navigation-panel-collapsed > aside { display: none; }
@@ -243,9 +253,9 @@ export const workspacePanelStyles = css`
 export const listStyles = css`
   :host { display: flex; flex-direction: column; min-height: 0; overflow: hidden; color: var(--pi-text); font: 14px system-ui, sans-serif; }
   :host([collapsed]) { flex: 0 0 auto; min-height: auto; overflow: hidden; }
-  section { box-sizing: border-box; flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; padding: 10px; }
-  h2 { flex: 0 0 auto; display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: 0 0 8px; color: var(--pi-muted); font-size: 12px; text-transform: uppercase; }
-  section > h2 { position: relative; z-index: 3; margin: 0 -10px; padding: 0 10px 8px; background: var(--pi-bg); box-shadow: ${scrollBoundaryShadow}; }
+  section { box-sizing: border-box; flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; padding: 6px 10px; }
+  h2 { flex: 0 0 auto; display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: 0 0 4px; color: var(--pi-muted); font-size: 12px; text-transform: uppercase; }
+  section > h2 { position: relative; z-index: 3; margin: 0 -10px; padding: 0 10px 6px; background: var(--pi-bg); box-shadow: ${scrollBoundaryShadow}; }
   .list-body { flex: 1 1 auto; min-height: 0; overflow: auto; }
   button { border: 1px solid var(--pi-border); border-radius: 8px; background: var(--pi-surface); color: var(--pi-text); padding: 7px 9px; cursor: pointer; }
   section > button { display: block; width: 100%; text-align: left; margin: 6px 0; }
@@ -256,11 +266,20 @@ export const listStyles = css`
   .section-toggle .section-selected { display: block; color: var(--pi-text); font-size: 12px; font-weight: 600; line-height: 1.25; text-transform: none; }
   .section-toggle .section-count { flex: 0 0 auto; display: inline; color: var(--pi-muted); font-size: inherit; }
   .section-toggle small { display: inline; color: inherit; font-size: inherit; }
-  .action-row { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; margin: 6px 0; cursor: pointer; }
+  .action-row { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; margin: 2px 0; cursor: pointer; }
   .action-row:focus-visible { outline: 2px solid var(--pi-accent); outline-offset: 2px; border-radius: 8px; }
-  .action-row.selected .action-main, .action-row.selected .action-menu-toggle { border-color: var(--pi-accent); background: var(--pi-selection-bg); }
+  .action-row.selected .action-main, .action-row.selected .action-menu-toggle { border-color: transparent; background: var(--pi-selection-bg); }
   .action-row.archived .action-main { color: var(--pi-muted); }
-  .action-main { position: relative; box-sizing: border-box; min-width: 0; width: 100%; border: 1px solid var(--pi-border); border-top-right-radius: 0; border-bottom-right-radius: 0; border-top-left-radius: 8px; border-bottom-left-radius: 8px; background: var(--pi-surface); color: var(--pi-text); padding: 7px 22px 7px calc(9px + var(--depth, 0) * 16px); text-align: left; }
+  .action-main { position: relative; box-sizing: border-box; min-width: 0; width: 100%; border: 1px solid transparent; border-radius: 7px; background: transparent; color: var(--pi-text); padding: 7px 22px 7px calc(9px + var(--depth, 0) * 16px); text-align: left; }
+  .action-row:hover .action-main, .action-row:hover .action-menu-toggle { background: var(--pi-surface-hover); }
+  .action-row.selected:hover .action-main, .action-row.selected:hover .action-menu-toggle { background: var(--pi-selection-bg); }
+  :host-context([data-pi-web-theme$="classic"]) section { padding: 10px; }
+  :host-context([data-pi-web-theme$="classic"]) h2 { margin-bottom: 8px; }
+  :host-context([data-pi-web-theme$="classic"]) section > h2 { margin: 0 -10px; padding-bottom: 8px; }
+  :host-context([data-pi-web-theme$="classic"]) .action-row { margin: 6px 0; }
+  :host-context([data-pi-web-theme$="classic"]) .action-main { border-color: var(--pi-border); border-radius: 8px 0 0 8px; background: var(--pi-surface); }
+  :host-context([data-pi-web-theme$="classic"]) .action-row.selected .action-main,
+  :host-context([data-pi-web-theme$="classic"]) .action-row.selected .action-menu-toggle { border-color: var(--pi-accent); background: var(--pi-selection-bg); }
   .action-name { display: -webkit-box; max-height: 2.5em; overflow: hidden; overflow-wrap: anywhere; line-height: 1.25; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
   .action-row:not(.selected):hover .action-main { background: var(--pi-surface-hover); }
   .workspace-row .action-main { border-radius: 8px 0 0 8px; }

@@ -26,7 +26,11 @@ const { normalizeConfig, recordConnectionEntry, publicEntry } = require("./histo
 const { loadSshConfigBlocks, listSshConfigAliases, expandHome } = require("./sshConfig.cjs");
 const { createTunnel, detectSshClient } = require("./tunnel.cjs");
 
-const ICON_PATH = path.join(__dirname, "icon.png");
+// Windows picks a native frame out of a multi-size ico for the taskbar, its
+// context menus and the tray; a single 512px bitmap only gets rescaled there.
+const ICON_ICO_PATH = path.join(__dirname, "icon.ico");
+const ICON_PNG_PATH = path.join(__dirname, "icon.png");
+const ICON_PATH = process.platform === "win32" && fs.existsSync(ICON_ICO_PATH) ? ICON_ICO_PATH : ICON_PNG_PATH;
 const CONFIG_DIR = path.join(require("node:os").homedir(), ".pi-desktop");
 const CONFIG_FILE = path.join(CONFIG_DIR, "config.json");
 const SSH_CONFIG_FILE = path.join(require("node:os").homedir(), ".ssh", "config");
@@ -140,6 +144,9 @@ function tunnelDisplayUrl(targetUrl, localPort) {
 
 /** Single active tunnel: the connect page opens one gateway at a time. */
 let activeTunnel;
+let activeDial;
+let reconnecting = false;
+let reconnectFailures = 0;
 
 async function replaceActiveTunnel(spec, target) {
   const previous = activeTunnel;
@@ -147,13 +154,28 @@ async function replaceActiveTunnel(spec, target) {
   if (previous !== undefined) await previous.close();
   const tunnel = await createTunnel(spec, target);
   activeTunnel = tunnel;
+  activeDial = { spec, target, localPort: tunnel.localPort };
+  reconnectFailures = 0;
   return tunnel;
 }
 
 async function closeActiveTunnel() {
   const tunnel = activeTunnel;
   activeTunnel = undefined;
+  activeDial = undefined;
   if (tunnel !== undefined) await tunnel.close();
+}
+
+async function probeGateway(value) {
+  const url = new URL(value);
+  if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password || url.search || url.hash) throw new Error('请输入不含凭据和查询参数的 HTTP(S) 网关地址');
+  const probe = new URL(`${url.pathname.replace(/\/$/, '')}/api/pi-web/status`, url.origin);
+  const response = await fetch(probe, { signal: AbortSignal.timeout(6000), redirect: 'manual' });
+  if (![200, 401, 403].includes(response.status)) throw new Error(`网关返回 HTTP ${response.status}`);
+  if (response.status === 200) {
+    const body = await response.json();
+    if (!body?.components?.web) throw new Error('该地址不是可识别的 Pi 工作台网关');
+  }
 }
 
 async function connectDirect(entry) {
@@ -166,6 +188,12 @@ async function connectDirect(entry) {
     return { ok: false, error: "网关地址无效，请填写 http(s)://host:port" };
   }
   if (parsed.hostname === "") return { ok: false, error: "网关地址无效，请填写 http(s)://host:port" };
+  try {
+    await probeGateway(url);
+  } catch (error) {
+    return { ok: false, error: `无法连接网关：${error.message}` };
+  }
+  await closeActiveTunnel();
   recordConnection({ type: "direct", url });
   return { ok: true, url };
 }
@@ -200,6 +228,17 @@ async function connectSsh(entry, password, options = {}) {
     tunnel = await replaceActiveTunnel(spec, { host: target.host, port: target.port });
   } catch (error) {
     return { ok: false, error: `SSH 隧道建立失败：${error instanceof Error ? error.message : String(error)}` };
+  }
+
+  try {
+    await probeGateway(tunnelDisplayUrl(entry.targetUrl.trim(), tunnel.localPort));
+  } catch (error) {
+    await closeActiveTunnel();
+    return { ok: false, error: `SSH 已连接，但网关不可用：${error.message}` };
+  }
+  if (password && entry.rememberPassword === true && !isPasswordStorageAvailable()) {
+    await closeActiveTunnel();
+    return { ok: false, error: '系统安全存储不可用，请取消安全保存密码后重试' };
   }
 
   // Secret handling: a fresh password persists only on request (and only
@@ -264,6 +303,10 @@ async function detectEnvironment() {
 // IPC
 // ---------------------------------------------------------------------------
 
+ipcMain.handle("show-window", () => {
+  showWindow();
+});
+
 ipcMain.handle("get-history", () => ({
   history: publicHistory(),
   lastMode: loadConfig().lastMode,
@@ -296,6 +339,11 @@ ipcMain.handle("clear-history", () => {
   return [];
 });
 ipcMain.handle("ssh-detect", () => detectEnvironment());
+ipcMain.handle('detect-local', async () => {
+  const url = 'http://127.0.0.1:8504';
+  try { await probeGateway(url); return { ok: true, url }; }
+  catch { return { ok: false }; }
+});
 
 // ---------------------------------------------------------------------------
 // Window and tray
@@ -303,6 +351,26 @@ ipcMain.handle("ssh-detect", () => detectEnvironment());
 
 let mainWindow;
 let tray;
+
+// 同一端口恢复隧道，已加载页面的 WebSocket 自身负责恢复订阅。
+const tunnelWatchdog = setInterval(async () => {
+  if (!activeDial || activeTunnel?.alive || reconnecting || !mainWindow) return;
+  reconnecting = true;
+  const dial = activeDial;
+  try {
+    const tunnel = await createTunnel(dial.spec, dial.target, { localPort: dial.localPort });
+    if (activeDial !== dial) { await tunnel.close(); return; }
+    activeTunnel = tunnel;
+    reconnectFailures = 0;
+  } catch (error) {
+    console.error('SSH 自动重连失败', error.message);
+    if (activeDial === dial && ++reconnectFailures >= 3) {
+      await closeActiveTunnel();
+      mainWindow?.loadFile(path.join(__dirname, 'connect.html'), { query: { manual: '1' } });
+    }
+  } finally { reconnecting = false; }
+}, 10000);
+tunnelWatchdog.unref();
 
 // History writes refresh the tray menu so its recent list stays current.
 function refreshTray() {
@@ -316,7 +384,7 @@ function createWindow(url) {
     minWidth: 600,
     minHeight: 500,
     title: "PI Desktop",
-    backgroundColor: "#0d1117",
+    backgroundColor: "#fafbfc",
     show: false, // Show when ready for smoother startup
     icon: appIcon || undefined,
     autoHideMenuBar: true,
@@ -333,6 +401,11 @@ function createWindow(url) {
     return { action: "deny" };
   });
 
+  win.webContents.on('did-fail-load', (_event, code, description, _url, isMainFrame) => {
+    if (!isMainFrame || code === -3 || win.isDestroyed()) return;
+    console.error('Pi 工作台页面加载失败', code, description);
+    win.loadFile(path.join(__dirname, 'connect.html'), { query: { manual: '1' } });
+  });
   win.on("closed", () => { if (mainWindow === win) mainWindow = null; });
 
   // Show when ready for smoother appearance

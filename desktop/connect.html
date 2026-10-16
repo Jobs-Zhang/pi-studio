@@ -390,19 +390,53 @@
       /* Below 16px mobile browsers zoom the layout when an input is focused. */
       input { font-size: 16px; }
     }
+    :root { color-scheme: light; --connect-bg: #fafbfc; --connect-surface: #ffffff; --connect-surface-muted: #edeff2; --connect-border: #dce0e5; --connect-text: #292c32; --connect-muted: #7c838e; --connect-placeholder: #9ca2ac; --connect-input-shadow: #e7eaf0; --connect-icon-bg: #f0f2f5; --connect-button: #292c32; --connect-button-hover: #414650; --connect-danger: #b42318; --connect-success: #247047; }
+    body { background: var(--connect-bg); color: var(--connect-text); transition: background-color .15s ease, color .15s ease; }
+    .container { max-width: 400px; text-align: left; }
+    .logo-container { margin-bottom: 16px; text-align: center; }
+    .logo { width: 40px; height: 40px; font-size: 25px; background: var(--connect-button); color: var(--connect-bg); border-radius: 10px; box-shadow: none; animation: none; }
+    h1 { font-size: 24px; background: none; -webkit-text-fill-color: initial; text-align: center; }
+    .subtitle { text-align: center; color: var(--connect-muted); margin-top: 8px; }
+    .mode-switch { background: var(--connect-surface-muted); border: 0; border-radius: 9px; }
+    .mode-btn, .via-btn { color: var(--connect-muted); letter-spacing: normal; }
+    .mode-btn.active, .via-btn.active { background: var(--connect-surface); color: var(--connect-text); box-shadow: 0 1px 3px #00000012; border-color: var(--connect-border); }
+    .via-btn { background: transparent; border-color: var(--connect-border); }
+    input, select { background: var(--connect-surface); border: 1px solid var(--connect-border); color: var(--connect-text); border-radius: 8px; padding: 12px; width: 100%; font: inherit; backdrop-filter: none; }
+    input:focus, select:focus { border-color: var(--connect-muted); box-shadow: 0 0 0 2px var(--connect-input-shadow); }
+    input::placeholder { color: var(--connect-placeholder); }
+    .input-icon { display: none; }
+    .btn-connect { background: var(--connect-button); color: var(--connect-bg); border-radius: 8px; font-size: 14px; }
+    .btn-connect:hover { box-shadow: none; transform: none; background: var(--connect-button-hover); }
+    .field-label, .hint-inline, .remember, .status-line, .history-title, .history-sub, .tips, .history-clear { color: var(--connect-muted); letter-spacing: normal; }
+    .status-line.error { color: var(--connect-danger); }
+    .status-line.ok, .env-chip .ok { color: var(--connect-success); }
+    .env-chip .warn { color: #946626; }
+    .env-chip .error { color: #b42318; }
+    .history-list { background: var(--connect-surface); border-color: var(--connect-border); backdrop-filter: none; }
+    .history-url, .history-item:hover .history-url { color: var(--connect-text); }
+    .history-icon { background: var(--connect-icon-bg); color: var(--connect-muted); }
+    .history-delete { opacity: 1; }
+    .dropdown { background: var(--connect-surface); border-color: var(--connect-border); box-shadow: 0 8px 24px #00000010; backdrop-filter: none; }
+    .dropdown-item { color: var(--connect-text); }
+    .dropdown-item:hover, .dropdown-item.selected { background: var(--connect-icon-bg); color: var(--connect-text); }
+    .divider::before, .divider::after { background: var(--connect-border); }
+    .install-btn { width: 100%; background: transparent; border: 0; padding: 16px; cursor: pointer; color: var(--connect-muted); }
+    [data-connect-theme="dark"] { color-scheme: dark; --connect-bg: #17191d; --connect-surface: #202328; --connect-surface-muted: #2a2e35; --connect-border: #3a404a; --connect-text: #e5e7eb; --connect-muted: #a2a8b3; --connect-placeholder: #737b87; --connect-input-shadow: #343a44; --connect-icon-bg: #2b3038; --connect-button: #e5e7eb; --connect-button-hover: #ffffff; --connect-danger: #f38b86; --connect-success: #70c491; }
+    @media (prefers-color-scheme: dark) { :root:not([data-connect-theme]) { color-scheme: dark; --connect-bg: #17191d; --connect-surface: #202328; --connect-surface-muted: #2a2e35; --connect-border: #3a404a; --connect-text: #e5e7eb; --connect-muted: #a2a8b3; --connect-placeholder: #737b87; --connect-input-shadow: #343a44; --connect-icon-bg: #2b3038; --connect-button: #e5e7eb; --connect-button-hover: #ffffff; --connect-danger: #f38b86; --connect-success: #70c491; } }
+    @media (max-width: 560px) { body { align-items: center; } }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="logo-container">
-      <div class="logo">⚡</div>
+      <div class="logo">π</div>
     </div>
-    <h1 id="appTitle">PI Desktop</h1>
-    <p class="subtitle">Connect to your AI workspace</p>
+    <h1 id="appTitle">Pi 工作台</h1>
+    <p class="subtitle">连接网关，进入你的项目</p>
 
     <div class="mode-switch">
-      <button class="mode-btn" id="tabDirect">🌐 直连</button>
-      <button class="mode-btn" id="tabSsh">🔗 SSH</button>
+      <button class="mode-btn" id="tabDirect">连接网关</button>
+      <button class="mode-btn" id="tabSsh">SSH 连接</button>
     </div>
 
     <div id="panelDirect">
@@ -415,14 +449,14 @@
 
     <div id="panelSsh" style="display:none">
       <div class="via-switch">
-        <button class="via-btn" id="viaConfig">~/.ssh/config</button>
-        <button class="via-btn" id="viaManual">账户密码</button>
+        <button class="via-btn" id="viaConfig">SSH 配置</button>
+        <button class="via-btn" id="viaManual">手动连接</button>
       </div>
 
       <div id="viaConfigPanel">
         <div class="input-wrapper">
           <span class="input-icon">🖥</span>
-          <input id="sshHost" type="text" placeholder="选择 ~/.ssh/config 里的主机" autocomplete="off" />
+          <select id="sshHost" aria-label="SSH 主机配置"><option value="">正在读取 SSH 配置…</option></select>
           <div id="hostDropdown" class="dropdown"></div>
         </div>
         <div class="env-chip" id="envChip"></div>
@@ -452,7 +486,7 @@
           <input id="manualIdentity" type="text" placeholder="密钥文件（可选，与密码二选一）" autocomplete="off" />
         </div>
         <label class="remember" id="rememberRow">
-          <input id="manualRemember" type="checkbox" /> 记住密码（本地加密存储）
+          <input id="manualRemember" type="checkbox" checked /> 安全保存密码
         </label>
       </div>
 
@@ -467,16 +501,17 @@
     <div class="status-line" id="statusLine"></div>
 
     <div id="historySection" style="display:none">
-      <div class="divider"><span>Recent</span></div>
+      <div class="divider"><span>最近连接</span></div>
       <div class="history-section">
         <div class="history-header">
-          <span class="history-title">Connections</span>
-          <span class="history-clear" id="clearAll">Clear all</span>
+          <span class="history-title">已保存连接</span>
+          <span class="history-clear" id="clearAll">清空</span>
         </div>
         <ul id="historyList" class="history-list"></ul>
       </div>
     </div>
 
+    <button class="install-btn" id="installBtn" type="button" hidden>安装 Pi 工作台</button>
     <div class="tips" id="shortcutTips">
       <span class="shortcut">↑</span>
       <span class="shortcut">↓</span> navigate
@@ -523,6 +558,8 @@
         clearHistory: () => call('clearHistory'),
         detectEnvironment: () => call('detectEnvironment'),
         capabilities: () => call('capabilities'),
+        tunnelStatus: () => call('tunnelStatus'),
+        reconnect: () => call('reconnect'),
       };
     }
 
@@ -572,12 +609,34 @@
     let sshClientAvailable = true;
     let passwordStorageAvailable = true;
     let connecting = false;
+    let themeMedia;
+
+    function applyConnectTheme() {
+      let preference;
+      try { preference = JSON.parse(localStorage.getItem('pi-web-app-theme') || 'null'); } catch {}
+      const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const selected = typeof preference?.themeId === 'string' ? preference.themeId : 'themes:pi-web-dark';
+      const auto = preference?.auto !== false;
+      const dark = auto ? systemDark : selected.includes('dark');
+      if (dark) document.documentElement.dataset.connectTheme = 'dark';
+      else document.documentElement.dataset.connectTheme = 'light';
+    }
+
+    function watchConnectTheme() {
+      applyConnectTheme();
+      themeMedia = window.matchMedia('(prefers-color-scheme: dark)');
+      themeMedia.addEventListener?.('change', applyConnectTheme);
+      window.addEventListener('storage', (event) => {
+        if (event.key === 'pi-web-app-theme') applyConnectTheme();
+      });
+    }
 
     // ------------------------------------------------------------------
     // Init
     // ------------------------------------------------------------------
 
     async function init() {
+      watchConnectTheme();
       await loadCapabilities();
       applyCapabilities();
       try {
@@ -611,7 +670,17 @@
         sshClientAvailable = env.client?.available !== false;
         sshHosts = env.hosts || [];
       } catch {}
+      els.sshHost.innerHTML = sshHosts.length === 0 ? '<option value="">未发现 SSH 主机配置</option>' : sshHosts.map((host) => `<option value="${escapeHtml(host)}">${escapeHtml(host)}</option>`).join('');
+      document.getElementById('installBtn').hidden = capabilities.sshConfig === false;
+      document.getElementById('installBtn').onclick = () => setStatus('安装能力即将上线，敬请期待。');
       renderEnvChip();
+      if (!new URLSearchParams(location.search).has('manual')) {
+        if (history.length > 0) await connectRecent(0);
+        else if (capabilities.sshConfig !== false && typeof api.detectLocal === 'function') {
+          const local = await api.detectLocal();
+          if (local?.ok) { els.url.value = local.url; await connect(); }
+        }
+      }
       // Hosts may have arrived after the first render; open the list if the
       // config tab is already in front.
       if (mode === 'ssh' && via === 'config') renderHostDropdown();
@@ -729,7 +798,7 @@
     function setConnecting(active) {
       connecting = active;
       els.connectBtn.disabled = active;
-      els.connectLabel.textContent = active ? '连接中…' : '连接';
+      els.connectLabel.textContent = active ? '连接中…' : '连接并进入';
     }
 
     // ------------------------------------------------------------------
@@ -742,6 +811,7 @@
     }
 
     function renderHostDropdown() {
+      return;
       const matches = hostMatches();
       // The full alias list shows directly; typing only narrows it down.
       if (matches.length === 0) {

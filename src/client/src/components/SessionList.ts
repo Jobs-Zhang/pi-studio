@@ -61,6 +61,7 @@ export class SessionList extends LitElement implements KeyboardNavigableSection 
   @property({ attribute: false }) onDeleteArchived?: (session: SessionInfo) => void | Promise<void>;
   @property({ attribute: false }) onDeleteArchivedMany?: (sessions: SessionInfo[]) => void | Promise<void>;
   @property({ attribute: false }) onDetachParent?: (session: SessionInfo) => void;
+  @property({ attribute: false }) onRename?: (session: SessionInfo, name: string) => void;
   @property({ attribute: false }) onMarkRead?: (session: SessionInfo) => void;
   @property({ attribute: false }) onMarkReadMany?: (sessions: SessionInfo[]) => void | Promise<void>;
   @property({ attribute: false }) onReload?: (session: SessionInfo) => void;
@@ -68,6 +69,8 @@ export class SessionList extends LitElement implements KeyboardNavigableSection 
 
   @state() private openMenuSessionId: string | undefined;
   @state() private menuStyle = "";
+  @state() private renamingSessionId: string | undefined;
+  @state() private renameDraft = "";
   @state() private archivedExpanded = false;
   @state() private selectionScopes: ReadonlySet<SessionSelectionScope> = new Set();
   @state() private selectedSessionIds: ReadonlySet<string> = new Set();
@@ -118,10 +121,14 @@ export class SessionList extends LitElement implements KeyboardNavigableSection 
   protected override updated(changed: PropertyValues<this>): void {
     if (changed.has("sessions")) {
       if (this.openMenuSessionId !== undefined && !this.sessions.some((session) => session.id === this.openMenuSessionId)) this.openMenuSessionId = undefined;
+      if (this.renamingSessionId !== undefined && !this.sessions.some((session) => session.id === this.renamingSessionId)) this.cancelRenaming();
       if (!this.sessions.some((session) => session.archived === true)) this.archivedExpanded = false;
       this.pruneSelectedSessionIds();
     }
-    if (changed.has("collapsed") && this.collapsed) this.openMenuSessionId = undefined;
+    if (changed.has("collapsed") && this.collapsed) {
+      this.openMenuSessionId = undefined;
+      this.cancelRenaming();
+    }
     const previousSelected = changed.get("selected");
     if (changed.has("selected") && this.selected?.archived === true && (previousSelected?.id !== this.selected.id || previousSelected.archived !== true) && !this.archivedExpanded) {
       this.archivedExpanded = true;
@@ -314,6 +321,7 @@ export class SessionList extends LitElement implements KeyboardNavigableSection 
     const unread = sessionRowUnread(session, this.unreadSessionIds);
     const canArchive = isArchivableSessionInfo(session, status);
     const canDeleteTransient = isTransientNewSessionInfo(session, status);
+    const canRename = session.archived !== true;
     return html`
       <div
         class="action-row ${this.selected?.id === session.id ? "selected" : ""} ${bulkSelected ? "bulk-selected" : ""} ${session.archived === true ? "archived" : ""} ${selectionActive ? "selecting" : ""} ${unread ? "unread" : ""}"
@@ -321,11 +329,12 @@ export class SessionList extends LitElement implements KeyboardNavigableSection 
         tabindex="0"
         title=${session.path}
         @click=${(event: MouseEvent) => { activateSelectableRow(event, () => { this.activateSessionRow(session, scope); }); }}
+        @dblclick=${(event: MouseEvent) => { this.handleSessionDoubleClick(event, session, scope); }}
         @keydown=${(event: KeyboardEvent) => { this.handleSessionKeydown(event, session, scope); }}
       >
         <div class="action-main ${selectionActive ? "selecting" : ""}">
           ${showsCheckbox ? html`<input class="session-checkbox" type="checkbox" aria-label=${`Select ${sessionLabel(session)}`} .checked=${bulkSelected} @click=${(event: MouseEvent) => { event.stopPropagation(); }} @change=${() => { this.toggleSelected(session.id); }}>` : null}
-          <span class="action-name-line"><span class="action-name" dir="auto">${this.renderRowMarker(row)}${sessionLabel(session)}</span>${this.renderRowBadges(row)}</span><small>${this.renderSessionMetaPrefix(session, status, activity)}${String(session.messageCount)} messages</small>
+          <span class="action-name-line"><span class="action-name" dir="auto" title=${sessionLabel(session)}>${this.renderRowMarker(row)}${this.renderSessionTitle(session)}</span>${this.renderRowBadges(row)}</span><small>${this.renderSessionMetaPrefix(session, status, activity)}${String(session.messageCount)} messages</small>
           ${this.renderActivity(indicatorKind, unread)}
         </div>
         <div class="action-menu">
@@ -341,6 +350,7 @@ export class SessionList extends LitElement implements KeyboardNavigableSection 
                   ? html`<button title="Delete transient new session" @click=${() => { this.openMenuSessionId = undefined; this.onDelete?.(session); }}>Delete</button>`
                   : html`
                     ${this.unreadSessionIds.has(session.id) ? html`<button title="Mark session as read" @click=${() => { this.openMenuSessionId = undefined; this.onMarkRead?.(session); }}>Mark as read</button>` : null}
+                    ${canRename ? html`<button title="Rename session" @click=${() => { this.openMenuSessionId = undefined; this.startRenaming(session); }}>Rename</button>` : null}
                     ${canArchive ? html`
                       <button title="Archive session" @click=${() => { this.openMenuSessionId = undefined; this.onArchive?.(session); }}>Archive</button>
                       ${descendantCount > 0 ? html`<button title="Archive this session and its descendants" @click=${() => { this.openMenuSessionId = undefined; this.confirmArchiveWithDescendants(session, descendantCount); }}>Archive with descendants (${descendantCount})</button>` : null}
@@ -366,6 +376,74 @@ export class SessionList extends LitElement implements KeyboardNavigableSection 
       return html`<span class="tree-marker orphan-marker" title=${ORPHAN_PARENT_TITLE} aria-label=${ORPHAN_PARENT_LABEL}>↳</span>`;
     }
     return row.depth > 0 ? html`<span class="tree-marker">↳</span>` : null;
+  }
+
+  private renderSessionTitle(session: SessionInfo) {
+    if (this.renamingSessionId !== session.id) return sessionLabel(session);
+    // The draft starts as the explicit name only: an un-named row shows its
+    // derived label as a placeholder so committing an untouched editor does
+    // not turn the first message into an explicit name.
+    return html`<input
+      class="rename-input"
+      type="text"
+      dir="auto"
+      aria-label=${`Rename ${sessionLabel(session)}`}
+      placeholder=${sessionLabel(session)}
+      .value=${this.renameDraft}
+      @click=${(event: MouseEvent) => { event.stopPropagation(); }}
+      @dblclick=${(event: MouseEvent) => { event.stopPropagation(); }}
+      @input=${(event: InputEvent) => { this.renameDraft = renameInputValue(event) ?? this.renameDraft; }}
+      @keydown=${(event: KeyboardEvent) => { this.handleRenameKeydown(event, session); }}
+      @blur=${(event: FocusEvent) => { this.commitRenaming(session, renameInputValue(event) ?? this.renameDraft); }}
+    >`;
+  }
+
+  /**
+   * Rename a row in place. `⋯` opens the same editor, so both rename entries
+   * share one commit path and one focus/validation rule.
+   */
+  private startRenaming(session: SessionInfo): void {
+    if (session.archived === true) return;
+    this.renamingSessionId = session.id;
+    this.renameDraft = session.name ?? "";
+    void this.updateComplete.then(() => {
+      const input = this.renderRoot.querySelector<HTMLInputElement>(".rename-input");
+      input?.focus();
+      input?.select();
+    });
+  }
+
+  private cancelRenaming(): void {
+    this.renamingSessionId = undefined;
+    this.renameDraft = "";
+  }
+
+  private commitRenaming(session: SessionInfo, name: string): void {
+    if (this.renamingSessionId !== session.id) return;
+    this.cancelRenaming();
+    if (name === (session.name ?? "")) return;
+    this.onRename?.(session, name);
+  }
+
+  private handleRenameKeydown(event: KeyboardEvent, session: SessionInfo): void {
+    // The editor owns its keys: Enter and Escape must not reach the row's
+    // selection keyboard handling.
+    event.stopPropagation();
+    if (event.key === "Enter") {
+      event.preventDefault();
+      this.commitRenaming(session, renameInputValue(event) ?? this.renameDraft);
+    } else if (event.key === "Escape") {
+      event.preventDefault();
+      this.cancelRenaming();
+    }
+  }
+
+  private handleSessionDoubleClick(event: MouseEvent, session: SessionInfo, scope: SessionSelectionScope): void {
+    if (this.selectionScopes.has(scope) || session.archived === true) return;
+    const target = event.target;
+    if (target instanceof Element && target.closest(".rename-input") !== null) return;
+    event.preventDefault();
+    this.startRenaming(session);
   }
 
   /**
@@ -509,16 +587,35 @@ export class SessionList extends LitElement implements KeyboardNavigableSection 
   }
 
   static override styles = [listStyles, css`
-    h2 { min-height: 30px; }
+    h2 { min-height: 28px; justify-content: flex-end; gap: 4px; }
+    .plain-heading { margin-right: auto; }
+    .action-name-line .action-name { display: block; max-height: none; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; -webkit-line-clamp: unset; }
+    .action-row { border-radius: 7px; overflow: visible; }
+    .action-row:hover { background: var(--pi-surface-hover); }
+    .action-row.selected, .action-row.selected:hover { background: var(--pi-selection-bg); }
+    .action-row .action-main,
+    :host-context([data-pi-web-theme$="classic"]) .action-row .action-main { border-color: transparent; border-radius: 7px 0 0 7px; background: transparent; padding-top: 6px; padding-bottom: 6px; }
+    .action-row .action-menu-toggle,
+    :host-context([data-pi-web-theme$="classic"]) .action-row .action-menu-toggle { width: 26px; min-width: 26px; padding: 0; border: 0; border-radius: 0 7px 7px 0; background: transparent; }
+    .action-main > small { margin-top: 2px; font-size: 11px; line-height: 1.3; }
+    .action-row .action-menu-toggle:focus-visible { outline: 2px solid var(--pi-accent); outline-offset: -2px; }
+    .action-row.selected .action-main, .action-row:hover .action-main,
+    .action-row.selected:hover .action-main,
+    .action-row.selected .action-menu-toggle, .action-row:hover .action-menu-toggle,
+    .action-row.selected:hover .action-menu-toggle { background: transparent; }
+    :host-context([data-pi-web-theme$="classic"]) .action-row.selected .action-main,
+    :host-context([data-pi-web-theme$="classic"]) .action-row.selected .action-menu-toggle { background: transparent; border-color: transparent; }
     h2 > .section-count { flex: 0 0 auto; display: inline; color: var(--pi-muted); font-size: inherit; }
     h2 > .section-unread-count { flex: 0 0 auto; display: inline; color: var(--pi-accent); font-size: inherit; text-transform: none; }
-    .bulk-select-entry { box-sizing: border-box; flex: 0 0 auto; display: inline-grid; place-items: center; width: 30px; height: 30px; padding: 0; font-size: 13px; line-height: 1; text-transform: none; }
-    .start-session-button { box-sizing: border-box; flex: 0 0 auto; display: inline-grid; place-items: center; min-width: 30px; height: 30px; padding: 0 9px; }
-    .cleanup-entry { flex: 0 0 auto; padding: 5px 7px; font-size: 12px; text-transform: none; }
+    .bulk-select-entry { box-sizing: border-box; flex: 0 0 auto; display: inline-grid; place-items: center; width: 26px; height: 26px; padding: 0; font-size: 13px; line-height: 1; text-transform: none; }
+    .start-session-button { box-sizing: border-box; flex: 0 0 auto; display: inline-grid; place-items: center; min-width: 26px; height: 26px; padding: 0 6px; }
+    .cleanup-entry { flex: 0 0 auto; height: 26px; padding: 3px 6px; font-size: 12px; text-transform: none; }
     .bulk-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 6px; }
     .bulk-row button { padding: 5px 7px; font-size: 12px; white-space: nowrap; }
     .bulk-actions { flex: 0 0 auto; display: flex; align-items: center; gap: 6px; margin-left: auto; }
     .action-name, .section-selected { text-align: start; unicode-bidi: plaintext; }
+    /* The in-place rename editor replaces the title text without resizing the row. */
+    .rename-input { box-sizing: border-box; width: 100%; min-width: 0; margin: -2px 0; padding: 1px 4px; border: 1px solid var(--pi-accent); border-radius: 4px; background: var(--pi-surface); color: inherit; font: inherit; }
     .action-row.unread .action-name { color: var(--pi-text-bright); font-weight: 650; }
     .plain-heading { min-width: 0; }
     .action-name-line { min-width: 0; display: flex; align-items: flex-start; gap: 6px; }
@@ -552,6 +649,11 @@ export function unreadSessionCount(
 
 function sessionSelectionScope(session: SessionInfo): SessionSelectionScope {
   return session.archived === true ? "archived" : "current";
+}
+
+/** The rename editor's live text, or undefined when the event came from elsewhere. */
+function renameInputValue(event: Event): string | undefined {
+  return event.target instanceof HTMLInputElement ? event.target.value : undefined;
 }
 
 function removeSessionIds(sessionIds: ReadonlySet<string>, removedIds: readonly string[]): ReadonlySet<string> {

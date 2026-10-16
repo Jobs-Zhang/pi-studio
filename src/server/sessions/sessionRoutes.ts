@@ -1,5 +1,5 @@
 import type { FastifyInstance, FastifyReply } from "fastify";
-import { ASK_USER_ID_MAX_LENGTH, ASK_USER_OPTION_LIMIT, ASK_USER_OTHER_TEXT_MAX_LENGTH, ASK_USER_QUESTION_LIMIT, EXTENSION_DIALOG_ID_MAX_LENGTH, EXTENSION_DIALOG_INPUT_MAX_LENGTH, SESSION_TREE_CUSTOM_INSTRUCTIONS_MAX_LENGTH, SESSION_UNREAD_CATALOG_ID_MAX_LENGTH, SESSION_UNREAD_CWD_MAX_LENGTH, SESSION_UNREAD_SESSION_ID_MAX_LENGTH, type AskUserAnswer, type AskUserSubmission, type ExtensionDialogAnswerRequest, type ExtensionDialogCancelRequest, type SessionBulkMutationRequest, type SessionBulkMutationRef, type SessionCleanupRequest, type SessionModelScopeMode, type SessionTreeForkRequest, type SessionTreeNavigateRequest, type SessionTreeSummaryChoice, type SessionUnreadAcknowledgeRequest } from "../../shared/apiTypes.js";
+import { ASK_USER_ID_MAX_LENGTH, ASK_USER_OPTION_LIMIT, ASK_USER_OTHER_TEXT_MAX_LENGTH, ASK_USER_QUESTION_LIMIT, EXTENSION_DIALOG_ID_MAX_LENGTH, EXTENSION_DIALOG_INPUT_MAX_LENGTH, SESSION_NAME_MAX_LENGTH, SESSION_TREE_CUSTOM_INSTRUCTIONS_MAX_LENGTH, SESSION_UNREAD_CATALOG_ID_MAX_LENGTH, SESSION_UNREAD_CWD_MAX_LENGTH, SESSION_UNREAD_SESSION_ID_MAX_LENGTH, type AskUserAnswer, type AskUserSubmission, type ExtensionDialogAnswerRequest, type ExtensionDialogCancelRequest, type SessionBulkMutationRequest, type SessionBulkMutationRef, type SessionCleanupRequest, type SessionModelScopeMode, type SessionTreeForkRequest, type SessionTreeNavigateRequest, type SessionTreeSummaryChoice, type SessionUnreadAcknowledgeRequest } from "../../shared/apiTypes.js";
 import { parseSessionDefaultsUpdate } from "../../shared/sessionDefaults.js";
 import { projectBrowserMessageResponse, projectBrowserStreamSnapshot, projectBrowserTranscriptSnapshot, type BrowserImageProjector } from "../browserMessageProjection.js";
 import { isSessionMediaId, SESSION_MEDIA_MODE } from "../../shared/sessionMedia.js";
@@ -495,6 +495,16 @@ export function registerSessionRoutes(app: FastifyInstance, sessions: SessionRou
     }
   });
 
+  app.post<{ Params: { sessionId: string }; Body: { cwd?: unknown; name?: unknown } | undefined }>(`${prefix}/sessions/:sessionId/name`, async (request, reply) => {
+    try {
+      const body = optionalRecord(request.body);
+      const ref = sessionRefFromBody(request.params.sessionId, body);
+      return await sessions.rename(ref, sessionNameFromBody(body));
+    } catch (error) {
+      return reply.code(mutationErrorStatus(error)).send({ error: errorMessage(error) });
+    }
+  });
+
   app.post<{ Params: { sessionId: string }; Body: { cwd?: unknown } | undefined }>(`${prefix}/sessions/:sessionId/archive-tree`, async (request, reply) => {
     try {
       return await sessions.archiveTree(sessionRefFromBody(request.params.sessionId, optionalRecord(request.body)));
@@ -599,6 +609,18 @@ function sessionRefFromQueryOr400(id: string, query: SessionQuery, reply: Fastif
 
 function sessionRefFromBody(id: string, body: Record<string, unknown>): SessionRouteRef {
   return { id, cwd: requireRefCwd(body["cwd"]) };
+}
+
+/**
+ * A session display name is optional user text: the SDK collapses line breaks
+ * and trims it, and a blank result clears the name. The bound only keeps a
+ * pathological payload out of the transcript and the session list.
+ */
+function sessionNameFromBody(body: Record<string, unknown>): string {
+  const name = body["name"];
+  if (typeof name !== "string") throw new Error("name field must be a string");
+  if (name.length > SESSION_NAME_MAX_LENGTH) throw new Error(`name field must be at most ${String(SESSION_NAME_MAX_LENGTH)} characters`);
+  return name;
 }
 
 // Every per-session ref is cwd-scoped: the workspace path picks the session

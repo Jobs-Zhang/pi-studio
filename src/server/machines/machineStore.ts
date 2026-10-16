@@ -1,9 +1,10 @@
 import { randomUUID } from "node:crypto";
-import { chmod, mkdir, readFile, writeFile } from "node:fs/promises";
+import { chmod, mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { piWebDataDir } from "../../config.js";
+import { MachineSecretStore } from "./machineSecretStore.js";
 
-/** SSH connection details persisted for `mode: "ssh"` machines. The optional `password` is stored in plaintext next to `token`. */
+/** 连接层读取解密后的凭据，持久化层只写密文。 */
 export interface StoredSshConnection {
   host: string;
   port?: number;
@@ -45,7 +46,12 @@ export function machineStorePath(env: NodeJS.ProcessEnv = process.env, cwd = pro
 }
 
 export class MachineStore {
-  constructor(private readonly filePath = machineStorePath()) {}
+  private readonly secrets: MachineSecretStore;
+  private writes: Promise<void> = Promise.resolve();
+
+  constructor(private readonly filePath = machineStorePath()) {
+    this.secrets = new MachineSecretStore(`${filePath}.key`);
+  }
 
   async list(): Promise<StoredMachine[]> {
     return (await this.read()).machines;
@@ -95,6 +101,10 @@ export class MachineStore {
       const value: unknown = JSON.parse(await readFile(this.filePath, "utf8"));
       const parsed = parseMachineFile(value);
       await restrictMachineStorePermissions(this.filePath);
+      for (const machine of parsed.machines) {
+        if (machine.token !== undefined) machine.token = await this.secrets.decrypt(machine.token);
+        if (machine.connection.mode === "ssh" && machine.connection.ssh.password !== undefined) machine.connection.ssh.password = await this.secrets.decrypt(machine.connection.ssh.password);
+      }
       return parsed;
     } catch (error) {
       if (isNodeErrorWithCode(error, "ENOENT")) return { machines: [] };
@@ -103,9 +113,24 @@ export class MachineStore {
   }
 
   private async write(data: MachineFile): Promise<void> {
-    await mkdir(dirname(this.filePath), { recursive: true });
-    await writeFile(this.filePath, `${JSON.stringify(data, null, 2)}\n`, { encoding: "utf8", mode: MACHINE_STORE_FILE_MODE });
-    await restrictMachineStorePermissions(this.filePath);
+    const encrypted = structuredClone(data);
+    for (const machine of encrypted.machines) {
+      if (machine.token !== undefined) machine.token = await this.secrets.encrypt(machine.token);
+      if (machine.connection.mode === "ssh" && machine.connection.ssh.password !== undefined) machine.connection.ssh.password = await this.secrets.encrypt(machine.connection.ssh.password);
+    }
+    const write = this.writes.then(async () => {
+      await mkdir(dirname(this.filePath), { recursive: true });
+      const temporary = `${this.filePath}.${randomUUID()}.tmp`;
+      try {
+        await writeFile(temporary, `${JSON.stringify(encrypted, null, 2)}\n`, { encoding: "utf8", mode: MACHINE_STORE_FILE_MODE });
+        await rename(temporary, this.filePath);
+        await restrictMachineStorePermissions(this.filePath);
+      } finally {
+        await rm(temporary, { force: true });
+      }
+    });
+    this.writes = write.catch(() => undefined);
+    await write;
   }
 }
 
