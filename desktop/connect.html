@@ -2,6 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>PI Desktop</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -376,6 +377,19 @@
       font-size: 12px;
       color: #4a5568;
     }
+    /* Touch shells (the Android app) have no window chrome and no keyboard. */
+    @media (max-width: 560px) {
+      body {
+        align-items: flex-start;
+        min-height: 100dvh;
+        padding: 1.25rem 1rem 1.5rem;
+      }
+      .container { max-width: 100%; }
+      .logo { width: 60px; height: 60px; font-size: 30px; }
+      h1 { font-size: 22px; }
+      /* Below 16px mobile browsers zoom the layout when an input is focused. */
+      input { font-size: 16px; }
+    }
   </style>
 </head>
 <body>
@@ -383,7 +397,7 @@
     <div class="logo-container">
       <div class="logo">⚡</div>
     </div>
-    <h1>PI Desktop</h1>
+    <h1 id="appTitle">PI Desktop</h1>
     <p class="subtitle">Connect to your AI workspace</p>
 
     <div class="mode-switch">
@@ -463,7 +477,7 @@
       </div>
     </div>
 
-    <div class="tips">
+    <div class="tips" id="shortcutTips">
       <span class="shortcut">↑</span>
       <span class="shortcut">↓</span> navigate
       &nbsp;&nbsp;
@@ -472,7 +486,52 @@
   </div>
 
   <script>
-    const api = window.piWebDesktop;
+    // ------------------------------------------------------------------
+    // Platform API
+    //
+    // Desktop builds expose `window.piWebDesktop` from the Electron preload.
+    // The Android shell has no preload, so its WebView bridge is adapted to the
+    // same contract here and one connect page serves both clients.
+    // ------------------------------------------------------------------
+
+    function createAndroidBridgeApi() {
+      let nextId = 0;
+      const pending = new Map();
+      // The native side answers every call through this global.
+      window.__piWebBridge = (id, json) => {
+        const entry = pending.get(Number(id));
+        if (entry === undefined) return;
+        pending.delete(Number(id));
+        try { entry.resolve(JSON.parse(json)); } catch (error) { entry.reject(error); }
+      };
+      const call = (method, args) => new Promise((resolve, reject) => {
+        const id = ++nextId;
+        pending.set(id, { resolve, reject });
+        try {
+          window.AndroidBridge.call(method, JSON.stringify(args ?? {}), String(id));
+        } catch (error) {
+          pending.delete(id);
+          reject(error);
+        }
+      });
+      return {
+        getHistory: () => call('getHistory'),
+        saveMode: (mode) => call('saveMode', { mode }),
+        connect: (payload) => call('connect', { payload }),
+        connectRecent: (index) => call('connectRecent', { index }),
+        deleteConnection: (index) => call('deleteConnection', { index }),
+        clearHistory: () => call('clearHistory'),
+        detectEnvironment: () => call('detectEnvironment'),
+        capabilities: () => call('capabilities'),
+      };
+    }
+
+    const api = window.piWebDesktop ??
+      (window.AndroidBridge === undefined ? undefined : createAndroidBridgeApi());
+
+    // Fallbacks keep the desktop behaviour when a shell does not negotiate.
+    const DEFAULT_CAPABILITIES = { sshConfig: true, identityFile: true, shortcutHints: true };
+    let capabilities = DEFAULT_CAPABILITIES;
 
     const els = {
       tabDirect: document.getElementById('tabDirect'),
@@ -499,6 +558,8 @@
       connectBtn: document.getElementById('connectBtn'),
       connectLabel: document.getElementById('connectLabel'),
       statusLine: document.getElementById('statusLine'),
+      appTitle: document.getElementById('appTitle'),
+      shortcutTips: document.getElementById('shortcutTips'),
       historySection: document.getElementById('historySection'),
       historyList: document.getElementById('historyList'),
       clearAll: document.getElementById('clearAll'),
@@ -517,6 +578,8 @@
     // ------------------------------------------------------------------
 
     async function init() {
+      await loadCapabilities();
+      applyCapabilities();
       try {
         const state = await api.getHistory();
         history = state.history || [];
@@ -552,6 +615,41 @@
       // Hosts may have arrived after the first render; open the list if the
       // config tab is already in front.
       if (mode === 'ssh' && via === 'config') renderHostDropdown();
+    }
+
+    // ------------------------------------------------------------------
+    // Platform capabilities
+    // ------------------------------------------------------------------
+
+    async function loadCapabilities() {
+      if (typeof api?.capabilities !== 'function') return;
+      try {
+        capabilities = { ...DEFAULT_CAPABILITIES, ...(await api.capabilities()) };
+      } catch {}
+    }
+
+    /**
+     * Hides the affordances this platform cannot honour. Android has no
+     * `~/.ssh/config` and no identity files, so SSH is account + password only.
+     */
+    function applyCapabilities() {
+      if (capabilities.sshConfig === false) {
+        // A single SSH path needs no sub-tab switcher.
+        els.viaConfig.style.display = 'none';
+        els.viaManual.style.display = 'none';
+        via = 'manual';
+      }
+      if (capabilities.identityFile === false) {
+        els.manualIdentity.closest('.input-wrapper').style.display = 'none';
+        els.manualPassword.placeholder = '密码';
+      }
+      if (capabilities.shortcutHints === false) {
+        els.shortcutTips.style.display = 'none';
+      }
+      if (typeof capabilities.appTitle === 'string' && capabilities.appTitle !== '') {
+        document.title = capabilities.appTitle;
+        els.appTitle.textContent = capabilities.appTitle;
+      }
     }
 
     // ------------------------------------------------------------------
@@ -812,7 +910,13 @@
         if (payload.port !== undefined && (!Number.isInteger(payload.port) || payload.port < 1 || payload.port > 65535)) {
           return '端口需为 1-65535 之间的数字';
         }
-        if (payload.identityFile !== '' && payload.password !== '') return '密钥文件与密码只能二选一';
+        if (capabilities.identityFile === false) {
+          // No identity files here, so the account form must be complete.
+          if (payload.user === '' && !payload.host.includes('@')) return '请输入登录用户';
+          if (payload.password === '') return '请输入密码';
+        } else if (payload.identityFile !== '' && payload.password !== '') {
+          return '密钥文件与密码只能二选一';
+        }
       }
       let target;
       try { target = new URL(payload.targetUrl); } catch { return '远程网关地址无效，请填写 http(s)://host:port'; }

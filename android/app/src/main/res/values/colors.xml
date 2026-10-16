@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Matches the connect page background so launches do not flash white. -->
+    <color name="pi_background">#0D1117</color>
+    <!-- The launcher glyph is the desktop client's black π, so the adaptive
+         background matches its white plate. -->
+    <color name="pi_icon_background">#FFFFFF</color>
+</resources>

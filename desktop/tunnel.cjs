@@ -24,6 +24,10 @@ const STDERR_SUMMARY_LINES = 5;
 // Owner-only but executable: ssh runs the script to obtain the password, so a
 // missing execute bit makes every password authentication fail.
 const ASKPASS_SCRIPT_MODE = 0o700;
+// Local tunnel ports live below the Windows ephemeral range (49152-65535) so an
+// in-use derived port is unlikely and the range is reserved for these tunnels.
+const LOCAL_PORT_MIN = 20000;
+const LOCAL_PORT_RANGE = 10000;
 
 /** Expands a leading `~/` since spawned arguments never go through a shell. */
 function expandHomePath(path) {
@@ -92,21 +96,49 @@ function detectSshClient(spawnImpl = spawn) {
   });
 }
 
-async function allocateFreePort() {
-  return await new Promise((resolve, reject) => {
+/**
+ * Stable local port for one SSH connection, derived from its identity.
+ *
+ * Browser storage is scoped to the loopback origin `http://127.0.0.1:<port>`,
+ * so a random port per connect silently drops every persisted web preference
+ * (session selection, notification opt-in) whenever the tunnel reconnects.
+ * Deriving the port deterministically keeps that origin stable, while distinct
+ * connection identities still land on distinct origins.
+ */
+function deriveLocalPort(spec, target) {
+  const key = [spec.host, spec.user ?? "", spec.port ?? "", spec.identityFile ?? "", target.host, String(target.port)].join("\u0000");
+  // FNV-1a: a fast, well-distributed hash is enough to spread identities over
+  // the range; collisions merely share an origin, they do not break the tunnel.
+  let hash = 0x811c9dc5;
+  for (const character of key) {
+    hash ^= character.codePointAt(0);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return LOCAL_PORT_MIN + ((hash >>> 0) % LOCAL_PORT_RANGE);
+}
+
+function isLocalPortAvailable(port) {
+  return new Promise((resolve) => {
     const server = createServer();
-    server.once("error", reject);
-    server.listen(0, "127.0.0.1", () => {
-      const address = server.address();
-      if (address === null || typeof address === "string") {
-        server.close();
-        reject(new Error("Could not allocate a local tunnel port"));
-        return;
-      }
-      const port = address.port;
-      server.close(() => { resolve(port); });
+    server.once("error", () => { resolve(false); });
+    server.listen(port, "127.0.0.1", () => {
+      server.close(() => { resolve(true); });
     });
   });
+}
+
+/**
+ * The connection's derived port, or the next free one when it is taken.
+ * Probing only moves off the derived port when something already occupies it,
+ * which keeps the origin stable across ordinary reconnects.
+ */
+async function allocateTunnelPort(spec, target) {
+  const preferred = deriveLocalPort(spec, target);
+  for (let offset = 0; offset < LOCAL_PORT_RANGE; offset += 1) {
+    const port = LOCAL_PORT_MIN + ((preferred - LOCAL_PORT_MIN + offset) % LOCAL_PORT_RANGE);
+    if (await isLocalPortAvailable(port)) return port;
+  }
+  throw new Error("Could not find a free local tunnel port");
 }
 
 /**
@@ -163,13 +195,13 @@ async function createAskpassScript() {
  */
 async function createTunnel(spec, target, deps = {}) {
   const spawnImpl = deps.spawnImpl ?? spawn;
-  const allocatePort = deps.allocatePort ?? allocateFreePort;
+  const allocatePort = deps.allocatePort ?? allocateTunnelPort;
   const connectProbe = deps.connectProbe ?? probeLocalListener;
   const platform = deps.platform ?? process.platform;
   const execPath = deps.execPath ?? process.execPath;
   const probeTimeoutMs = deps.probeTimeoutMs ?? PROBE_TIMEOUT_MS;
 
-  const localPort = await allocatePort();
+  const localPort = await allocatePort(spec, target);
   const args = buildSshArgs(localPort, spec, target);
 
   let askpassCleanup;
@@ -239,6 +271,7 @@ module.exports = {
   buildAskpassEnv,
   expandHomePath,
   detectSshClient,
-  allocateFreePort,
+  deriveLocalPort,
+  allocateTunnelPort,
   createTunnel,
 };

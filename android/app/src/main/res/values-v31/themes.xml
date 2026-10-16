@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Android 12+ draws the launch splash from the theme, so the icon needs a
+         plate that matches the launcher glyph. -->
+    <style name="Theme.PiWeb" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/pi_background</item>
+        <item name="android:windowSplashScreenBackground">@color/pi_icon_background</item>
+    </style>
+</resources>

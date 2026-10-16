@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">PI Web</string>
+    <string name="notification_channel_name">PI Web 提醒</string>
+    <string name="notification_channel_description">代理提问、扩展对话、回合完成或失败时的提醒</string>
+</resources>

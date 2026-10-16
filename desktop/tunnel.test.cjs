@@ -3,11 +3,12 @@
 const assert = require("node:assert/strict");
 const { EventEmitter } = require("node:events");
 const { stat } = require("node:fs/promises");
+const { createServer } = require("node:net");
 const { homedir } = require("node:os");
 const { join } = require("node:path");
 const { test } = require("node:test");
 
-const { buildSshArgs, buildAskpassEnv, expandHomePath, createTunnel } = require("./tunnel.cjs");
+const { buildSshArgs, buildAskpassEnv, expandHomePath, deriveLocalPort, allocateTunnelPort, createTunnel } = require("./tunnel.cjs");
 
 const TARGET = { host: "127.0.0.1", port: 8504 };
 
@@ -126,4 +127,50 @@ test("createTunnel adds no askpass env for key-based auth", async () => {
 
   assert.equal(state.env.SSH_ASKPASS, undefined);
   assert.equal(state.env.PI_WEB_TUNNEL_PASSWORD, undefined);
+});
+
+test("deriveLocalPort is deterministic, in range, and per identity", () => {
+  const spec = { host: "dev-box", port: 2222, user: "deploy" };
+  const port = deriveLocalPort(spec, TARGET);
+
+  assert.equal(deriveLocalPort(spec, TARGET), port);
+  assert.ok(port >= 20000 && port < 30000, `expected 20000-29999, got ${String(port)}`);
+  // Different connection identities must not collapse onto one loopback origin.
+  assert.notEqual(deriveLocalPort({ host: "other-box" }, TARGET), port);
+  assert.notEqual(deriveLocalPort(spec, { host: "127.0.0.1", port: 9000 }), port);
+});
+
+test("allocateTunnelPort returns the connection's derived port when it is free", async () => {
+  const spec = { host: "stable-box", port: 22 };
+
+  assert.equal(await allocateTunnelPort(spec, TARGET), deriveLocalPort(spec, TARGET));
+});
+
+test("allocateTunnelPort falls back to the next free port when the derived one is taken", async () => {
+  const spec = { host: "busy-box", port: 22 };
+  const preferred = deriveLocalPort(spec, TARGET);
+  const blocker = createServer();
+  await new Promise((resolve, reject) => {
+    blocker.once("error", reject);
+    blocker.listen(preferred, "127.0.0.1", resolve);
+  });
+  try {
+    const allocated = await allocateTunnelPort(spec, TARGET);
+
+    assert.notEqual(allocated, preferred);
+    assert.ok(allocated >= 20000 && allocated < 30000);
+  } finally {
+    await new Promise((resolve) => { blocker.close(resolve); });
+  }
+});
+
+test("createTunnel passes the connection identity to the port allocator", async () => {
+  const { deps } = fakeTunnelDeps("linux");
+  let received;
+  deps.allocatePort = async (spec, target) => { received = { spec, target }; return 4321; };
+  const spec = { host: "dev-box" };
+
+  await createTunnel(spec, TARGET, deps);
+
+  assert.deepEqual(received, { spec, target: TARGET });
 });
