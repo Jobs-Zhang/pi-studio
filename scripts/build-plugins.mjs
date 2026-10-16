@@ -6,8 +6,8 @@ import { pathToFileURL } from "node:url";
 import ts from "typescript";
 import { build as viteBuild } from "vite";
 
-const bundledPluginsSourceDir = resolve("pi-web-plugins");
-const bundledPluginsOutputDir = resolve("dist/pi-web-plugins");
+const bundledPluginsSourceDir = resolve("pi-studio-plugins");
+const bundledPluginsOutputDir = resolve("dist/pi-studio-plugins");
 const filesPluginSourceDir = resolve(bundledPluginsSourceDir, "files");
 const filesPluginOutputDir = resolve(bundledPluginsOutputDir, "files");
 const terminalPluginSourceDir = resolve(bundledPluginsSourceDir, "terminal");
@@ -15,8 +15,8 @@ const terminalPluginOutputDir = resolve(bundledPluginsOutputDir, "terminal");
 const mermaidPluginSourceDir = resolve(bundledPluginsSourceDir, "mermaid");
 const mermaidPluginOutputDir = resolve(bundledPluginsOutputDir, "mermaid");
 
-// Two independent source trees ship inside the npm package: bundled PI WEB
-// plugins (discovered by directory scan, see PiWebPluginCatalog) and Pi
+// Two independent source trees ship inside the npm package: bundled PI STUDIO
+// plugins (discovered by directory scan, see PiStudioPluginCatalog) and Pi
 // packages that ship alongside them without being discovered that way (for
 // example a Pi package that is installed rather than scanned). They retain
 // separate output roots so neither becomes a discovery root for the other.
@@ -198,11 +198,11 @@ export function complexBrowserBuildConfig(sourceDir, targetDir) {
       assetsInlineLimit: 0,
       reportCompressedSize: false,
       rollupOptions: {
-        input: resolve(sourceDir, "pi-web-plugin.ts"),
+        input: resolve(sourceDir, "pi-studio-plugin.ts"),
         preserveEntrySignatures: "strict",
         output: {
           format: "es",
-          entryFileNames: "pi-web-plugin.js",
+          entryFileNames: "pi-studio-plugin.js",
           chunkFileNames: "assets/[name]-[hash].js",
           assetFileNames: "assets/[name]-[hash][extname]",
         },

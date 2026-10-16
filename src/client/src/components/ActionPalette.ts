@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { LitElement, css, html, nothing, type PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import type { AppAction } from "../actions";
@@ -21,13 +22,13 @@ export class ActionPalette extends LitElement {
       <modal-surface
         .onClose=${() => this.onCancel?.()}
         .initialFocus=${"input"}
-        .label=${"Action palette"}
+        .label=${t("actionPalette.title")}
         @keydown=${(event: KeyboardEvent) => { this.handleKeyDown(event); }}
       >
         <header>
           <input
             .value=${this.queryText}
-            placeholder="Search actions..."
+            placeholder=${t("actionPalette.search")}
             @input=${(event: Event) => {
               if (event.target instanceof HTMLInputElement) {
                 this.queryText = event.target.value;
@@ -35,10 +36,10 @@ export class ActionPalette extends LitElement {
               }
             }}
           >
-          <button title="Close" aria-label="Close" @click=${() => this.onCancel?.()}>×</button>
+          <button title=${t("common.close")} aria-label=${t("common.close")} @click=${() => this.onCancel?.()}>×</button>
         </header>
         <div class="options">
-          ${actions.length === 0 ? html`<div class="empty">No actions found.</div>` : actions.map((action, index) => html`
+          ${actions.length === 0 ? html`<div class="empty">${t("actionPalette.none")}</div>` : actions.map((action, index) => html`
             <button
               class=${`${index === this.selectedIndex ? "selected" : ""} ${action.enabled === false ? "disabled" : ""}`}
               ?disabled=${action.enabled === false}

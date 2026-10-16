@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-// Assembles the "dev" variant of the pi-web.dev docs site into docs/.deploy/dev.
+// Assembles the "dev" variant of the pi-studio.dev docs site into docs/.deploy/dev.
 //
-// The dev variant is served by the pi-web-docs-dev Cloudflare Worker, which owns the
-// pi-web.dev/dev/* route, so every page is nested under a dev/ directory. Pages use
+// The dev variant is served by the pi-studio-docs-dev Cloudflare Worker, which owns the
+// pi-studio.dev/dev/* route, so every page is nested under a dev/ directory. Pages use
 // relative asset and link URLs, so they work unchanged under the /dev/ prefix.
 //
 // Differences from the stable site:
@@ -46,13 +46,13 @@ function resolveGitSha() {
 }
 
 function stableUrlFor(htmlFileName) {
-  if (htmlFileName === "index.html") return "https://pi-web.dev/";
-  return `https://pi-web.dev/${htmlFileName.replace(/\.html$/, "")}`;
+  if (htmlFileName === "index.html") return "https://pi-studio.dev/";
+  return `https://pi-studio.dev/${htmlFileName.replace(/\.html$/, "")}`;
 }
 
 function bannerHtml(sha, stableUrl) {
   const source = sha
-    ? `<a href="https://github.com/jmfederico/pi-web/commit/${sha}" style="color:inherit;text-decoration:underline;">main@${sha.slice(0, 7)}</a>`
+    ? `<a href="https://github.com/pi-studio/pi-studio/commit/${sha}" style="color:inherit;text-decoration:underline;">main@${sha.slice(0, 7)}</a>`
     : "the main branch";
   const linkStyle = "color:inherit;text-decoration:underline;font-weight:600;";
   return (

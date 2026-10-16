@@ -1,5 +1,6 @@
-import type { PluginActivationContext } from "@jmfederico/pi-web/plugin-api";
+import type { PluginActivationContext } from "@pi-studio/pi-studio/plugin-api";
 import { Lexer, type MarkedToken, type Token } from "marked";
+import { t } from "./messages.js";
 
 type Html = PluginActivationContext["html"];
 
@@ -53,7 +54,7 @@ export function renderCaptainMarkdown(html: Html, markdown: string): unknown {
         ? html`<ol start=${token.start}>${renderTokens(token.items)}</ol>`
         : html`<ul>${renderTokens(token.items)}</ul>`;
       case "list_item": return html`<li>${renderTokens(token.tokens)}</li>`;
-      case "checkbox": return html`<input type="checkbox" disabled ?checked=${token.checked} aria-label="Task completed">`;
+      case "checkbox": return html`<input type="checkbox" disabled ?checked=${token.checked} aria-label=${t("markdown.taskCompleted")}>`;
       case "link": {
         const href = safeLink(token.href);
         const label = renderTokens(token.tokens);

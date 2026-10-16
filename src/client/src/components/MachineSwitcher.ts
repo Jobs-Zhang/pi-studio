@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { LitElement, css, html, type PropertyValues, type TemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import type { Machine, MachineHealth, MachineStatus } from "../api";
@@ -77,7 +78,7 @@ export class MachineSwitcher extends LitElement implements KeyboardNavigableSect
           ${this.renderMachineIcon(selected)}
           ${this.renderActivity(selected)}
           <span class="machine-switcher-text">
-            <span class="machine-switcher-kicker">Machine</span>
+            <span class="machine-switcher-kicker">${t("machine.kicker")}</span>
             <span class="machine-switcher-label">${label}</span>
           </span>
           <span class=${`machine-status ${status}`}>${machineStatusLabel(status)}</span>
@@ -115,14 +116,14 @@ export class MachineSwitcher extends LitElement implements KeyboardNavigableSect
             <button
               type="button"
               class="machine-option-actions-toggle"
-              title="Machine actions"
-              aria-label=${`Actions for ${machine.name}`}
+              title=${t("machine.actions")}
+              aria-label=${t("machine.actionsFor", { name: machine.name })}
               aria-expanded=${String(actionsOpen)}
               @click=${(event: MouseEvent) => { event.stopPropagation(); this.toggleActionsMenu(machine.id, event.currentTarget); }}
             >⋯</button>
             ${actionsOpen ? html`
               <div class="machine-option-actions-panel" style=${this.actionMenuStyle} @click=${(event: MouseEvent) => { event.stopPropagation(); }}>
-                <button class="danger" title=${`Remove ${machine.name}`} @click=${() => { this.removeMachine(machine); }}>Remove</button>
+                <button class="danger" title=${t("machine.removeNamed", { name: machine.name })} @click=${() => { this.removeMachine(machine); }}>${t("machine.remove")}</button>
               </div>
             ` : null}
           </div>
@@ -365,7 +366,7 @@ function machineTitle(machine: Machine): string {
 /** The local machine identifies itself by the serving gateway's URL. */
 function machineSubtitle(machine: Machine): string {
   if (machine.kind === "local") return browserGatewayDisplayUrl();
-  return machine.baseUrl ?? "Remote Pi Web";
+  return machine.baseUrl ?? t("machine.remote");
 }
 
 function machineSwitcherMenuStyle(target: EventTarget | null): string {

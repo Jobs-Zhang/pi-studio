@@ -1,3 +1,4 @@
+import { t } from "../../i18n";
 import { LitElement, css, html, type PropertyValues } from "lit";
 import { repeat } from "lit/directives/repeat.js";
 import { customElement, property, query, state } from "lit/decorators.js";
@@ -211,7 +212,7 @@ export class AppNavigationPanel extends LitElement {
   override render() {
     return html`
       <header>
-        <strong>PI WEB</strong>
+        <strong>PI STUDIO</strong>
         <machine-switcher
           .machines=${this.machines}
           .selected=${this.selectedMachine}
@@ -225,7 +226,7 @@ export class AppNavigationPanel extends LitElement {
         ></machine-switcher>
         <div class="header-actions">
           ${this.refreshControl}
-          <button title="Show Actions" aria-label="Show Actions" @click=${() => { this.onShowActions?.(); }}>Actions</button>
+          <button title=${t("shell.showActions")} aria-label=${t("shell.showActions")} @click=${() => { this.onShowActions?.(); }}>${t("shell.actions")}</button>
         </div>
       </header>
       ${this.compact && shouldShowMachinesSection(this.machines) ? html`
@@ -245,7 +246,7 @@ export class AppNavigationPanel extends LitElement {
         ></machine-list>
       ` : null}
       ${this.renderSectionSplit("machines", "projects")}
-      <nav class="navigation-tree" aria-label="Projects and sessions" @click=${(event: Event) => { if (!(event.target instanceof Element) || event.target.closest(".project-menu") === null) this.openProjectMenuId = undefined; }} @keydown=${(event: KeyboardEvent) => { this.handleTreeKeydown(event); }}>
+      <nav class="navigation-tree" aria-label=${t("shell.projectsAndSessions")} @click=${(event: Event) => { if (!(event.target instanceof Element) || event.target.closest(".project-menu") === null) this.openProjectMenuId = undefined; }} @keydown=${(event: KeyboardEvent) => { this.handleTreeKeydown(event); }}>
         ${repeat(this.projects, (project) => project.id, (project) => this.renderProjectNode(project))}
       </nav>
     `;
@@ -261,8 +262,8 @@ export class AppNavigationPanel extends LitElement {
           <button class="tree-expander" aria-label=${`${expanded ? "Collapse" : "Expand"} ${project.name}`} aria-expanded=${String(expanded)} @click=${(event: Event) => { event.stopPropagation(); this.toggleExpandedProject(project.id); }}>${expanded ? "▾" : "▸"}</button>
           <button class="tree-label" title=${project.path} aria-expanded=${String(expanded)} @click=${() => { this.toggleExpandedProject(project.id); }}><svg class="folder-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8V6a2 2 0 0 1 2-2h4l3 3h7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8Zm0 1h18" /></svg><span>${project.name}</span></button>
           <div class="project-menu action-menu">
-            <button class="tree-menu" aria-label=${`Actions for ${project.name}`} aria-expanded=${String(this.openProjectMenuId === project.id)} title="Project actions" @click=${(event: Event) => { this.projectMenuStyle = actionMenuPanelStyle(event.currentTarget, { constrainTo: "viewport" }); this.openProjectMenuId = this.openProjectMenuId === project.id ? undefined : project.id; }}>⋯</button>
-            ${this.openProjectMenuId === project.id ? html`<div class="action-menu-panel" style=${this.projectMenuStyle}><button @click=${() => { this.openProjectMenuId = undefined; this.closeProject(project); }}>Close project</button></div>` : null}
+            <button class="tree-menu" aria-label=${t("project.actionsFor", { name: project.name })} aria-expanded=${String(this.openProjectMenuId === project.id)} title=${t("project.actions")} @click=${(event: Event) => { this.projectMenuStyle = actionMenuPanelStyle(event.currentTarget, { constrainTo: "viewport" }); this.openProjectMenuId = this.openProjectMenuId === project.id ? undefined : project.id; }}>⋯</button>
+            ${this.openProjectMenuId === project.id ? html`<div class="action-menu-panel" style=${this.projectMenuStyle}><button @click=${() => { this.openProjectMenuId = undefined; this.closeProject(project); }}>${t("project.close")}</button></div>` : null}
           </div>
           ${renderActionActivityIndicator(statusActivityKind(flags), "Project active", hasStatusUnread(flags) ? "Unread sessions in project" : undefined)}
         </div>
@@ -283,7 +284,7 @@ export class AppNavigationPanel extends LitElement {
       <div class="tree-workspace">
         <div class="tree-row workspace-row">
           <button class="tree-expander" aria-label=${`${expanded ? "Collapse" : "Expand"} ${workspace.label}`} aria-expanded=${String(expanded)} @click=${(event: Event) => { event.stopPropagation(); this.toggleExpandedWorkspace(workspace.id); }}> ${expanded ? "▾" : "▸"}</button>
-          <button class="tree-label" title=${workspace.path} aria-expanded=${String(expanded)} @click=${() => { this.toggleExpandedWorkspace(workspace.id); }}>⑂ <span>${workspace.label}</span>${workspace.isMain ? html`<small class="tree-badge">主工作区</small>` : null}</button>
+          <button class="tree-label" title=${workspace.path} aria-expanded=${String(expanded)} @click=${() => { this.toggleExpandedWorkspace(workspace.id); }}>⑂ <span>${workspace.label}</span>${workspace.isMain ? html`<small class="tree-badge">${t("shell.mainWorkspace")}</small>` : null}</button>
           <workspace-list
             .menuOnly=${true}
             .workspaces=${[workspace]}
@@ -397,8 +398,8 @@ export class AppNavigationPanel extends LitElement {
 
   private renderBrowseFeedback(key: string, retry: () => void) {
     const error = this.browseErrors[key];
-    if (error !== undefined && error !== "") return html`<small class="browse-error" role="alert">${error} <button @click=${retry}>Retry</button></small>`;
-    return this.browseRequests.has(key) ? html`<small role="status">Loading…</small>` : null;
+    if (error !== undefined && error !== "") return html`<small class="browse-error" role="alert">${error} <button @click=${retry}>${t("common.retry")}</button></small>`;
+    return this.browseRequests.has(key) ? html`<small role="status">${t("shell.loading")}</small>` : null;
   }
 
   private cancelBrowseRequests(): void {
@@ -407,7 +408,7 @@ export class AppNavigationPanel extends LitElement {
   }
 
   private closeProject(project: Project): void {
-    if (confirm(`Close ${project.name}?\\n\\nThis only removes it from PI WEB; it will not change the project folder.`)) void this.onCloseProject?.(project);
+    if (confirm(`Close ${project.name}?\\n\\nThis only removes it from PI STUDIO; it will not change the project folder.`)) void this.onCloseProject?.(project);
   }
 
 

@@ -1,6 +1,6 @@
 import { mkdir } from "node:fs/promises";
 import { resolve } from "node:path";
-import { isPiWebPluginId } from "../../shared/pluginIds.js";
+import { isPiStudioPluginId } from "../../shared/pluginIds.js";
 import { pathToFileURL } from "node:url";
 import type {
   JsonObject,
@@ -25,7 +25,7 @@ import type {
   ServerPluginStartContext,
   WorkspaceProvider,
 } from "../../server-plugin-api.js";
-import type { PiWebPluginScope } from "../../shared/apiTypes.js";
+import type { PiStudioPluginScope } from "../../shared/apiTypes.js";
 import {
   parseServerNoticeScope,
   SERVER_PLUGIN_NOTICE_CONTEXT_MAX_BYTES,
@@ -41,11 +41,11 @@ import {
 import type { ServerPluginSafeStart } from "../../serverPluginRecovery.js";
 import { REQUIRED_TERMINAL_SERVICE_CAPABILITY } from "../terminals/requiredTerminalService.js";
 import type {
-  PiWebPluginCatalog,
-  PiWebPluginCatalogDiagnostic,
-  PiWebPluginCatalogEntry,
-  PiWebPluginCatalogSnapshot,
-} from "../piWebPluginCatalog.js";
+  PiStudioPluginCatalog,
+  PiStudioPluginCatalogDiagnostic,
+  PiStudioPluginCatalogEntry,
+  PiStudioPluginCatalogSnapshot,
+} from "../piStudioPluginCatalog.js";
 import { createServerPluginExecFile } from "./serverPluginExec.js";
 
 export type ServerPluginRuntimeState = "active" | "failed" | "incompatible" | "disabled";
@@ -54,7 +54,7 @@ export type ServerPluginLifecyclePhase = "import" | "activate" | "validate" | "s
 export interface ServerPluginRuntimeRecord {
   pluginId: string;
   source: string;
-  scope: PiWebPluginScope;
+  scope: PiStudioPluginScope;
   moduleRevision: string;
   browserRevision?: string;
   settingsRevision: string;
@@ -74,7 +74,7 @@ export interface ServerPluginProviderContribution {
   pluginName: string;
   packageRoot: string;
   source: string;
-  scope: PiWebPluginScope;
+  scope: PiStudioPluginScope;
   moduleRevision: string;
   provider: WorkspaceProvider;
 }
@@ -84,7 +84,7 @@ export interface ServerPluginPairedBackendContribution {
   pluginName: string;
   packageRoot: string;
   source: string;
-  scope: PiWebPluginScope;
+  scope: PiStudioPluginScope;
   moduleRevision: string;
   backend: ServerPluginPeer;
 }
@@ -124,7 +124,7 @@ export interface ServerPluginHostCapabilityFactory<Value = unknown> {
 }
 
 export interface CreateServerPluginRuntimeOptions {
-  catalog: Pick<PiWebPluginCatalog, "snapshot">;
+  catalog: Pick<PiStudioPluginCatalog, "snapshot">;
   dataDir: string;
   safeStart?: ServerPluginSafeStart;
   logger: ServerPluginRuntimeLogger;
@@ -153,7 +153,7 @@ interface LoadedServerPlugin {
 }
 
 interface StagedServerPlugin {
-  entry: PiWebPluginCatalogEntry;
+  entry: PiStudioPluginCatalogEntry;
   plugin: LoadedServerPlugin;
   activation: ServerPluginActivation;
   lifetimeController: AbortController;
@@ -231,7 +231,7 @@ export class ServerPluginRuntime {
   private constructor(
     private readonly dataDir: string,
     private readonly safeStart: ServerPluginSafeStart | undefined,
-    private readonly diagnostics: readonly PiWebPluginCatalogDiagnostic[],
+    private readonly diagnostics: readonly PiStudioPluginCatalogDiagnostic[],
     private readonly logger: ServerPluginRuntimeLogger,
     private readonly importer: ServerPluginModuleImporter,
     private readonly execFile: ServerPluginExecFile,
@@ -251,7 +251,7 @@ export class ServerPluginRuntime {
   }
 
   static async activate(
-    snapshot: PiWebPluginCatalogSnapshot,
+    snapshot: PiStudioPluginCatalogSnapshot,
     options: Omit<CreateServerPluginRuntimeOptions, "catalog">,
   ): Promise<ServerPluginRuntime> {
     const runtime = new ServerPluginRuntime(
@@ -288,7 +288,7 @@ export class ServerPluginRuntime {
     return this.safeStart;
   }
 
-  catalogDiagnostics(): readonly PiWebPluginCatalogDiagnostic[] {
+  catalogDiagnostics(): readonly PiStudioPluginCatalogDiagnostic[] {
     return this.diagnostics;
   }
 
@@ -414,7 +414,7 @@ export class ServerPluginRuntime {
     }
   }
 
-  private async start(entries: readonly PiWebPluginCatalogEntry[]): Promise<void> {
+  private async start(entries: readonly PiStudioPluginCatalogEntry[]): Promise<void> {
     const serverEntries = entries
       .filter((entry) => entry.serverModule !== undefined)
       .sort(requiredTerminalFirst);
@@ -430,7 +430,7 @@ export class ServerPluginRuntime {
     }
   }
 
-  private async stageEntry(entry: PiWebPluginCatalogEntry): Promise<void> {
+  private async stageEntry(entry: PiStudioPluginCatalogEntry): Promise<void> {
     const disabledMessage = disabledReason(entry, this.safeStart);
     if (disabledMessage !== undefined) {
       this.recordsById.set(entry.id, recordFor(entry, { state: "disabled", message: disabledMessage }));
@@ -452,7 +452,7 @@ export class ServerPluginRuntime {
       const loadedPlugin = parsePluginExport(imported);
       plugin = loadedPlugin;
       phase = "activate";
-      if (!isPiWebPluginId(entry.id)) throw new Error(`Invalid PI WEB plugin id: ${entry.id}`);
+      if (!isPiStudioPluginId(entry.id)) throw new Error(`Invalid PI STUDIO plugin id: ${entry.id}`);
       const dataDirectory = resolve(this.dataDir, "plugin-data", entry.id);
       await mkdir(dataDirectory, { recursive: true });
       const scopedLogger = createScopedLogger(entry.id, this.logger);
@@ -820,7 +820,7 @@ export class ServerPluginRuntime {
   }
 }
 
-function requireTerminalCatalogEntry(snapshot: PiWebPluginCatalogSnapshot): PiWebPluginCatalogEntry {
+function requireTerminalCatalogEntry(snapshot: PiStudioPluginCatalogSnapshot): PiStudioPluginCatalogEntry {
   const entry = snapshot.plugins.find(({ id }) => id === REQUIRED_TERMINAL_PLUGIN_ID);
   if (entry === undefined) throw requiredTerminalError("Required bundled Terminal package is missing");
   if (entry.scope !== "bundled" || entry.source !== "bundled") {
@@ -849,7 +849,7 @@ function requireTerminalActivation(activation: ServerPluginActivation): void {
   }
 }
 
-function requiredTerminalFirst(left: PiWebPluginCatalogEntry, right: PiWebPluginCatalogEntry): number {
+function requiredTerminalFirst(left: PiStudioPluginCatalogEntry, right: PiStudioPluginCatalogEntry): number {
   if (left.id === REQUIRED_TERMINAL_PLUGIN_ID) return right.id === REQUIRED_TERMINAL_PLUGIN_ID ? 0 : -1;
   if (right.id === REQUIRED_TERMINAL_PLUGIN_ID) return 1;
   return left.id.localeCompare(right.id);
@@ -862,15 +862,15 @@ function requiredTerminalError(message: string, cause?: unknown): RequiredTermin
   );
 }
 
-function disabledReason(entry: PiWebPluginCatalogEntry, safeStart: ServerPluginSafeStart | undefined): string | undefined {
-  if (!entry.enabled) return "disabled in PI WEB config";
+function disabledReason(entry: PiStudioPluginCatalogEntry, safeStart: ServerPluginSafeStart | undefined): string | undefined {
+  if (!entry.enabled) return "disabled in PI STUDIO config";
   if (safeStart === "none") return "disabled by no-server-plugin safe start";
   if (safeStart === "bundled-only" && entry.scope !== "bundled") return "disabled by bundled-only safe start";
   return undefined;
 }
 
 function recordFor(
-  entry: PiWebPluginCatalogEntry,
+  entry: PiStudioPluginCatalogEntry,
   status: Pick<ServerPluginRuntimeRecord, "state"> & Partial<Pick<ServerPluginRuntimeRecord, "name" | "phase" | "message" | "pairedRequestVersion" | "pairedChannelVersion">>,
 ): ServerPluginRuntimeRecord {
   return Object.freeze({
@@ -890,16 +890,16 @@ function recordFor(
   });
 }
 
-function requireServerModule(entry: PiWebPluginCatalogEntry): NonNullable<PiWebPluginCatalogEntry["serverModule"]> {
+function requireServerModule(entry: PiStudioPluginCatalogEntry): NonNullable<PiStudioPluginCatalogEntry["serverModule"]> {
   const serverModule = entry.serverModule;
-  if (serverModule === undefined) throw new Error(`PI WEB plugin has no server module: ${entry.id}`);
+  if (serverModule === undefined) throw new Error(`PI STUDIO plugin has no server module: ${entry.id}`);
   return serverModule;
 }
 
-function serverModuleUrl(entry: PiWebPluginCatalogEntry): string {
+function serverModuleUrl(entry: PiStudioPluginCatalogEntry): string {
   const serverModule = requireServerModule(entry);
   const url = pathToFileURL(serverModule.filePath);
-  url.searchParams.set("piWebRevision", serverModule.revision);
+  url.searchParams.set("piStudioRevision", serverModule.revision);
   return url.href;
 }
 

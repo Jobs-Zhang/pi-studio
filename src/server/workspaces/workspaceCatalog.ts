@@ -5,7 +5,7 @@ import type {
   ServerPluginHealthInspection,
   ServerPluginRuntimeRecord,
 } from "../plugins/serverPluginRuntime.js";
-import type { PiWebPluginCatalogDiagnostic } from "../piWebPluginCatalog.js";
+import type { PiStudioPluginCatalogDiagnostic } from "../piStudioPluginCatalog.js";
 
 export const WORKSPACE_PROVIDER_RUNTIME_PROTOCOL_VERSION = 2;
 
@@ -25,7 +25,7 @@ export interface WorkspaceProviderRuntimeSnapshot {
   safeStart?: ServerPluginSafeStart;
   records: readonly ServerPluginRuntimeRecord[];
   health: readonly ServerPluginHealthInspection[];
-  diagnostics: readonly PiWebPluginCatalogDiagnostic[];
+  diagnostics: readonly PiStudioPluginCatalogDiagnostic[];
 }
 
 export interface WorkspaceProviderRuntimeReader {
@@ -36,7 +36,7 @@ export function createWorkspaceProviderRuntimeSnapshot(
   records: readonly ServerPluginRuntimeRecord[],
   health: readonly ServerPluginHealthInspection[],
   safeStart?: ServerPluginSafeStart,
-  diagnostics: readonly PiWebPluginCatalogDiagnostic[] = [],
+  diagnostics: readonly PiStudioPluginCatalogDiagnostic[] = [],
 ): WorkspaceProviderRuntimeSnapshot {
   return Object.freeze({
     protocolVersion: WORKSPACE_PROVIDER_RUNTIME_PROTOCOL_VERSION,

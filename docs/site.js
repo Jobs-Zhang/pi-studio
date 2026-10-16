@@ -13,7 +13,7 @@ if (animatedHomePage !== null) {
 }
 
 const themeButtons = document.querySelectorAll("[data-theme-toggle]");
-const themeStorageKey = "pi-web-theme";
+const themeStorageKey = "pi-studio-theme";
 const systemPrefersLight = window.matchMedia("(prefers-color-scheme: light)");
 
 function storedThemeMode() {
@@ -146,7 +146,7 @@ function setupScreenshotCarousel(carousel) {
     const captionParts = Array.from(figure?.querySelectorAll("figcaption strong, figcaption span") ?? [])
       .map((node) => node.textContent?.trim())
       .filter(Boolean);
-    const caption = captionParts.length > 0 ? captionParts.join(" — ") : "PI WEB screenshot";
+    const caption = captionParts.length > 0 ? captionParts.join(" — ") : "PI STUDIO screenshot";
 
     lightboxImage.src = image.currentSrc || image.src;
     lightboxImage.alt = image.alt;

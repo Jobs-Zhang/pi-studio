@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.PiWeb" parent="@android:style/Theme.Material.NoActionBar">
+    <style name="Theme.PiStudio" parent="@android:style/Theme.Material.NoActionBar">
         <item name="android:windowBackground">@color/pi_background</item>
     </style>
 </resources>

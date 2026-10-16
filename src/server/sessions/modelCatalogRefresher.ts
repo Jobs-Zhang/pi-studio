@@ -70,7 +70,7 @@ const noopLogger: ModelCatalogRefresherLogger = {
  * Refreshes provider model catalogs over the network on a background schedule.
  *
  * The shared ModelRuntime keeps its own refreshes local-only (pi 0.84 does so
- * by default, and pi-web request paths pass `allowNetwork: false` explicitly —
+ * by default, and pi-studio request paths pass `allowNetwork: false` explicitly —
  * see authService.ts), so they stay fast. This refresher is the single place
  * that deliberately performs network refreshes —
  * bounded by an abort timeout, serialized through one in-flight run, stopped by
@@ -79,7 +79,7 @@ const noopLogger: ModelCatalogRefresherLogger = {
  * should be listed, such as provider logins, where the cached catalog is known
  * to be wrong.
  *
- * When the operator asked for offline behavior (`PI_OFFLINE` / `PI_WEB_OFFLINE`),
+ * When the operator asked for offline behavior (`PI_OFFLINE` / `PI_STUDIO_OFFLINE`),
  * the refresher performs no network I/O at all and the cached catalogs in
  * models-store.json are used as they are.
  */

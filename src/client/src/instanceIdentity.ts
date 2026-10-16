@@ -13,7 +13,7 @@ export function machineIconUrl(machine: Pick<Machine, "kind" | "baseUrl">): stri
   return new URL("favicon.svg", machine.baseUrl.endsWith("/") ? machine.baseUrl : `${machine.baseUrl}/`).toString();
 }
 
-/** `host` plus any non-root deployment path, e.g. `pi.example.com` or `example.com/pi-web`. */
+/** `host` plus any non-root deployment path, e.g. `pi.example.com` or `example.com/pi-studio`. */
 export function gatewayDisplayUrl(appBaseUrl: string): string {
   const url = new URL(appBaseUrl);
   return `${url.host}${url.pathname.replace(/\/+$/, "")}`;

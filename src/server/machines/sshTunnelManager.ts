@@ -88,7 +88,7 @@ interface TunnelFailure {
 
 /**
  * Owns the lifecycle of `ssh -N -L` child processes that forward a local port to
- * each SSH machine's remote PI WEB instance. Tunnels are created lazily by
+ * each SSH machine's remote PI STUDIO instance. Tunnels are created lazily by
  * `ensure()`, probed for readiness, and torn down on child exit or `close()`.
  * A per-machine backoff window prevents spawn loops against unreachable hosts.
  */
@@ -208,7 +208,7 @@ export class SshTunnelManager {
         SSH_ASKPASS: askpass.scriptPath,
         SSH_ASKPASS_REQUIRE: "force",
         DISPLAY: ":",
-        PI_WEB_TUNNEL_PASSWORD: spec.password,
+        PI_STUDIO_TUNNEL_PASSWORD: spec.password,
       };
     }
 
@@ -267,11 +267,11 @@ export class SshTunnelManager {
   private async createAskpassScript(): Promise<{ scriptPath: string; cleanup: () => Promise<void> }> {
     const dir = await (this.askpassDir?.() ?? defaultAskpassDir());
     await mkdir(dir, { recursive: true });
-    const scriptPath = join(dir, `pi-web-askpass-${randomUUID()}.sh`);
-    // The password travels via PI_WEB_TUNNEL_PASSWORD so the script needs no
+    const scriptPath = join(dir, `pi-studio-askpass-${randomUUID()}.sh`);
+    // The password travels via PI_STUDIO_TUNNEL_PASSWORD so the script needs no
     // escaping; owner-only permissions keep the harness private for its short
     // lifetime, and the execute bit (see ASKPASS_SCRIPT_MODE) lets ssh run it.
-    await writeFile(scriptPath, '#!/bin/sh\nprintf \'%s\\n\' "$PI_WEB_TUNNEL_PASSWORD"\n', { mode: ASKPASS_SCRIPT_MODE });
+    await writeFile(scriptPath, '#!/bin/sh\nprintf \'%s\\n\' "$PI_STUDIO_TUNNEL_PASSWORD"\n', { mode: ASKPASS_SCRIPT_MODE });
     return { scriptPath, cleanup: async () => { await rm(scriptPath, { force: true }); } };
   }
 }
@@ -289,7 +289,7 @@ function defaultSpawnSsh(command: string, args: string[], options: SpawnOptions)
 }
 
 async function defaultAskpassDir(): Promise<string> {
-  const dir = join(tmpdir(), "pi-web-ssh-askpass");
+  const dir = join(tmpdir(), "pi-studio-ssh-askpass");
   await mkdir(dir, { recursive: true });
   return dir;
 }

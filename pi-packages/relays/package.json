@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "description": "Tool-agnostic Relay method, opinionated Relay Runner profile, and human-gated preparation prompts for independent Pi session chains.",
-  "piWeb": {
+  "piStudio": {
     "plugins": [
-      { "id": "relays", "browserRoot": ".", "module": "pi-web-plugin.js" }
+      { "id": "relays", "browserRoot": ".", "module": "pi-studio-plugin.js" }
     ]
   }
 }

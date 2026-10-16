@@ -51,7 +51,7 @@ Framework-facing code should usually be thin: gather inputs, call the core logic
 
 Failures must be observable and traceable to their cause. Handle them at meaningful boundaries through an explicit return or throw, contextual logging, a user-visible error, or another signal appropriate to that boundary. Do not silently rescue failures, swallow errors, or turn them into vague fallback or success behavior. Avoid scattering defensive `try`/`catch` blocks everywhere; let core logic communicate failures clearly, then translate them at the edge that has the right context.
 
-When changing PI WEB-managed durable state, structure operations so failure does not silently leave partial writes, ambiguous overwrites, or broken invariants. Apply this where an actual persistence or lifecycle boundary warrants it; do not add transactional machinery to ephemeral or reconstructible state without a concrete need.
+When changing PI STUDIO-managed durable state, structure operations so failure does not silently leave partial writes, ambiguous overwrites, or broken invariants. Apply this where an actual persistence or lifecycle boundary warrants it; do not add transactional machinery to ephemeral or reconstructible state without a concrete need.
 
 Security and authorization boundaries fail closed. Never convert a validation, authentication, authorization, or policy failure into permissive behavior merely to keep an operation running.
 

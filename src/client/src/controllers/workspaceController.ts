@@ -156,7 +156,7 @@ export class WorkspaceController {
 
   /**
    * Re-lists the selected project's workspaces so worktrees created or removed outside
-   * PI WEB become visible, without disturbing the current selection.
+   * PI STUDIO become visible, without disturbing the current selection.
    *
    * Deliberately never routes through `selectWorkspace`: that has no already-selected
    * guard, so re-picking the same workspace would still call `clearActiveSession()` and
@@ -224,7 +224,7 @@ export class WorkspaceController {
 
   /**
    * Re-points `selectedWorkspace` at its refreshed entry when any browser-visible field changed
-   * outside PI WEB (owner metadata, effective config, a branch switch, and so on), so the
+   * outside PI STUDIO (owner metadata, effective config, a branch switch, and so on), so the
    * workspace list and surfaces reading the selection cannot disagree. Keyed by id, so
    * this never changes *which* workspace is selected and never triggers the session/terminal
    * teardown in `handleWorkspaceChange`. Returns nothing when the entry is gone or unchanged,

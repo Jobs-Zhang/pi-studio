@@ -18,11 +18,11 @@ val stageConnectPage by tasks.registering(Copy::class) {
 }
 
 android {
-    namespace = "dev.pi.web"
+    namespace = "dev.pi.studio"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "dev.pi.web"
+        applicationId = "dev.pi.studio"
         minSdk = 26
         targetSdk = 35
         versionCode = 1

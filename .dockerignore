@@ -1,7 +1,7 @@
 .git
 node_modules
 dist
-.pi-web
+.pi-studio
 .playwright-cli
 dev-plugins
 *.log

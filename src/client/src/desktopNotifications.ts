@@ -1,6 +1,7 @@
 import type { PendingAskUser, PendingExtensionDialog, SessionActivity, SessionStatus } from "../../shared/apiTypes";
 import type { ChatLine, ChatPart } from "./components/shared";
 import type { BrowserRealtimeEvent } from "./sessionSocket";
+import { t } from "./i18n";
 
 /**
  * Desktop (OS-level) notifications for signals that need the user's attention:
@@ -19,7 +20,7 @@ export interface DesktopNotificationPreferences {
   enabled: boolean;
 }
 
-const storageKey = "pi-web:desktop-notifications";
+const storageKey = "pi-studio:desktop-notifications";
 
 function browserStorage(): Storage | undefined {
   try {
@@ -175,8 +176,8 @@ function runFailureNotification(machineId: string, activity: SessionActivity, su
 export function machineUnavailableNotification(machineId: string, machineName: string): DesktopNotification {
   return {
     tag: `${machineId}:machine-unavailable`,
-    title: "PI WEB machine unavailable",
-    body: `${machineName} is not responding. Sessions on it keep running; only this browser lost contact.`,
+    title: t("desktopNotifications.machineUnavailable"),
+    body: t("desktopNotifications.machineUnavailableBody", { machine: machineName }),
     machineId,
   };
 }

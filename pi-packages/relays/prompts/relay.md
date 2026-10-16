@@ -16,7 +16,7 @@ Select these skills before using their instructions:
 
 The quality of the Relay depends on a clear shared understanding of its destination and edges. Front-load that understanding, not a predicted implementation route.
 
-1. **Start a reviewable draft packet.** Choose a clear Relay name and create `.pi-web/relays/<name>/` in the current drafting checkout. Seed draft `charter.md`, `operations.md`, `status.md`, and `log.md`; mark status **Draft — awaiting approval; not dispatched**. Update these documents as understanding improves so the human can review them through the Relays UI. Draft creation is not dispatch authorization.
+1. **Start a reviewable draft packet.** Choose a clear Relay name and create `.pi-studio/relays/<name>/` in the current drafting checkout. Seed draft `charter.md`, `operations.md`, `status.md`, and `log.md`; mark status **Draft — awaiting approval; not dispatched**. Update these documents as understanding improves so the human can review them through the Relays UI. Draft creation is not dispatch authorization.
 2. **Understand the request and baseline.** Read the repository's canonical agent/contributor instructions and task-relevant project material. Inspect enough current behavior, repository state, and delivery context to distinguish the user's intended outcome from an assumed solution. Keep this bounded to facts that affect the goal, scope edges, feasibility, working location, or first leg; leave implementation archaeology to the Relay.
 3. **Capture understanding without making a roadmap.** Keep `charter.md` to the plain-language goal and observable finish line, minimum outcome acceptance, in-scope edges, explicit non-goals, directly affected behavior to preserve, and material assumptions or human decisions. Put packet/profile identity, proposed operating mode/base, canonical project-guidance pointers, verification/delivery mechanics, and packet isolation in `operations.md`. Put only the proposed first bounded leg and current approval state in `status.md`.
 4. **Do not pre-plan the chain.** Do not create a fixed leg count, work-package hierarchy, exhaustive stage list, expected file/layer map, `plan.md`, or technical design merely to make the Relay look prepared. The route is adaptive. Select an implementation-first leg under the runner profile. Reserve research-only work for a concrete unanswered question blocking implementation; routine investigation belongs inside the implementation leg.
@@ -32,7 +32,7 @@ Only after an explicit **Approve and dispatch** response, follow `relay-runner`'
 - finalize `charter.md`, `operations.md`, `status.md`, and `log.md` without adding an upfront route plan;
 - mark the packet approved and record the approval in status/log;
 - create or finish the selected checkout/worktree setup;
-- when the target is a fresh worktree, move the draft packet from the drafting checkout into the target worktree's `.pi-web/relays/<name>/`, update its recorded path/location, and remove the stale draft copy;
+- when the target is a fresh worktree, move the draft packet from the drafting checkout into the target worktree's `.pi-studio/relays/<name>/`, update its recorded path/location, and remove the stale draft copy;
 - dispatch exactly one first leg with `spawn_session` after all state is durable in its final location; and
 - after `spawn_session` returns, provide the dispatch summary without further tool use, state changes, or Relay work.
 

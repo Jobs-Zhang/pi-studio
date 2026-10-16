@@ -1,6 +1,6 @@
 {
-  "name": "PI WEB",
-  "short_name": "PI WEB",
+  "name": "PI STUDIO",
+  "short_name": "PI STUDIO",
   "description": "Remote web UI and browser control plane for persistent Pi Coding Agent sessions.",
   "start_url": "./",
   "scope": "./",

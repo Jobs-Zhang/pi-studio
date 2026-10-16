@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { LitElement, css, html, nothing, type PropertyValues, type TemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { repeat } from "lit/directives/repeat.js";
@@ -110,7 +111,7 @@ interface ModelPickerRow {
  */
 @customElement("model-picker")
 export class ModelPicker extends LitElement {
-  @property() override title = "Select Model";
+  @property() override title = t("modelPicker.selectModel");
   /** Enabled-mode rows: the session's pickable models, pre-labeled by the host. */
   @property({ attribute: false }) options: CommandOption[] = [];
   /** All-mode rows, including enabled state and (on current servers) each model's natural catalog index. Workspace overrides mark rows `editable: false`. */
@@ -153,32 +154,32 @@ export class ModelPicker extends LitElement {
       >
         <header>
           <strong>${this.title}</strong>
-          <button aria-label="Close" @click=${() => this.onCancel?.()}>×</button>
+          <button aria-label=${t("common.close")} @click=${() => this.onCancel?.()}>×</button>
         </header>
-        <div class="scope-toggle" role="group" aria-label="Model scope">
+        <div class="scope-toggle" role="group" aria-label=${t("modelPicker.scope")}>
           ${this.renderScopeToggleButton("enabled", "Enabled")}
           ${this.renderScopeToggleButton("all", "All models")}
         </div>
         ${!this.modelScopeEditable ? html`
           <div class="scope-notice" role="status">
-            <strong>Project override</strong>
-            <span>Showing models from this workspace’s <code>.pi/settings.json</code>. Model availability selection is disabled.</span>
+            <strong>${t("modelPicker.projectOverride")}</strong>
+            <span>${t("modelPicker.scopeNotice")}</span>
           </div>
         ` : nothing}
         <div class="search-row">
-          <input class="search" aria-label="Search models" placeholder="Search" .value=${this.query} @input=${(event: Event) => { this.handleSearchInput(event); }}>
+          <input class="search" aria-label=${t("modelPicker.searchModels")} placeholder=${t("modelPicker.search")} .value=${this.query} @input=${(event: Event) => { this.handleSearchInput(event); }}>
           ${this.mode === "all" ? this.renderToggleAllButton() : nothing}
         </div>
-        ${this.onSetDefault ? defaultPinHelp : nothing}
+        ${this.onSetDefault ? defaultPinHelp() : nothing}
         <div
           class="options"
           role="region"
-          aria-label=${this.mode === "all" ? "All models in catalog order" : "Enabled models"}
+          aria-label=${this.mode === "all" ? t("modelPicker.allModels") : t("modelPicker.enabledModels")}
           tabindex="0"
           aria-busy=${this.membershipChangePending ? "true" : "false"}
         >
           ${this.mode === "all" ? this.renderCatalogList() : this.renderEnabledList()}
-          ${rows.length === 0 ? html`<div class="empty">No matching options</div>` : null}
+          ${rows.length === 0 ? html`<div class="empty">${t("modelPicker.noMatches")}</div>` : null}
         </div>
       </modal-surface>
     `;
@@ -235,10 +236,10 @@ export class ModelPicker extends LitElement {
         class="toggle-all"
         ?disabled=${!this.modelScopeEditable || !plan.canApply || !plan.hasChanges || this.toggleAllPending || this.pendingToggles.size > 0}
         aria-describedby="model-scope-status"
-        title=${!this.modelScopeEditable ? "Workspace settings control model availability" : !plan.canApply ? "The current model is unavailable" : nothing}
+        title=${!this.modelScopeEditable ? t("modelPicker.workspaceControls") : !plan.canApply ? t("modelPicker.currentUnavailable") : nothing}
         @click=${() => { this.requestToggleAll(); }}
       >${label}</button>
-      <span id="model-scope-status" class="scope-status" aria-live="polite">${this.membershipChangePending ? "Updating model availability" : !this.modelScopeEditable ? "Workspace settings control model availability" : !plan.canApply ? "The current model is unavailable" : nothing}</span>
+      <span id="model-scope-status" class="scope-status" aria-live="polite">${this.membershipChangePending ? "Updating model availability" : !this.modelScopeEditable ? t("modelPicker.workspaceControls") : !plan.canApply ? t("modelPicker.currentUnavailable") : nothing}</span>
     `;
   }
 
@@ -309,7 +310,7 @@ export class ModelPicker extends LitElement {
           .checked=${entry.enabled}
           ?disabled=${membershipDisabled}
           aria-label=${membershipLabel}
-          title=${!this.modelScopeEditable ? "Workspace settings control model availability" : protectsCurrentModel ? "The current model must remain enabled" : nothing}
+          title=${!this.modelScopeEditable ? t("modelPicker.workspaceControls") : protectsCurrentModel ? t("modelPicker.currentMustStay") : nothing}
           @focus=${() => { this.selectedIndex = index; }}
           @click=${(event: MouseEvent) => { this.handleEnableToggleClick(entry, event); }}
         />

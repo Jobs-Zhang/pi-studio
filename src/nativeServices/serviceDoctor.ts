@@ -125,14 +125,14 @@ export function selectManagedNativeServiceConfig(
   const firstEnvironment = parsed.value[0]?.environment;
   const installedConfigPath = firstEnvironment === undefined
     ? undefined
-    : ownEnvironmentValue(firstEnvironment, "PI_WEB_CONFIG");
+    : ownEnvironmentValue(firstEnvironment, "PI_STUDIO_CONFIG");
   if (installedConfigPath === undefined || installedConfigPath === "") {
     return { ok: true, value: { source: "default" } };
   }
   if (!posixPath.isAbsolute(installedConfigPath)) {
     return {
       ok: false,
-      message: `Installed service definitions declare relative PI_WEB_CONFIG ${JSON.stringify(installedConfigPath)}; managed config paths must be absolute.`,
+      message: `Installed service definitions declare relative PI_STUDIO_CONFIG ${JSON.stringify(installedConfigPath)}; managed config paths must be absolute.`,
     };
   }
   return { ok: true, value: { source: "installed", configPath: installedConfigPath } };
@@ -232,7 +232,7 @@ export function formatNativeServiceDoctorResult(result: NativeServiceDoctorResul
       failureKind: "inspection",
       lines: [
         `✗ Installed native-service plan could not be inspected: ${result.message}`,
-        "  Run `pi-web install` or `pi-web install --dev` to replace mixed, partial, or outdated service definitions.",
+        "  Run `pi-studio install` or `pi-studio install --dev` to replace mixed, partial, or outdated service definitions.",
       ],
       plan: null,
       adviceShell: null,
@@ -391,7 +391,7 @@ function hasSystemdPhysicalLineContinuation(line: string): boolean {
   return trailingBackslashes % 2 === 1;
 }
 
-/** Parse PI WEB's bounded ExecStart argument structure, including persisted legacy encodings. */
+/** Parse PI STUDIO's bounded ExecStart argument structure, including persisted legacy encodings. */
 function parseSystemdExecStart(value: string): ParsedSystemdExecStart | undefined {
   const environmentPrefix = "/usr/bin/env ";
   const shellOffset = value.startsWith(environmentPrefix) ? environmentPrefix.length : 0;
@@ -657,7 +657,7 @@ export function decodeSystemdEscapes(value: string): string | undefined {
   try {
     // Keep a BOM produced by an escape sequence as U+FEFF. The default
     // decoder behavior strips leading UTF-8 BOM bytes, which could turn an
-    // invalid BOM-prefixed environment key into PI_WEB_CONFIG.
+    // invalid BOM-prefixed environment key into PI_STUDIO_CONFIG.
     return new TextDecoder("utf-8", { fatal: true, ignoreBOM: true }).decode(Uint8Array.from(bytes));
   } catch {
     return undefined;
@@ -730,7 +730,7 @@ const plistXmlDeclaration = '<?xml version="1.0" encoding="UTF-8"?>';
 const plistDoctype = '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">';
 const maximumPlistDepth = 32;
 
-/** Parse the complete XML plist subset emitted by PI WEB, rejecting fragments and duplicate dictionary keys. */
+/** Parse the complete XML plist subset emitted by PI STUDIO, rejecting fragments and duplicate dictionary keys. */
 function parseLaunchdPlistDocument(contents: string): ReadonlyMap<string, ParsedPlistValue> | undefined {
   const normalizedContents = normalizePlistXml(contents);
   if (normalizedContents === undefined) return undefined;

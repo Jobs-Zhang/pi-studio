@@ -3,33 +3,33 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>PI WEB configuration — settings, defaults, scope, and restarts</title>
+    <title>PI STUDIO configuration — settings, defaults, scope, and restarts</title>
     <meta
       name="description"
-      content="Configure PI WEB config files, external path access, manual upload defaults, session daemon tools, plugins, shortcuts, and runtime environment variables."
+      content="Configure PI STUDIO config files, external path access, manual upload defaults, session daemon tools, plugins, shortcuts, and runtime environment variables."
     />
-    <link rel="canonical" href="https://pi-web.dev/config" />
+    <link rel="canonical" href="https://pi-studio.dev/config" />
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="PI WEB" />
-    <meta property="og:title" content="Configure PI WEB" />
+    <meta property="og:site_name" content="PI STUDIO" />
+    <meta property="og:title" content="Configure PI STUDIO" />
     <meta
       property="og:description"
-      content="Reference for PI WEB config files, path access allowlists, manual upload defaults, session daemon options, plugins, shortcuts, and environment variables."
+      content="Reference for PI STUDIO config files, path access allowlists, manual upload defaults, session daemon options, plugins, shortcuts, and environment variables."
     />
-    <meta property="og:url" content="https://pi-web.dev/config" />
-    <meta property="og:image" content="https://pi-web.dev/assets/pi-web-banner.png" />
-    <meta property="og:image:alt" content="PI WEB browser UI for persistent Pi Coding Agent sessions" />
+    <meta property="og:url" content="https://pi-studio.dev/config" />
+    <meta property="og:image" content="https://pi-studio.dev/assets/pi-studio-banner.png" />
+    <meta property="og:image:alt" content="PI STUDIO browser UI for persistent Pi Coding Agent sessions" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Configure PI WEB" />
+    <meta name="twitter:title" content="Configure PI STUDIO" />
     <meta
       name="twitter:description"
-      content="Reference for PI WEB config files, path access allowlists, manual upload defaults, session daemon options, plugins, shortcuts, and environment variables."
+      content="Reference for PI STUDIO config files, path access allowlists, manual upload defaults, session daemon options, plugins, shortcuts, and environment variables."
     />
-    <meta name="twitter:image" content="https://pi-web.dev/assets/pi-web-banner.png" />
+    <meta name="twitter:image" content="https://pi-studio.dev/assets/pi-studio-banner.png" />
     <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
     <script>
       (() => {
-        const theme = window.localStorage.getItem("pi-web-theme");
+        const theme = window.localStorage.getItem("pi-studio-theme");
         if (theme === "light" || theme === "dark") document.documentElement.dataset.theme = theme;
       })();
     </script>
@@ -44,7 +44,7 @@
   <body>
     <header class="site-header">
       <nav class="container nav" aria-label="Main navigation">
-        <a class="brand" href="./" aria-label="PI WEB home">PI WEB</a>
+        <a class="brand" href="./" aria-label="PI STUDIO home">PI STUDIO</a>
         <div class="nav-links">
           <div class="nav-pages">
             <a href="remote-first">Remote-first</a>
@@ -55,7 +55,7 @@
             <a href="faq">FAQ</a>
           </div>
           <div class="nav-actions">
-            <a class="github-link" href="https://github.com/jmfederico/pi-web" aria-label="PI WEB on GitHub">
+            <a class="github-link" href="https://github.com/pi-studio/pi-studio" aria-label="PI STUDIO on GitHub">
               <svg class="github-icon" viewBox="0 0 16 16" aria-hidden="true">
                 <path
                   fill="currentColor"
@@ -76,7 +76,7 @@
 <main class="config-reference">
 <section class="page-hero"><div class="container">
 <p class="eyebrow">Configuration · quick reference</p>
-<h1>Configure PI WEB</h1>
+<h1>Configure PI STUDIO</h1>
 <p>Settings grouped by what they affect. Each row shows scope, default, and when a change takes effect. Use your browser’s Find command to look up a key or environment variable.</p>
 <p><a href="config.md">Detailed Markdown reference →</a></p>
 </div></section>
@@ -109,23 +109,23 @@
 <tbody>
 <tr>
 <th scope="row">Machine config</th>
-<td>PI WEB settings on one machine.</td>
-<td><span id="global-config"></span>Settings UI or <code>~/.config/pi-web/config.json</code>. Override with <code>PI_WEB_CONFIG</code>; otherwise <code>XDG_CONFIG_HOME</code> changes the base config directory.</td>
+<td>PI STUDIO settings on one machine.</td>
+<td><span id="global-config"></span>Settings UI or <code>~/.config/pi-studio/config.json</code>. Override with <code>PI_STUDIO_CONFIG</code>; otherwise <code>XDG_CONFIG_HOME</code> changes the base config directory.</td>
 </tr>
 <tr>
 <th scope="row">Project config</th>
 <td>Shared file access and upload/attachment folders.</td>
-<td><span id="project-config"></span><code>&lt;project&gt;/.pi-web/config.json</code>. Commit it with the repository.</td>
+<td><span id="project-config"></span><code>&lt;project&gt;/.pi-studio/config.json</code>. Commit it with the repository.</td>
 </tr>
 <tr>
 <th scope="row">Pi settings</th>
 <td>Agent defaults, models, credentials, and Pi packages.</td>
-<td><code>~/.pi/agent</code> by default. Separate from PI WEB config; see <a href="#agent-runtime">agent storage</a>.</td>
+<td><code>~/.pi/agent</code> by default. Separate from PI STUDIO config; see <a href="#agent-runtime">agent storage</a>.</td>
 </tr>
 <tr>
 <th scope="row">Managed state</th>
-<td>PI WEB registries and archives.</td>
-<td><code>~/.pi-web</code> by default. <strong>Not</strong> a user-editable config API. See <a href="#managed-data-directory">storage</a>.</td>
+<td>PI STUDIO registries and archives.</td>
+<td><code>~/.pi-studio</code> by default. <strong>Not</strong> a user-editable config API. See <a href="#managed-data-directory">storage</a>.</td>
 </tr>
 </tbody></table></div>
 <p id="precedence"><strong>Machine precedence:</strong> built-in default → global config → environment override (highest priority).</p>
@@ -155,15 +155,15 @@
 </tr>
 <tr>
 <th scope="row">Other core keys</th>
-<td>Not supported in project config. Plugins may own separate files, such as <code>.pi-web/tasks.json</code>.</td>
+<td>Not supported in project config. Plugins may own separate files, such as <code>.pi-studio/tasks.json</code>.</td>
 </tr>
 </tbody></table></div>
-<details class="config-details"><summary>Minimal project config example</summary><p>Merge these keys into the existing file; preserve other settings.</p><div class="code-card"><div class="copy-row"><strong>.pi-web/config.json</strong><button class="copy-button" data-copy="#project-config-example">Copy</button></div><pre id="project-config-example"><code>{
+<details class="config-details"><summary>Minimal project config example</summary><p>Merge these keys into the existing file; preserve other settings.</p><div class="code-card"><div class="copy-row"><strong>.pi-studio/config.json</strong><button class="copy-button" data-copy="#project-config-example">Copy</button></div><pre id="project-config-example"><code>{
   "version": 1,
   "uploads": { "defaultFolder": "manual/uploads" },
   "attachments": { "defaultFolder": "prompt-attachments" }
 }</code></pre></div></details>
-<details class="config-details" id="custom-config-path"><summary>Custom config paths: service commands and recovery</summary><p><code>start</code>, <code>restart</code>, and <code>doctor</code> use the config path saved in the installed services for readiness checks unless the caller supplies a nonempty <code>PI_WEB_CONFIG</code> override. <code>doctor</code> checks the managed setup, not every custom runtime environment.</p>
+<details class="config-details" id="custom-config-path"><summary>Custom config paths: service commands and recovery</summary><p><code>start</code>, <code>restart</code>, and <code>doctor</code> use the config path saved in the installed services for readiness checks unless the caller supplies a nonempty <code>PI_STUDIO_CONFIG</code> override. <code>doctor</code> checks the managed setup, not every custom runtime environment.</p>
 <div class="table-scroll" role="region" aria-label="Custom config path: situation → action" tabindex="0">
 <table class="reference-table ">
 <caption>Custom config path: situation → action</caption>
@@ -174,15 +174,15 @@
 <tbody>
 <tr>
 <th scope="row">Use the installed config</th>
-<td>Run <code>pi-web start</code>, <code>pi-web restart</code>, or <code>pi-web doctor</code> normally.</td>
+<td>Run <code>pi-studio start</code>, <code>pi-studio restart</code>, or <code>pi-studio doctor</code> normally.</td>
 </tr>
 <tr>
 <th scope="row">Override the path for one command</th>
-<td>Supply a nonempty <code>PI_WEB_CONFIG</code> when invoking that command. This does not rewrite service definitions.</td>
+<td>Supply a nonempty <code>PI_STUDIO_CONFIG</code> when invoking that command. This does not rewrite service definitions.</td>
 </tr>
 <tr>
 <th scope="row">Change the managed service config path</th>
-<td>Run <code>pi-web install --config /path/to/config.json</code> to regenerate both web/API and sessiond service definitions.</td>
+<td>Run <code>pi-studio install --config /path/to/config.json</code> to regenerate both web/API and sessiond service definitions.</td>
 </tr>
 <tr>
 <th scope="row">Upgrade from an installation that set the path only for the web service</th>
@@ -190,11 +190,11 @@
 </tr>
 <tr>
 <th scope="row">systemd cannot verify the loaded service environment</th>
-<td>The command fails rather than guesses if manager state is stale, the loaded fragment differs, or a PI WEB-managed environment value cannot be verified. Managed <code>Environment=</code> values (currently <code>PI_WEB_CONFIG</code>) must match the installed definition; unrelated variables are ignored. Drop-ins that leave managed values unchanged are allowed.</td>
+<td>The command fails rather than guesses if manager state is stale, the loaded fragment differs, or a PI STUDIO-managed environment value cannot be verified. Managed <code>Environment=</code> values (currently <code>PI_STUDIO_CONFIG</code>) must match the installed definition; unrelated variables are ignored. Drop-ins that leave managed values unchanged are allowed.</td>
 </tr>
 <tr>
 <th scope="row">systemd uses <code>EnvironmentFile=</code></th>
-<td>Accepted with a nonfatal warning. File contents are not included in systemctl's <code>Environment</code> property and PI WEB does not inspect them, so config overrides in those files cannot be verified.</td>
+<td>Accepted with a nonfatal warning. File contents are not included in systemctl's <code>Environment</code> property and PI STUDIO does not inspect them, so config overrides in those files cannot be verified.</td>
 </tr>
 <tr>
 <th scope="row">launchd has an old config path or a label loaded from another plist</th>
@@ -204,7 +204,7 @@
 </details>
 </section>
 <section id="ui-settings"><h2>UI & new-session defaults</h2>
-<p>Use the selectors in chat, <strong>Settings → General → Theme</strong>, or <strong>Settings → Keyboard</strong>. Pi defaults and PI WEB UI settings live in different configuration files.</p>
+<p>Use the selectors in chat, <strong>Settings → General → Theme</strong>, or <strong>Settings → Keyboard</strong>. Pi defaults and PI STUDIO UI settings live in different configuration files.</p>
 <div class="table-scroll" role="region" aria-label="UI preferences" tabindex="0">
 <table class="reference-table settings-table">
 <caption>UI preferences</caption>
@@ -233,7 +233,7 @@
 <tr>
 <th scope="row"><span id="theme-default" class="reference-anchor"></span>Default theme<br><code>defaultTheme.themeId / defaultTheme.auto</code></th>
 <td>Gateway; device choices take precedence</td>
-<td>PI WEB Dark with Auto on</td>
+<td>PI STUDIO Dark with Auto on</td>
 <td>Starting theme for browsers using the default; not a forced theme or a project setting.</td>
 <td>Settings save / browser config refresh; no restart</td>
 </tr>
@@ -260,7 +260,7 @@
 </tr>
 </tbody></table></div>
 <details class="config-details"><summary>Default selection and shortcut rules</summary><ul><li>Model/thinking stars change new-session defaults, not the current session. Resumed sessions keep saved choices.</li><li>Project Pi settings, explicit startup choices, and per-model thinking settings can override defaults. If the default model is disabled, startup falls back to the first enabled model.</li><li><code>mod</code> means Ctrl or ⌘. App shortcuts support sequences; composer send bindings support one combination only.</li><li>Unassigned Enter/Shift+Enter insert newlines; Enter accepts a selected completion first. <code>null</code> disables keyboard submission, not the send button.</li><li>Existing browser-local Enter preferences remain the fallback until a composer binding is configured. Reset restores that fallback.</li></ul><p><a href="config.md#shortcut-config">Full shortcut matching rules →</a></p></details>
-<details class="config-details"><summary>Theme defaults and device choices</summary><p>In <strong>Settings → General → Theme</strong>, choose a theme and Auto mode, then select <strong>Use on this device</strong>, <strong>Set as default</strong>, or <strong>Use the default</strong>. The action palette’s Select theme action opens the same controls.</p><ul><li>Use on this device saves a browser-local override. Existing browser choices remain overrides.</li><li>Set as default writes global gateway config without changing saved device choices. Browsers following the default pick it up after a page reload or config refresh.</li><li>Use the default clears this browser’s override. Precedence is device choice → configured default → built-in default.</li><li>Use a qualified theme contribution ID, not a display name or theme-pair ID. Built-in IDs are <code>themes:pi-web-dark</code>, <code>themes:pi-web-light</code>, and <code>themes:classic</code>.</li><li>Auto must be a boolean. It follows this device’s light/dark preference for paired themes; unpaired themes stay selected. Auto off keeps the theme fixed.</li><li>Unavailable themes fall back to Classic without erasing the requested choice. Applying a default never creates a device override.</li><li>The default stays on the gateway, even with a remote machine selected. Project-local theme defaults and remote theme contributions are unsupported.</li></ul><pre><code>{ "defaultTheme": { "themeId": "themes:pi-web-dark", "auto": true } }</code></pre><p><a href="config.md#theme-default-and-device-choices">Full theme preference reference →</a></p></details>
+<details class="config-details"><summary>Theme defaults and device choices</summary><p>In <strong>Settings → General → Theme</strong>, choose a theme and Auto mode, then select <strong>Use on this device</strong>, <strong>Set as default</strong>, or <strong>Use the default</strong>. The action palette’s Select theme action opens the same controls.</p><ul><li>Use on this device saves a browser-local override. Existing browser choices remain overrides.</li><li>Set as default writes global gateway config without changing saved device choices. Browsers following the default pick it up after a page reload or config refresh.</li><li>Use the default clears this browser’s override. Precedence is device choice → configured default → built-in default.</li><li>Use a qualified theme contribution ID, not a display name or theme-pair ID. Built-in IDs are <code>themes:pi-studio-dark</code>, <code>themes:pi-studio-light</code>, and <code>themes:classic</code>.</li><li>Auto must be a boolean. It follows this device’s light/dark preference for paired themes; unpaired themes stay selected. Auto off keeps the theme fixed.</li><li>Unavailable themes fall back to Classic without erasing the requested choice. Applying a default never creates a device override.</li><li>The default stays on the gateway, even with a remote machine selected. Project-local theme defaults and remote theme contributions are unsupported.</li></ul><pre><code>{ "defaultTheme": { "themeId": "themes:pi-studio-dark", "auto": true } }</code></pre><p><a href="config.md#theme-default-and-device-choices">Full theme preference reference →</a></p></details>
 <h3 id="prompt-completions">Composer shortcuts (not config keys)</h3>
 <div class="table-scroll" role="region" aria-label="Completion triggers" tabindex="0">
 <table class="reference-table ">
@@ -312,14 +312,14 @@
 <tr>
 <th scope="row"><span id="manual-uploads" class="reference-anchor"></span>Files panel uploads<br><code>uploads.defaultFolder</code></th>
 <td>Machine + project</td>
-<td><code>.pi-web/uploads</code></td>
+<td><code>.pi-studio/uploads</code></td>
 <td>Default folder for Upload dialogs and Files-panel drops.</td>
 <td>New dialogs / batches after config refresh</td>
 </tr>
 <tr>
 <th scope="row"><span id="prompt-attachments" class="reference-anchor"></span>Saved prompt attachments<br><code>attachments.defaultFolder</code></th>
 <td>Machine + project</td>
-<td><code>.pi-web/attachments</code></td>
+<td><code>.pi-studio/attachments</code></td>
 <td>Folder used by the composer’s <strong>Save to …</strong> delivery option.</td>
 <td>New saves after config refresh</td>
 </tr>
@@ -331,7 +331,7 @@
 <td>Web/API + sessiond restart</td>
 </tr>
 </tbody></table></div>
-<div class="callout warning"><strong>External paths are not an agent sandbox.</strong> The allowlist controls PI WEB browser/API file exposure, not the underlying agent’s or OS user’s permissions.</div>
+<div class="callout warning"><strong>External paths are not an agent sandbox.</strong> The allowlist controls PI STUDIO browser/API file exposure, not the underlying agent’s or OS user’s permissions.</div>
 <details class="config-details"><summary>Path formats, overwrite behavior, and folder rules</summary><ul><li><strong>External roots:</strong> existing directories using absolute paths or <code>~</code>, such as <code>/opt/reference</code>, <code>~/SDKs</code>, or Windows absolute paths on Windows hosts. Relative roots are not supported; symlink escapes are rejected.</li><li><strong>Upload/attachment folders:</strong> nonempty workspace-relative paths. Absolute paths and <code>..</code> traversal are rejected; repeated separators and backslashes are normalized.</li><li><strong>Uploads:</strong> create parent folders; existing files are preserved unless overwrite is enabled in the review dialog. Direct drops never overwrite.</li><li><strong>Upload dialog only:</strong> clear the destination field to upload that batch to the workspace root.</li><li><strong>Attachments API:</strong> an explicit per-request folder overrides the configured default.</li></ul></details>
 </section>
 <section id="session-tools"><h2>Session daemon</h2>
@@ -379,7 +379,7 @@
 <th scope="row">Environment facts<br><code>environmentFacts</code></th>
 <td>Machine</td>
 <td><code>true</code></td>
-<td>Include PI WEB nesting and deployment facts in session system prompts.</td>
+<td>Include PI STUDIO nesting and deployment facts in session system prompts.</td>
 <td>Sessiond restart</td>
 </tr>
 </tbody></table></div>
@@ -387,7 +387,7 @@
 <details class="config-details"><summary>Question forms and extension dialogs are different</summary><ul><li><strong>Question forms:</strong> up to 20 questions, up to 12 choices per question, custom text, and optional answers. An ordinary chat message cancels an open form; a new form supersedes the old one.</li><li><strong>Persistence:</strong> an open question form survives browser/web restarts while its owning session daemon remains running.</li><li><strong>Extension dialogs:</strong> always supported, independently of <code>askUser</code>. The sooner of the extension’s timeout and the configured daemon timeout wins.</li><li><strong>Timeout result:</strong> <code>false</code> for confirmation; <code>undefined</code> for selection/text input.</li></ul></details>
 </section>
 <section id="plugin-config"><h2>Plugins & packages</h2>
-<p>Use <strong>Settings → PI WEB plugins</strong> for enablement/settings and <strong>Settings → Pi packages</strong> for package installation. These are separate operations.</p>
+<p>Use <strong>Settings → PI STUDIO plugins</strong> for enablement/settings and <strong>Settings → Pi packages</strong> for package installation. These are separate operations.</p>
 <div class="table-scroll" role="region" aria-label="Plugin configuration" tabindex="0">
 <table class="reference-table settings-table">
 <caption>Plugin configuration</caption>
@@ -435,7 +435,7 @@
 <td>Type <code>/reload</code> in each idle session on the target machine.</td>
 </tr>
 <tr>
-<th scope="row">A PI WEB server plugin (<code>serverModule</code>)</th>
+<th scope="row">A PI STUDIO server plugin (<code>serverModule</code>)</th>
 <td>Manually restart sessiond, then reload the browser.</td>
 </tr>
 <tr>
@@ -453,23 +453,23 @@
 </tr></thead>
 <tbody>
 <tr>
-<th scope="row"><code>pi-web plugins disable &lt;plugin-id&gt; --restart</code></th>
+<th scope="row"><code>pi-studio plugins disable &lt;plugin-id&gt; --restart</code></th>
 <td>Persist disablement; rejects required Terminal.</td>
 </tr>
 <tr>
-<th scope="row"><code>pi-web plugins safe-start show</code></th>
+<th scope="row"><code>pi-studio plugins safe-start show</code></th>
 <td>Inspect safe-start state.</td>
 </tr>
 <tr>
-<th scope="row"><code>pi-web plugins safe-start set bundled-only --restart</code></th>
+<th scope="row"><code>pi-studio plugins safe-start set bundled-only --restart</code></th>
 <td>Skip external server packages; keep bundled plugins.</td>
 </tr>
 <tr>
-<th scope="row"><code>pi-web plugins safe-start set none --restart</code></th>
+<th scope="row"><code>pi-studio plugins safe-start set none --restart</code></th>
 <td>Skip all server plugins, including Terminal; keep diagnosis/Settings surfaces.</td>
 </tr>
 <tr>
-<th scope="row"><code>pi-web plugins safe-start clear --restart</code></th>
+<th scope="row"><code>pi-studio plugins safe-start clear --restart</code></th>
 <td>Restore normal configured discovery.</td>
 </tr>
 </tbody></table></div>
@@ -524,28 +524,28 @@
 </tr></thead>
 <tbody>
 <tr>
-<th scope="row"><code>PI_WEB_SESSIOND_SOCKET</code></th>
+<th scope="row"><code>PI_STUDIO_SESSIOND_SOCKET</code></th>
 <td>Web/API + sessiond</td>
-<td><code>$PI_WEB_DATA_DIR/sessiond.sock</code></td>
+<td><code>$PI_STUDIO_DATA_DIR/sessiond.sock</code></td>
 <td>Unix socket path; both processes must use the same endpoint.</td>
 <td>Web/API + sessiond restart</td>
 </tr>
 <tr>
-<th scope="row"><code>PI_WEB_SESSIOND_PORT</code></th>
+<th scope="row"><code>PI_STUDIO_SESSIOND_PORT</code></th>
 <td>Sessiond</td>
 <td>Unset (Unix socket)</td>
 <td>Listen over TCP instead of the Unix socket. Also set the web-to-daemon URL.</td>
 <td>Sessiond restart; update web/API connection</td>
 </tr>
 <tr>
-<th scope="row"><code>PI_WEB_SESSIOND_HOST</code></th>
+<th scope="row"><code>PI_STUDIO_SESSIOND_HOST</code></th>
 <td>Sessiond</td>
 <td><code>127.0.0.1</code></td>
 <td>TCP listen address when TCP mode is enabled.</td>
 <td>Sessiond restart</td>
 </tr>
 <tr>
-<th scope="row"><code>PI_WEB_SESSIOND_URL</code></th>
+<th scope="row"><code>PI_STUDIO_SESSIOND_URL</code></th>
 <td>Web/API</td>
 <td>Unset (Unix socket)</td>
 <td>Daemon URL when using TCP.</td>
@@ -567,23 +567,23 @@
 </tr></thead>
 <tbody>
 <tr>
-<th scope="row"><span id="managed-data-directory" class="reference-anchor"></span>PI WEB state<br><code>PI_WEB_DATA_DIR</code></th>
-<td>PI WEB machine</td>
-<td><code>~/.pi-web</code></td>
+<th scope="row"><span id="managed-data-directory" class="reference-anchor"></span>PI STUDIO state<br><code>PI_STUDIO_DATA_DIR</code></th>
+<td>PI STUDIO machine</td>
+<td><code>~/.pi-studio</code></td>
 <td>Registries, plugins, daemon socket, and session archives.</td>
 <td>Stop services before switching; then restart</td>
 </tr>
 <tr>
-<th scope="row"><code>PI_WEB_PROJECTS_FILE</code></th>
+<th scope="row"><code>PI_STUDIO_PROJECTS_FILE</code></th>
 <td>Web/API + sessiond</td>
-<td><code>$PI_WEB_DATA_DIR/projects.json</code></td>
+<td><code>$PI_STUDIO_DATA_DIR/projects.json</code></td>
 <td>Override the projects registry file.</td>
 <td>Web/API + sessiond restart</td>
 </tr>
 <tr>
-<th scope="row"><code>PI_WEB_MACHINES_FILE</code></th>
+<th scope="row"><code>PI_STUDIO_MACHINES_FILE</code></th>
 <td>Web/API</td>
-<td><code>$PI_WEB_DATA_DIR/machines.json</code></td>
+<td><code>$PI_STUDIO_DATA_DIR/machines.json</code></td>
 <td>Override the remote-machine registry file.</td>
 <td>Web/API restart</td>
 </tr>
@@ -602,8 +602,8 @@
 <td>Sessiond restart</td>
 </tr>
 </tbody></table></div>
-<details class="config-details"><summary>Changing directories or running a second instance</summary><ul><li><strong>State migration:</strong> a new PI WEB data directory starts with empty registries and no archives. Stop PI WEB before copying state. For archives, copy both <code>archived-sessions.json</code> and <code>archived-sessions/</code>.</li><li><strong>Second instance:</strong> use a distinct data directory, daemon endpoint, and web port. One live session daemon owns each data directory.</li><li><strong>Agent state:</strong> uses the bundled Pi SDK’s data layout. PI WEB does not convert profiles or move PI WEB-managed archives when the agent directory changes.</li><li><strong>Active path:</strong> sessiond keeps the agent directory resolved at startup. Web/API-only restarts do not change it.</li></ul></details>
-<details class="config-details"><summary>Environment inherited by agent processes</summary><ul><li>Agent shells, terminals, and child sessions inherit the daemon environment, including its resolved Pi state paths.</li><li><code>NODE_ENV</code> and <code>PORT</code> are removed from the environment given to agent processes.</li><li><code>PI_WEB_SESSION=1</code> marks nested processes. Inherited <code>PI_WEB_*</code> values still point to the live hosting instance.</li><li>Do not restart the hosting session daemon from inside an active session you need to preserve.</li></ul></details>
+<details class="config-details"><summary>Changing directories or running a second instance</summary><ul><li><strong>State migration:</strong> a new PI STUDIO data directory starts with empty registries and no archives. Stop PI STUDIO before copying state. For archives, copy both <code>archived-sessions.json</code> and <code>archived-sessions/</code>.</li><li><strong>Second instance:</strong> use a distinct data directory, daemon endpoint, and web port. One live session daemon owns each data directory.</li><li><strong>Agent state:</strong> uses the bundled Pi SDK’s data layout. PI STUDIO does not convert profiles or move PI STUDIO-managed archives when the agent directory changes.</li><li><strong>Active path:</strong> sessiond keeps the agent directory resolved at startup. Web/API-only restarts do not change it.</li></ul></details>
+<details class="config-details"><summary>Environment inherited by agent processes</summary><ul><li>Agent shells, terminals, and child sessions inherit the daemon environment, including its resolved Pi state paths.</li><li><code>NODE_ENV</code> and <code>PORT</code> are removed from the environment given to agent processes.</li><li><code>PI_STUDIO_SESSION=1</code> marks nested processes. Inherited <code>PI_STUDIO_*</code> values still point to the live hosting instance.</li><li>Do not restart the hosting session daemon from inside an active session you need to preserve.</li></ul></details>
 </section>
 <section id="providers"><h2>Providers, catalogs & project trust</h2>
 <div class="table-scroll" role="region" aria-label="Provider and trust configuration" tabindex="0">
@@ -635,13 +635,13 @@
 <td>Automatic; reopen model selector to see changes</td>
 </tr>
 <tr>
-<th scope="row">Offline mode<br><code>PI_WEB_OFFLINE / PI_OFFLINE</code></th>
+<th scope="row">Offline mode<br><code>PI_STUDIO_OFFLINE / PI_OFFLINE</code></th>
 <td>Web/API + sessiond environment</td>
 <td>Unset (off). Any nonempty value disables release checks and provider catalog network refresh.</td>
 <td>Web/API + sessiond restart</td>
 </tr>
 <tr>
-<th scope="row">Skip release checks<br><code>PI_WEB_SKIP_VERSION_CHECK / PI_SKIP_VERSION_CHECK</code></th>
+<th scope="row">Skip release checks<br><code>PI_STUDIO_SKIP_VERSION_CHECK / PI_SKIP_VERSION_CHECK</code></th>
 <td>Web/API environment</td>
 <td>Unset (off). Any nonempty value suppresses release checks, <strong>not</strong> catalog refresh.</td>
 <td>Web/API restart</td>
@@ -649,7 +649,7 @@
 <tr>
 <th scope="row"><span id="project-trust"></span>Project trust</th>
 <td>Pi trust settings / workspace trust toggle</td>
-<td>Project code runs with agent permissions. PI WEB has no browser trust prompt.</td>
+<td>Project code runs with agent permissions. PI STUDIO has no browser trust prompt.</td>
 <td>Evaluated at each session start</td>
 </tr>
 </tbody></table></div>
@@ -681,12 +681,12 @@
 </tr>
 <tr>
 <th scope="row">No decision; <code>defaultProjectTrust=never</code> or <code>ask</code></th>
-<td>Skip project resources; PI WEB has no browser trust prompt.</td>
+<td>Skip project resources; PI STUDIO has no browser trust prompt.</td>
 </tr>
 </tbody></table></div>
 </details>
 <details class="config-details"><summary>Catalog refresh timing and failures</summary><ul><li><strong>Freshness:</strong> Pi treats catalogs as fresh for four hours, so most hourly checks make no network request.</li><li><strong>Login/logout:</strong> refresh immediately, bypassing the freshness window (except in offline mode).</li><li><strong>Timeout:</strong> 60 seconds. Timeout or unreachable provider gets one retry after five minutes; an HTTP error waits until the next scheduled refresh.</li><li><strong>Failure:</strong> retain the last successful catalog and log the problem.</li><li><strong>While refreshing:</strong> session startup can briefly wait on shared runtime state. The activity line reports concurrent refreshes.</li></ul></details>
-<p>Pi virtual models are unsupported in PI WEB, even from global extensions: their routers capture session-bound context that cannot safely be shared across sessions. Calls to <code>registerVirtualModel()</code> or <code>unregisterVirtualModel()</code> on the shared runtime raise explicit errors, reported in bootstrap diagnostics or session extension errors. Disable the extension's virtual-model feature and select a physical model instead; restarting the daemon does not enable it.</p>
+<p>Pi virtual models are unsupported in PI STUDIO, even from global extensions: their routers capture session-bound context that cannot safely be shared across sessions. Calls to <code>registerVirtualModel()</code> or <code>unregisterVirtualModel()</code> on the shared runtime raise explicit errors, reported in bootstrap diagnostics or session extension errors. Disable the extension's virtual-model feature and select a physical model instead; restarting the daemon does not enable it.</p>
 <details class="config-details"><summary>Provider safety and logging</summary><ul><li>Provider registrations/configuration are a startup snapshot. <code>/reload</code> cannot rebuild it.</li><li>Accepted model-list updates are machine-wide; if two workspaces register lists for one provider, the last registration wins.</li><li>Model entries can override provider URLs/headers. Pi extensions remain trusted code; this is not a security boundary.</li><li>Provider decisions are recorded in daemon logs, not browser notifications. Entries omit provider configuration and credentials. See <a href="faq#provider-extension-no-effect">provider extension troubleshooting</a> for ignored changes.</li></ul></details>
 </section>
 <section id="environment"><h2>Environment overrides</h2>
@@ -702,49 +702,49 @@
 <tbody>
 <tr>
 <th scope="row"><code>host</code></th>
-<td><code>PI_WEB_HOST</code></td>
+<td><code>PI_STUDIO_HOST</code></td>
 <td>Bind address</td>
 </tr>
 <tr>
 <th scope="row"><code>port</code></th>
-<td><code>PI_WEB_PORT</code>, then <code>PORT</code></td>
+<td><code>PI_STUDIO_PORT</code>, then <code>PORT</code></td>
 <td>Port number</td>
 </tr>
 <tr>
 <th scope="row"><code>allowedHosts</code></th>
-<td><code>PI_WEB_ALLOWED_HOSTS</code></td>
+<td><code>PI_STUDIO_ALLOWED_HOSTS</code></td>
 <td>Comma-separated hosts, or <code>true</code></td>
 </tr>
 <tr>
 <th scope="row"><code>maxUploadBytes</code></th>
-<td><code>PI_WEB_MAX_UPLOAD_BYTES</code></td>
+<td><code>PI_STUDIO_MAX_UPLOAD_BYTES</code></td>
 <td>Bytes</td>
 </tr>
 <tr>
 <th scope="row"><code>spawnSessions</code></th>
-<td><code>PI_WEB_SPAWN_SESSIONS</code></td>
+<td><code>PI_STUDIO_SPAWN_SESSIONS</code></td>
 <td><code>0 | 1 | true | false</code></td>
 </tr>
 <tr>
 <th scope="row"><code>subsessions</code></th>
-<td><code>PI_WEB_SUBSESSIONS</code></td>
+<td><code>PI_STUDIO_SUBSESSIONS</code></td>
 <td><code>0 | 1 | true | false</code></td>
 </tr>
 <tr>
 <th scope="row"><code>askUser</code></th>
-<td><code>PI_WEB_ASK_USER</code></td>
+<td><code>PI_STUDIO_ASK_USER</code></td>
 <td><code>0 | 1 | true | false</code></td>
 </tr>
 <tr>
 <th scope="row"><code>environmentFacts</code></th>
-<td><code>PI_WEB_ENVIRONMENT_FACTS</code></td>
+<td><code>PI_STUDIO_ENVIRONMENT_FACTS</code></td>
 <td><code>0 | 1 | true | false</code></td>
 </tr>
 </tbody></table></div>
 <p><strong>Environment-only settings:</strong> config paths are under <a href="#files">Config files</a>; daemon endpoints under <a href="#network">Networking</a>; directory overrides under <a href="#storage">Storage</a>; offline flags under <a href="#providers">Providers</a>.</p>
 </section>
 <section id="worktree-pre-remove-hook"><h2>Workspace cleanup hook</h2>
-<p>Optional executable script at <code>.pi-web/hooks/worktree-pre-remove</code>. Use it to stop containers or release workspace resources before removal.</p>
+<p>Optional executable script at <code>.pi-studio/hooks/worktree-pre-remove</code>. Use it to stop containers or release workspace resources before removal.</p>
 <div class="table-scroll" role="region" aria-label="Hook contract" tabindex="0">
 <table class="reference-table ">
 <caption>Hook contract</caption>
@@ -784,7 +784,7 @@
 
     <footer class="site-footer">
       <div class="container footer-inner">
-        <span>PI WEB docs</span>
+        <span>PI STUDIO docs</span>
         <div class="footer-links">
           <a href="./">Home</a>
           <a href="remote-first">Remote-first</a>
@@ -793,10 +793,10 @@
           <a href="config">Config</a>
           <a href="plugins">Plugins</a>
           <a href="faq">FAQ</a>
-          <a href="https://github.com/jmfederico/pi-web">GitHub</a>
+          <a href="https://github.com/pi-studio/pi-studio">GitHub</a>
           <span class="version-switcher" role="group" aria-label="Documentation version">
-            <a class="version-switcher-option" data-version-option="stable" href="https://pi-web.dev/config" aria-current="true">Stable</a>
-            <a class="version-switcher-option" data-version-option="dev" href="https://pi-web.dev/dev/config">Dev</a>
+            <a class="version-switcher-option" data-version-option="stable" href="https://pi-studio.dev/config" aria-current="true">Stable</a>
+            <a class="version-switcher-option" data-version-option="dev" href="https://pi-studio.dev/dev/config">Dev</a>
           </span>
         </div>
       </div>

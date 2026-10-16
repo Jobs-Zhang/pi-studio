@@ -6,7 +6,7 @@ dist/
 .playwright-cli/
 .planning/
 
-# Local plugin development sandboxes. Symlink these into ~/.pi-web/plugins/<plugin-id>.
+# Local plugin development sandboxes. Symlink these into ~/.pi-studio/plugins/<plugin-id>.
 /dev-plugins/
 
 # Local Docker image build hooks for development containers.
@@ -14,7 +14,7 @@ dist/
 !/docker/custom-image.d/.gitkeep
 
 # Local runtime attachment uploads (created by the chat composer "save to folder" mode).
-.pi-web/
+.pi-studio/
 
 # Dev docs site staging output (scripts/build-docs-dev.mjs).
 /docs/.deploy/

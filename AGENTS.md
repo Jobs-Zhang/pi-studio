@@ -2,7 +2,7 @@
 
 ## Project identity
 
-PI Studio is the multi-platform product built from PI WEB. It provides one shared coding workspace experience across:
+PI Studio is the multi-platform product built from PI STUDIO. It provides one shared coding workspace experience across:
 
 - Web browser
 - Windows Desktop
@@ -14,8 +14,8 @@ The product model is: machine → project → workspace → session. Keep behavi
 
 The project runs locally with split systemd user services:
 
-- `pi-web-sessiond.service` runs `npm run start:sessiond` in non-autoreload, non-auto-restart mode.
-- `pi-web-ui-dev.service` runs the web/API and Vite UI in development mode with `npm run dev:web` and `npm run dev:client`.
+- `pi-studio-sessiond.service` runs `npm run start:sessiond` in non-autoreload, non-auto-restart mode.
+- `pi-studio-ui-dev.service` runs the web/API and Vite UI in development mode with `npm run dev:web` and `npm run dev:client`.
 
 The session runtime owner is long-lived and separate from the autoreloading UI/API process. Browser disconnects and UI/API restarts must not stop active Pi sessions.
 
@@ -53,7 +53,7 @@ The Android client lives in `android/` and uses Kotlin, the Gradle wrapper, and 
 The Desktop client lives in `desktop/`. `desktop/electron-builder.yml` is the single packaging configuration source. `desktop/dist/` is never committed.
 
 - Build: `cd desktop && npm run build`
-- Installer: `desktop/dist/PI Desktop Setup.exe`
+- Installer: `desktop/dist/PI Studio Setup.exe`
 - The installer, not the portable executable, is the supported Windows deliverable.
 - The Desktop shell owns connection setup, direct HTTP(S) connections, recent connections, SSH configuration, and SSH tunnels. The connected Gateway normally provides the web application UI.
 - Do not assume the UI is bundled into the Desktop shell. The shell and Gateway are separate delivery boundaries.
@@ -76,14 +76,14 @@ The Desktop client lives in `desktop/`. `desktop/electron-builder.yml` is the si
 
 ## Configuration and URL boundaries
 
-- `$PI_WEB_DATA_DIR` contains PI Studio-managed state such as projects and machines; it is not the user-editable configuration API.
-- Global user and machine configuration belongs in `$PI_WEB_CONFIG` or `~/.config/pi-web/config.json`.
-- Project-local core configuration belongs in `<project>/.pi-web/config.json`.
-- Plugin-owned project configuration may use separate files such as `.pi-web/tasks.json`.
-- Client application paths must be application-relative without a leading slash, for example `api/...` and `pi-web-plugins/...`.
+- `$PI_STUDIO_DATA_DIR` contains PI Studio-managed state such as projects and machines; it is not the user-editable configuration API.
+- Global user and machine configuration belongs in `$PI_STUDIO_CONFIG` or `~/.config/pi-studio/config.json`.
+- Project-local core configuration belongs in `<project>/.pi-studio/config.json`.
+- Plugin-owned project configuration may use separate files such as `.pi-studio/tasks.json`.
+- Client application paths must be application-relative without a leading slash, for example `api/...` and `pi-studio-plugins/...`.
 - Encode dynamic path segments with `encodeURIComponent` and query values with `URLSearchParams` where appropriate.
 - Use the existing URL helpers at browser boundaries: `request()`, `resolveAppUrl()`, `resolveAppWebSocketUrl()`, and `resolvePluginModuleUrl()`.
-- Do not introduce raw leading `/api` or `/pi-web-plugins` references in production client code.
+- Do not introduce raw leading `/api` or `/pi-studio-plugins` references in production client code.
 
 ## Verification policy
 

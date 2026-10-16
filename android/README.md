@@ -1,10 +1,10 @@
-# PI Web for Android
+# PI Studio for Android
 
-[PI WEB](https://pi-web.dev) 的 Android 客户端 —— 手机上打开你的 AI 编码工作台。
+[PI STUDIO](https://pi-studio.dev) 的 Android 客户端 —— 手机上打开你的 AI 编码工作台。
 
 ## 功能
 
-- 🔗 **直连** — 输入可达的 PI WEB 网关地址即可连接
+- 🔗 **直连** — 输入可达的 PI STUDIO 网关地址即可连接
 - 🖥 **SSH 隧道** — 手机不在内网时，用 SSH 账号密码把网关映射到本机回环端口
 - 📌 **最近使用** — 直连与 SSH 连接都会记录，点击即重连
 - 🔒 **记住密码** — 密码用 Android Keystore 加密后保存在本机，明文不落盘
@@ -12,14 +12,14 @@
 ## 连接方式
 
 - **直连**：网关地址（如 `http://192.168.1.100:8504`）在手机上可达时直接使用。
-- **SSH**：填写 SSH 地址（`user@host` 或 IP）、端口、登录用户、密码，再填「远程网关」（PI WEB 在 SSH 主机上可被访问的地址，默认 `http://127.0.0.1:8504`）。隧道建立在手机本机，连接页随后打开 `http://127.0.0.1:<随机端口>`。
+- **SSH**：填写 SSH 地址（`user@host` 或 IP）、端口、登录用户、密码，再填「远程网关」（PI STUDIO 在 SSH 主机上可被访问的地址，默认 `http://127.0.0.1:8504`）。隧道建立在手机本机，连接页随后打开 `http://127.0.0.1:<随机端口>`。
 
 Android 上不读取 `~/.ssh/config`，也不支持密钥文件与 ssh agent：**只支持账号密码认证**。
 
 ## 环境要求
 
 - Android 8.0（API 26）或更高
-- 可达的 PI WEB 网关
+- 可达的 PI STUDIO 网关
 
 ## 下载
 
@@ -43,7 +43,7 @@ export ANDROID_HOME=~/Android/sdk
 | --- | --- |
 | `app/src/main/java/dev/pi/web/MainActivity.kt` | WebView 壳：加载连接页、返回键、系统栏 insets |
 | `.../ConnectionService.kt` | 历史、能力协商、隧道生命周期（对应 `desktop/main.cjs` 的 IPC 处理器） |
-| `.../ConnectBridge.kt` | 把 `window.piWebDesktop` 契约暴露给连接页 |
+| `.../ConnectBridge.kt` | 把 `window.piStudioDesktop` 契约暴露给连接页 |
 | `.../SshTunnel.kt` | JSch 隧道：认证 + `direct-tcpip` 本地转发 |
 | `.../ConnectionStore.kt`、`.../PasswordCipher.kt` | 最近使用的持久化；密码的 Keystore 加密 |
 | `.../ConnectionModels.kt`、`.../ConnectPayloads.kt` | 与 `desktop/history.cjs`、`desktop/main.cjs` 对齐的数据结构与纯函数 |

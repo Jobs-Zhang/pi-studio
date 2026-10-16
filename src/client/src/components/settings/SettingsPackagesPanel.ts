@@ -1,3 +1,4 @@
+import { t } from "../../i18n";
 import { css, html, LitElement, type TemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import type { PiPackageInfo, PiPackageInstallableSuggestion, PiPackageScope, PiPackagesResponse } from "../../api";
@@ -27,9 +28,9 @@ export class SettingsPackagesPanel extends LitElement {
     const showPackageControls = this.packagesResponse !== undefined;
     return html`
       <settings-panel-frame
-        heading="Pi packages"
+        heading=${t("packagesPanel.heading")}
         .description=${packagesDescription(targetLabel)}
-        actionLabel="Reload"
+        actionLabel=${t("common.reload")}
         actionTitle=${`Reload Pi packages from ${targetLabel}`}
         .actionDisabled=${this.loading || this.isOperating}
         .notices=${this.panelNotices(showPackageControls)}
@@ -49,7 +50,7 @@ export class SettingsPackagesPanel extends LitElement {
     if (showTrustedCodeWarning) {
       notices.push({
         type: "security",
-        content: html`<strong>Trusted code warning:</strong> Pi packages and PI WEB plugins can run with your user permissions. Install packages and enable plugins only from sources you trust.`,
+        content: html`<strong>${t("packagesPanel.trustedHeading")}:</strong> ${t("packagesPanel.trustedDetail")}`,
       });
     }
     return notices;
@@ -70,9 +71,9 @@ export class SettingsPackagesPanel extends LitElement {
     const suggestions = this.packagesResponse?.installableKnownPackages ?? [];
     if (suggestions.length === 0) return null;
     return html`
-      <section class="known-package-section" aria-label="Available known Pi packages">
-        <h3>Available packages</h3>
-        <p>PI WEB ships these packages so you can install them on ${targetLabel} with one click, with no path to type — including one you previously removed.</p>
+      <section class="known-package-section" aria-label=${t("packagesPanel.availableAria")}>
+        <h3>${t("packagesPanel.available")}</h3>
+        <p>${t("packagesPanel.availableDetail", { target: targetLabel })}</p>
         <div class="known-package-list">
           ${suggestions.map((suggestion) => this.renderInstallableKnownPackage(suggestion))}
         </div>
@@ -88,7 +89,7 @@ export class SettingsPackagesPanel extends LitElement {
           <strong>${suggestion.label}</strong>
           <small>${suggestion.description}</small>
         </div>
-        <button title=${`Install ${suggestion.label}`} ?disabled=${this.isOperating} @click=${() => { void this.installKnownPackage(suggestion.source); }}>${installing ? "Installing…" : "Install"}</button>
+        <button title=${t("packagesPanel.installNamed", { name: suggestion.label })} ?disabled=${this.isOperating} @click=${() => { void this.installKnownPackage(suggestion.source); }}>${installing ? t("packagesPanel.installing") : t("packagesPanel.install")}</button>
       </article>
     `;
   }
@@ -96,13 +97,13 @@ export class SettingsPackagesPanel extends LitElement {
   private renderInstallForm(targetLabel: string): TemplateResult {
     return html`
       <form class="install-card" @submit=${(event: Event) => { void this.installPackage(event); }}>
-        <label for="package-source">Pi package source</label>
+        <label for="package-source">${t("packagesPanel.source")}</label>
         <div class="install-row">
-          <input id="package-source" .value=${this.installSource} ?disabled=${this.isOperating} placeholder="npm:@scope/package, git URL, or local path" @input=${(event: Event) => { this.updateInstallSource(event); }}>
-          <button type="submit" title="Install this Pi package" ?disabled=${this.isOperating}>${isPiPackageOperationPending(this.operation, "install") ? "Installing…" : "Install"}</button>
+          <input id="package-source" .value=${this.installSource} ?disabled=${this.isOperating} placeholder=${t("packagesPanel.sourcePlaceholder")} @input=${(event: Event) => { this.updateInstallSource(event); }}>
+          <button type="submit" title=${t("packagesPanel.installHint")} ?disabled=${this.isOperating}>${isPiPackageOperationPending(this.operation, "install") ? t("packagesPanel.installing") : t("packagesPanel.install")}</button>
         </div>
         ${this.validationMessage === "" ? null : html`<div class="field-error">${this.validationMessage}</div>`}
-        <small>Installs run on ${targetLabel} and use Pi's default package location, equivalent to <code>pi install &lt;source&gt;</code>. PI WEB does not ask you to choose an install location.</small>
+        <small>${t("packagesPanel.installDetail", { target: targetLabel })}</small>
       </form>
     `;
   }
@@ -111,28 +112,28 @@ export class SettingsPackagesPanel extends LitElement {
     const targetLabel = piPackageTargetLabel(target);
     const updateAllReason = updateAllPiPackagesDisabledReason(packages);
     const showUpdateAllReason = updateAllReason !== undefined && packages.length > 0;
-    const updateAllTitle = updateAllReason ?? "Update all user-scope Pi packages";
+    const updateAllTitle = updateAllReason ?? t("packagesPanel.updateAllHint");
     return html`
-      <section class="package-section" aria-label="Configured Pi packages">
+      <section class="package-section" aria-label=${t("packagesPanel.configuredAria")}>
         <div class="package-toolbar">
           <div>
-            <h3>Configured Pi packages</h3>
-            <p>This list comes from Pi's package manager settings on ${targetLabel}.</p>
+            <h3>${t("packagesPanel.configured")}</h3>
+            <p>${t("packagesPanel.configuredDetail", { target: targetLabel })}</p>
           </div>
           <button class="secondary" title=${updateAllTitle} ?disabled=${this.isOperating || updateAllReason !== undefined} @click=${() => { void this.updatePackage(); }}>
-            ${isPiPackageOperationPending(this.operation, "update-all") ? "Updating…" : "Update all"}
+            ${isPiPackageOperationPending(this.operation, "update-all") ? t("packagesPanel.updating") : t("packagesPanel.updateAll")}
           </button>
         </div>
         ${showUpdateAllReason ? html`<div class="action-note">${updateAllReason}</div>` : null}
-        ${this.loading && packages.length > 0 ? html`<div class="action-note">Refreshing Pi packages from ${targetLabel}…</div>` : null}
+        ${this.loading && packages.length > 0 ? html`<div class="action-note">${t("packagesPanel.refreshing", { target: targetLabel })}</div>` : null}
         ${this.renderPackageListContent(packages, targetLabel)}
       </section>
     `;
   }
 
   private renderPackageListContent(packages: PiPackageInfo[], targetLabel: string): TemplateResult {
-    if (this.loading && packages.length === 0) return html`<div class="loading-card">Loading Pi packages from ${targetLabel}…</div>`;
-    if (packages.length === 0) return html`<div class="loading-card">No Pi packages configured in Pi settings on ${targetLabel} yet.</div>`;
+    if (this.loading && packages.length === 0) return html`<div class="loading-card">${t("packagesPanel.loading", { target: targetLabel })}</div>`;
+    if (packages.length === 0) return html`<div class="loading-card">${t("packagesPanel.none", { target: targetLabel })}</div>`;
     return html`
       <div class="package-list">
         ${packages.map((packageInfo) => this.renderPackage(packageInfo))}
@@ -149,12 +150,12 @@ export class SettingsPackagesPanel extends LitElement {
         <div class="package-main">
           <strong>${packageInfo.source}</strong>
           <small>${piPackageScopeLabel(packageInfo)} · ${piPackageFilteredLabel(packageInfo)}</small>
-          <small>Installed path: <code>${piPackageInstalledPathLabel(packageInfo)}</code></small>
+          <small>${t("packagesPanel.installedPath")}: <code>${piPackageInstalledPathLabel(packageInfo)}</code></small>
           ${updateReason === undefined ? null : html`<small class="action-note">${updateReason}</small>`}
         </div>
         <div class="package-actions">
-          <button class="secondary" title=${updateReason ?? "Update this Pi package"} ?disabled=${this.isOperating || updateReason !== undefined} @click=${() => { void this.updatePackage(packageInfo.source); }}>${updating ? "Updating…" : "Update"}</button>
-          <button class="danger" title="Remove this Pi package" ?disabled=${this.isOperating} @click=${() => { void this.removePackage(packageInfo); }}>${removing ? "Removing…" : "Remove"}</button>
+          <button class="secondary" title=${updateReason ?? t("packagesPanel.updateHint")} ?disabled=${this.isOperating || updateReason !== undefined} @click=${() => { void this.updatePackage(packageInfo.source); }}>${updating ? t("packagesPanel.updating") : t("packagesPanel.update")}</button>
+          <button class="danger" title=${t("packagesPanel.removeHint")} ?disabled=${this.isOperating} @click=${() => { void this.removePackage(packageInfo); }}>${removing ? t("packagesPanel.removing") : t("packagesPanel.remove")}</button>
         </div>
       </article>
     `;
@@ -257,5 +258,5 @@ export class SettingsPackagesPanel extends LitElement {
 }
 
 function packagesDescription(targetLabel: string): TemplateResult {
-  return html`Managing Pi packages on <strong>${targetLabel}</strong>. Install, remove, and update packages managed by Pi on the selected machine. Pi packages can provide extensions, skills, prompt templates, themes, context/system prompt files, and PI WEB browser plugins.`;
+  return html`Managing Pi packages on <strong>${targetLabel}</strong>. Install, remove, and update packages managed by Pi on the selected machine. Pi packages can provide extensions, skills, prompt templates, themes, context/system prompt files, and PI STUDIO browser plugins.`;
 }

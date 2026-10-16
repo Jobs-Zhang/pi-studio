@@ -12,8 +12,8 @@ const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = resolve(SCRIPT_DIR, "..");
 const DEFAULT_OUTPUT_DIR = join(REPO_ROOT, "docs", "assets");
 const SESSION_ID = "019ef4c0-0000-7000-8000-000000000001";
-const DEMO_FILE = "docs/assets/pi-web-dev-screenshot.png";
-const DEFAULT_SITE_URL = "https://pi-web.dev/";
+const DEMO_FILE = "docs/assets/pi-studio-dev-screenshot.png";
+const DEFAULT_SITE_URL = "https://pi-studio.dev/";
 const VIEWPORTS = {
   desktop: { width: 1440, height: 900, mobile: false },
   tablet: { width: 1024, height: 768, mobile: false },
@@ -30,7 +30,7 @@ if (chromeBin === undefined) {
   fail("Chromium was not found. Install chromium-browser/chromium or set CHROME_BIN=/path/to/chrome.");
 }
 
-const tempRoot = await mkdtemp(join(tmpdir(), "pi-web-screenshots-"));
+const tempRoot = await mkdtemp(join(tmpdir(), "pi-studio-screenshots-"));
 const children = new Set();
 let cleanedUp = false;
 
@@ -43,11 +43,11 @@ process.once("SIGTERM", () => {
 
 async function main() {
   const logsDir = join(tempRoot, "logs");
-  const dataDir = join(tempRoot, "pi-web-data");
+  const dataDir = join(tempRoot, "pi-studio-data");
   const configPath = join(tempRoot, "config.json");
   const sessionDir = join(tempRoot, "sessions");
   const agentDir = join(tempRoot, "pi-agent");
-  const demoProject = join(tempRoot, "pi-web");
+  const demoProject = join(tempRoot, "pi-studio");
   const projectsFile = join(dataDir, "projects.json");
   const socketPath = join(dataDir, "sessiond.sock");
   await Promise.all([
@@ -62,10 +62,10 @@ async function main() {
   await cloneDemoProject(demoProject);
   await removeLegacyDemoMedia(demoProject);
 
-  const projectId = "pi-web-demo";
+  const projectId = "pi-studio-demo";
   const workspaceId = createWorkspaceId(projectId, demoProject);
   await writeJson(projectsFile, {
-    projects: [{ id: projectId, name: "pi-web", path: demoProject, createdAt: new Date().toISOString() }],
+    projects: [{ id: projectId, name: "pi-studio", path: demoProject, createdAt: new Date().toISOString() }],
   });
   await writeJson(configPath, { host: "127.0.0.1", allowedHosts: true });
   await writeDemoSession(sessionDir, demoProject);
@@ -75,13 +75,13 @@ async function main() {
   const debugPort = await getFreePort();
   const env = {
     ...process.env,
-    PI_WEB_DATA_DIR: dataDir,
-    PI_WEB_CONFIG: configPath,
-    PI_WEB_PROJECTS_FILE: projectsFile,
-    PI_WEB_SESSIOND_SOCKET: socketPath,
-    PI_WEB_HOST: "127.0.0.1",
-    PI_WEB_PORT: String(apiPort),
-    PI_WEB_ALLOWED_HOSTS: "true",
+    PI_STUDIO_DATA_DIR: dataDir,
+    PI_STUDIO_CONFIG: configPath,
+    PI_STUDIO_PROJECTS_FILE: projectsFile,
+    PI_STUDIO_SESSIOND_SOCKET: socketPath,
+    PI_STUDIO_HOST: "127.0.0.1",
+    PI_STUDIO_PORT: String(apiPort),
+    PI_STUDIO_ALLOWED_HOSTS: "true",
     PI_CODING_AGENT_DIR: agentDir,
     PI_CODING_AGENT_SESSION_DIR: sessionDir,
     PI_OFFLINE: "1",
@@ -93,7 +93,7 @@ async function main() {
   assertExecutable(tsxBin, "Run npm install before capturing screenshots.");
   assertExecutable(viteBin, "Run npm install before capturing screenshots.");
 
-  console.log("Starting isolated PI WEB session daemon, API server, and Vite client…");
+  console.log("Starting isolated PI STUDIO session daemon, API server, and Vite client…");
   startChild("sessiond", tsxBin, ["src/server/sessiond.ts"], { env, cwd: REPO_ROOT, logsDir });
   await waitForFile(socketPath, 10_000);
   startChild("api", tsxBin, ["src/server/index.ts"], { env, cwd: REPO_ROOT, logsDir });
@@ -117,17 +117,17 @@ async function main() {
     appUrl.searchParams.set("session", SESSION_ID);
     appUrl.searchParams.set("view", "chat");
 
-    await captureDesktop(cdp, appUrl, join(outputDir, "pi-web-desktop.png"));
-    await captureDefaultApp(cdp, appUrl, VIEWPORTS.tablet, join(outputDir, "pi-web-tablet.png"));
-    await captureDefaultApp(cdp, appUrl, VIEWPORTS.mobile, join(outputDir, "pi-web-mobile.png"));
+    await captureDesktop(cdp, appUrl, join(outputDir, "pi-studio-desktop.png"));
+    await captureDefaultApp(cdp, appUrl, VIEWPORTS.tablet, join(outputDir, "pi-studio-tablet.png"));
+    await captureDefaultApp(cdp, appUrl, VIEWPORTS.mobile, join(outputDir, "pi-studio-mobile.png"));
   } finally {
     cdp.close();
     chrome.kill("SIGTERM");
   }
 
-  console.log(`Wrote ${join(outputDir, "pi-web-desktop.png")}`);
-  console.log(`Wrote ${join(outputDir, "pi-web-tablet.png")}`);
-  console.log(`Wrote ${join(outputDir, "pi-web-mobile.png")}`);
+  console.log(`Wrote ${join(outputDir, "pi-studio-desktop.png")}`);
+  console.log(`Wrote ${join(outputDir, "pi-studio-tablet.png")}`);
+  console.log(`Wrote ${join(outputDir, "pi-studio-mobile.png")}`);
   if (keepTemp) console.log(`Kept temporary workspace: ${tempRoot}`);
 }
 
@@ -152,7 +152,7 @@ async function captureDesktop(cdp, appUrl, outputPath) {
   await setViewport(cdp, VIEWPORTS.desktop);
   await navigate(cdp, appUrl.href, 15_000);
   await waitForApp(cdp);
-  await selectPreviewImage(cdp);
+  await openFilePreview(cdp, appUrl);
   await sleep(500);
   await capturePng(cdp, outputPath);
 }
@@ -165,36 +165,49 @@ async function captureDefaultApp(cdp, appUrl, viewport, outputPath) {
   await capturePng(cdp, outputPath);
 }
 
-async function selectPreviewImage(cdp) {
+/**
+ * Open the Files panel with the demo image selected through the app's own URL
+ * route (`tool=files&file=...`). This replaces the earlier reach into app
+ * internals, which stopped matching once the workspace panels moved behind
+ * plugin contributions.
+ */
+async function openFilePreview(cdp, appUrl) {
+  const filesUrl = new URL(appUrl.href);
+  filesUrl.searchParams.set("tool", "files");
+  filesUrl.searchParams.set("file", DEMO_FILE);
+  await navigate(cdp, filesUrl.href, 15_000);
+  await waitForApp(cdp);
+  try {
+    await waitForFilePreview(cdp);
+  } catch (error) {
+    // The panel screenshot is still useful without the preview mounted, so a
+    // missing preview degrades the image instead of failing the whole run.
+    console.warn(`Files preview did not mount; capturing the panel as rendered. ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
+async function waitForFilePreview(cdp) {
   await evaluate(cdp, `(async () => {
     const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-    const app = document.querySelector("pi-web-app");
-    if (!app) throw new Error("pi-web-app not found");
-    if (typeof app.openWorkspaceTool !== "function" || app.files === undefined) {
-      throw new Error("PI WEB app internals needed for deterministic screenshot setup were not available");
-    }
-    app.openWorkspaceTool("core:workspace.files");
-    await app.updateComplete;
-    await sleep(900);
-    await app.files.refreshFiles();
-    await app.updateComplete;
-    if (app.state?.expandedDirs?.["docs"] === undefined) await app.files.expandDir("docs");
-    await app.updateComplete;
-    if (app.state?.expandedDirs?.["docs/assets"] === undefined) await app.files.expandDir("docs/assets");
-    await app.updateComplete;
-    await app.files.selectFile(${JSON.stringify(DEMO_FILE)});
-    await app.updateComplete;
-
-    const panel = app.shadowRoot?.querySelector("workspace-panel");
-    const root = panel?.shadowRoot;
-    await panel?.updateComplete;
+    const findImage = (root) => {
+      const direct = root.querySelector(".image-preview img");
+      if (direct) return direct;
+      for (const element of root.querySelectorAll("*")) {
+        if (element.shadowRoot) {
+          const nested = findImage(element.shadowRoot);
+          if (nested) return nested;
+        }
+      }
+      return null;
+    };
     const start = Date.now();
-    while (Date.now() - start < 8000) {
-      const image = root?.querySelector(".image-preview img");
-      if (root?.textContent.includes(${JSON.stringify(DEMO_FILE)}) && image instanceof HTMLImageElement && image.complete) return true;
-      await sleep(100);
+    while (Date.now() - start < 15000) {
+      const app = document.querySelector("pi-studio-app");
+      const image = app?.shadowRoot ? findImage(app.shadowRoot) : null;
+      if (image instanceof HTMLImageElement && image.complete) return true;
+      await sleep(150);
     }
-    throw new Error("Timed out waiting for image preview");
+    throw new Error("Timed out waiting for the Files image preview");
   })()`);
 }
 
@@ -202,7 +215,7 @@ async function waitForApp(cdp) {
   await evaluate(cdp, `new Promise((resolve, reject) => {
     const start = Date.now();
     const visibleText = () => {
-      const app = document.querySelector("pi-web-app");
+      const app = document.querySelector("pi-studio-app");
       const appRoot = app?.shadowRoot;
       const chatRoot = appRoot?.querySelector("chat-view")?.shadowRoot;
       return [appRoot?.textContent ?? "", chatRoot?.textContent ?? ""].join("\\n");
@@ -214,7 +227,7 @@ async function waitForApp(cdp) {
         return;
       }
       if (Date.now() - start > 15000) {
-        reject(new Error("PI WEB app did not restore the seeded session in time. Visible text: " + visibleText()));
+        reject(new Error("PI STUDIO app did not restore the seeded session in time. Visible text: " + visibleText()));
         return;
       }
       setTimeout(check, 100);
@@ -262,9 +275,9 @@ async function cloneDemoProject(target) {
 
 async function removeLegacyDemoMedia(projectRoot) {
   await Promise.all([
-    rm(join(projectRoot, "docs", "assets", "pi-web-demo.gif"), { force: true }),
-    rm(join(projectRoot, "docs", "assets", "pi-web-demo.webm"), { force: true }),
-    rm(join(projectRoot, "docs", "assets", "pi-web-demo-flow.gif"), { force: true }),
+    rm(join(projectRoot, "docs", "assets", "pi-studio-demo.gif"), { force: true }),
+    rm(join(projectRoot, "docs", "assets", "pi-studio-demo.webm"), { force: true }),
+    rm(join(projectRoot, "docs", "assets", "pi-studio-demo-flow.gif"), { force: true }),
   ]);
 }
 
@@ -284,11 +297,11 @@ async function writeDemoSession(sessionDir, cwd) {
       timestamp: iso(ms + 1000),
       message: {
         role: "user",
-        content: [{ type: "text", text: "Take a screenshot of https://pi-web.dev, save it under docs/assets, and tell me where I can preview it." }],
+        content: [{ type: "text", text: "Take a screenshot of https://pi-studio.dev, save it under docs/assets, and tell me where I can preview it." }],
         timestamp: ms + 1000,
       },
     },
-    { type: "session_info", id: "10000004", parentId: "10000003", timestamp: iso(ms + 1100), name: "Screenshot pi-web.dev" },
+    { type: "session_info", id: "10000004", parentId: "10000003", timestamp: iso(ms + 1100), name: "Screenshot pi-studio.dev" },
     {
       type: "message",
       id: "10000005",
@@ -300,7 +313,7 @@ async function writeDemoSession(sessionDir, cwd) {
           type: "toolCall",
           id: "call_demo_screenshot",
           name: "bash",
-          arguments: { command: `capture-browser-screenshot https://pi-web.dev ${DEMO_FILE}` },
+          arguments: { command: `capture-browser-screenshot https://pi-studio.dev ${DEMO_FILE}` },
         }],
         api: "openai-codex-responses",
         provider: "openai-codex",
@@ -349,7 +362,7 @@ function fallbackWebsiteHtml(url) {
     body{margin:0;min-height:100vh;display:grid;place-items:center;background:linear-gradient(135deg,#07121f,#2b174c);color:#f8fafc;font:24px system-ui,sans-serif}
     main{width:min(900px,calc(100vw - 80px));padding:56px;border:1px solid rgba(255,255,255,.22);border-radius:28px;background:rgba(10,16,32,.72);box-shadow:0 24px 80px rgba(0,0,0,.35)}
     h1{margin:0 0 14px;font-size:64px;letter-spacing:-.06em}.eyebrow{color:#c084fc;text-transform:uppercase;letter-spacing:.16em;font-size:14px;font-weight:700}p{line-height:1.5;color:#dbeafe}
-  </style></head><body><main><div class="eyebrow">PI WEB</div><h1>pi-web.dev</h1><p>Fallback screenshot for ${escapeHtml(url)}.</p></main></body></html>`;
+  </style></head><body><main><div class="eyebrow">PI STUDIO</div><h1>pi-studio.dev</h1><p>Fallback screenshot for ${escapeHtml(url)}.</p></main></body></html>`;
 }
 
 function chromeArgs(debugPort, userDataDir) {
@@ -570,7 +583,7 @@ function parseArgs(argv) {
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
     if (arg === "--help" || arg === "-h") {
-      console.log(`Usage: node scripts/capture-screenshots.mjs [--output-dir docs/assets] [--site-url https://pi-web.dev/] [--keep-temp] [--chrome-bin /path/to/chrome]\n\nCaptures desktop, tablet, and mobile PI WEB screenshots from an isolated temporary instance.`);
+      console.log(`Usage: node scripts/capture-screenshots.mjs [--output-dir docs/assets] [--site-url https://pi-studio.dev/] [--keep-temp] [--chrome-bin /path/to/chrome]\n\nCaptures desktop, tablet, and mobile PI STUDIO screenshots from an isolated temporary instance.`);
       process.exit(0);
     }
     if (arg === "--keep-temp") {

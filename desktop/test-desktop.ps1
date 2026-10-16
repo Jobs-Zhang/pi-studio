@@ -1,15 +1,15 @@
-# PI Desktop - Quick Test Script
+# PI Studio - Quick Test Script
 # Run this in PowerShell on Windows to verify the installed app works
 
-$InstallerPath = Join-Path $PSScriptRoot "dist\PI Desktop Setup.exe"
-$AppPath = Join-Path $env:LOCALAPPDATA "Programs\PI Desktop\PI Desktop.exe"
+$InstallerPath = Join-Path $PSScriptRoot "dist\PI Studio Setup.exe"
+$AppPath = Join-Path $env:LOCALAPPDATA "Programs\PI Studio\PI Studio.exe"
 
 if (-not (Test-Path $InstallerPath)) {
     Write-Host "ERROR: Installer not found at $InstallerPath (run: npm run build)" -ForegroundColor Red
     exit 1
 }
 
-Write-Host "=== PI Desktop Test ===" -ForegroundColor Cyan
+Write-Host "=== PI Studio Test ===" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Installer path: $InstallerPath" -ForegroundColor Green
 Write-Host "Installer size: $([math]::Round((Get-Item $InstallerPath).Length / 1MB, 1)) MB" -ForegroundColor Green
@@ -36,7 +36,7 @@ if ($installer -eq $null -or $installer.ExitCode -ne 0) {
 Write-Host "[PASS] Silent install finished" -ForegroundColor Green
 
 Write-Host ""
-Write-Host "Starting installed app (will show connect page if no PI WEB running)..." -ForegroundColor Yellow
+Write-Host "Starting installed app (will show connect page if no PI STUDIO running)..." -ForegroundColor Yellow
 Write-Host "Close the window to continue the test." -ForegroundColor Yellow
 Write-Host ""
 

@@ -1,4 +1,4 @@
-export const DEFAULT_WORKSPACE_ATTACHMENTS_FOLDER = ".pi-web/attachments";
+export const DEFAULT_WORKSPACE_ATTACHMENTS_FOLDER = ".pi-studio/attachments";
 
 export interface WorkspaceAttachmentsFolderConfig {
   attachments?: {

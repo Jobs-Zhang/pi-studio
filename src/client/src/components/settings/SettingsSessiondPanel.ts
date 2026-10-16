@@ -1,20 +1,21 @@
+import { t } from "../../i18n";
 import { css, html, LitElement, type TemplateResult } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import type { PiWebConfigResponse, PiWebConfigValues } from "../../api";
+import type { PiStudioConfigResponse, PiStudioConfigValues } from "../../api";
 import "./SettingsPanelFrame";
 import type { SettingsNotice } from "./SettingsPanelFrame";
 import { askUserConfigPatch, spawnSessionsConfigPatch, subsessionsConfigPatch } from "./settingsSessiondConfig";
 
 @customElement("settings-sessiond-panel")
 export class SettingsSessiondPanel extends LitElement {
-  @property({ attribute: false }) configResponse: PiWebConfigResponse | undefined;
+  @property({ attribute: false }) configResponse: PiStudioConfigResponse | undefined;
   @property({ type: Boolean }) loading = false;
   @property({ type: Boolean }) saving = false;
   @property() error = "";
   @property() savedMessage = "";
   @property() targetLabel = "local (local gateway)";
   @property({ attribute: false }) onReload?: () => void | Promise<void>;
-  @property({ attribute: false }) onSave?: (config: PiWebConfigValues) => void | Promise<void>;
+  @property({ attribute: false }) onSave?: (config: PiStudioConfigValues) => void | Promise<void>;
 
   override render(): TemplateResult {
     const config = this.configResponse;
@@ -29,21 +30,21 @@ export class SettingsSessiondPanel extends LitElement {
     const effectiveAskUser = config?.effectiveConfig.askUser === true;
     return html`
       <settings-panel-frame
-        heading="Session daemon"
+        heading=${t("sessiondPanel.heading")}
         .description=${sessiondDescription(this.targetLabel)}
-        actionLabel="Reload"
+        actionLabel=${t("common.reload")}
         .actionDisabled=${this.loading}
         .notices=${this.panelNotices()}
         .onAction=${this.onReload}
       >
         ${config === undefined ? this.renderUnavailableConfigState() : html`
           <div class="config-path-card">
-            <span>Config file</span>
+            <span>${t("sessiondPanel.configFile")}</span>
             <code>${config.path}</code>
           </div>
           <div class="field">
             <span class="field-heading">
-              <span>Allow agents to start sessions</span>
+              <span>${t("sessiondPanel.spawnSessions")}</span>
               ${spawnOverridden ? html`<span class="override-badge">environment override</span>` : null}
             </span>
             <label class="toggle">
@@ -53,13 +54,13 @@ export class SettingsSessiondPanel extends LitElement {
                 ?disabled=${this.loading || this.saving || spawnOverridden}
                 @change=${(event: Event) => { void this.toggleSpawnSessions(event); }}
               >
-              <span>Enable the <code>spawn_session</code> tool</span>
+              <span>${t("sessiondPanel.spawnSessionTool")}</span>
             </label>
-            <small>When enabled, LLMs can start new sessions, constrained to a workspace (any worktree) of the same registered project so every spawned session stays visible here. On by default.</small>
+            <small>${t("sessiondPanel.spawnSessionsDetail")}</small>
           </div>
           <div class="field">
             <span class="field-heading">
-              <span>Allow agents to start tracked subsessions</span>
+              <span>${t("sessiondPanel.subsessions")}</span>
               ${subsessionsOverridden ? html`<span class="override-badge">environment override</span>` : null}
             </span>
             <label class="toggle">
@@ -69,33 +70,33 @@ export class SettingsSessiondPanel extends LitElement {
                 ?disabled=${this.loading || this.saving || subsessionsOverridden || !effectiveSpawn}
                 @change=${(event: Event) => { void this.toggleSubsessions(event); }}
               >
-              <span>Enable the <code>spawn_subsession</code> tools</span>
+              <span>${t("sessiondPanel.subsessionsTool")}</span>
             </label>
-            <small>Agents can start child sessions they stay attached to (<code>spawn_subsession</code>, <code>list_subsessions</code>, <code>check_subsession</code>, <code>read_subsession</code>) and are notified when a child finishes. Requires "Allow agents to start sessions". On by default.</small>
+            <small>${t("sessiondPanel.subsessionsHint")}</small>
           </div>
           <div class="field">
             <span class="field-heading">
-              <span>Allow agents to ask questions</span>
+              <span>${t("sessiondPanel.askUser")}</span>
               ${askUserOverridden ? html`<span class="override-badge">environment override</span>` : null}
             </span>
             <label class="toggle">
               <input
                 type="checkbox"
-                aria-label="Enable Ask Questions"
+                aria-label=${t("sessiondPanel.askUserToolAria")}
                 .checked=${effectiveAskUser}
                 ?disabled=${this.loading || this.saving || askUserOverridden}
                 @change=${(event: Event) => { void this.toggleAskUser(event); }}
               >
-              <span>Enable the <code>ask_user</code> tool</span>
+              <span>${t("sessiondPanel.askUserTool")}</span>
             </label>
-            <small>Agents can post a structured question form and pause until the user responds. On by default.</small>
+            <small>${t("sessiondPanel.askUserDetail")}</small>
           </div>
-          <section class="effective-card" aria-label="Desired session daemon configuration summary">
-            <h3>Desired after environment overrides</h3>
+          <section class="effective-card" aria-label=${t("sessiondPanel.effectiveAria")}>
+            <h3>${t("sessiondPanel.effective")}</h3>
             <dl>
-              <div><dt>Spawn sessions</dt><dd>${effectiveSpawn ? "Enabled" : html`<span class="muted">Disabled</span>`}</dd></div>
-              <div><dt>Subsessions</dt><dd>${effectiveSubsessions ? "Enabled" : html`<span class="muted">Disabled</span>`}</dd></div>
-              <div><dt>Ask questions</dt><dd>${effectiveAskUser ? "Enabled" : html`<span class="muted">Disabled</span>`}</dd></div>
+              <div><dt>${t("sessiondPanel.spawnSessions")}</dt><dd>${effectiveSpawn ? t("pluginsPanel.enabled") : html`<span class="muted">${t("shortcuts.disabled")}</span>`}</dd></div>
+              <div><dt>${t("sessiondPanel.subsessions")}</dt><dd>${effectiveSubsessions ? t("pluginsPanel.enabled") : html`<span class="muted">${t("shortcuts.disabled")}</span>`}</dd></div>
+              <div><dt>${t("sessiondPanel.askUser")}</dt><dd>${effectiveAskUser ? t("pluginsPanel.enabled") : html`<span class="muted">${t("shortcuts.disabled")}</span>`}</dd></div>
             </dl>
           </section>
         `}
@@ -111,7 +112,7 @@ export class SettingsSessiondPanel extends LitElement {
   }
 
   private renderUnavailableConfigState(): TemplateResult {
-    return html`<div class="loading-card">${this.loading ? "Loading configuration…" : "Configuration is unavailable. Reload to try again."}</div>`;
+    return html`<div class="loading-card">${this.loading ? t("sessiondPanel.loading") : t("sessiondPanel.unavailable")}</div>`;
   }
 
   private async toggleSpawnSessions(event: Event): Promise<void> {

@@ -1,4 +1,5 @@
-import type { PiWebPlugin, ThemeTokens } from "../types";
+import { t } from "../../i18n";
+import type { PiStudioPlugin, ThemeTokens } from "../types";
 
 const classicTokens = {
   "--pi-bg": "#0d1117",
@@ -38,7 +39,7 @@ const classicTokens = {
   "--pi-terminal-selection": "#264f78",
 } satisfies ThemeTokens;
 
-const piWebDarkTokens = {
+const piStudioDarkTokens = {
   "--pi-bg": "#16181c",
   "--pi-surface": "#1d2025",
   "--pi-surface-hover": "#262a30",
@@ -76,7 +77,7 @@ const piWebDarkTokens = {
   "--pi-terminal-selection": "#3d4a78",
 } satisfies ThemeTokens;
 
-const piWebLightTokens = {
+const piStudioLightTokens = {
   "--pi-bg": "#f4f5f6",
   "--pi-surface": "#ffffff",
   "--pi-surface-hover": "#eceef0",
@@ -114,32 +115,32 @@ const piWebLightTokens = {
   "--pi-terminal-selection": "#36566b",
 } satisfies ThemeTokens;
 
-export const themePackPlugin: PiWebPlugin = {
+export const themePackPlugin: PiStudioPlugin = {
   apiVersion: 4,
-  name: "PI WEB Themes",
+  name: "PI STUDIO Themes",
   activate: () => ({
     contributions: {
       themes: [
         {
-          id: "pi-web-dark",
-          name: "PI WEB Dark",
-          description: "Dark PI WEB palette.",
+          id: "pi-studio-dark",
+          name: "PI STUDIO Dark",
+          description: t("theme.darkDescription"),
           order: 10,
           colorScheme: "dark",
-          tokens: piWebDarkTokens,
+          tokens: piStudioDarkTokens,
         },
         {
-          id: "pi-web-light",
-          name: "PI WEB Light",
-          description: "Light PI WEB palette.",
+          id: "pi-studio-light",
+          name: "PI STUDIO Light",
+          description: t("theme.lightDescription"),
           order: 20,
           colorScheme: "light",
-          tokens: piWebLightTokens,
+          tokens: piStudioLightTokens,
         },
         {
           id: "classic",
-          name: "PI WEB Classic",
-          description: "The original PI WEB dark palette.",
+          name: "PI STUDIO Classic",
+          description: t("theme.classicDescription"),
           order: 30,
           colorScheme: "dark",
           tokens: classicTokens,
@@ -147,12 +148,12 @@ export const themePackPlugin: PiWebPlugin = {
       ],
       themePairs: [
         {
-          id: "pi-web",
-          name: "PI WEB",
-          description: "Follow the system light/dark preference with PI WEB themes.",
+          id: "pi-studio",
+          name: "PI STUDIO",
+          description: t("theme.pairDescription"),
           order: 10,
-          light: "pi-web-light",
-          dark: "pi-web-dark",
+          light: "pi-studio-light",
+          dark: "pi-studio-dark",
         },
       ],
     },

@@ -1,11 +1,11 @@
-import { PI_WEB_PLUGIN_LIFECYCLE_VERSION } from "../../../shared/apiTypes";
+import { PI_STUDIO_PLUGIN_LIFECYCLE_VERSION } from "../../../shared/apiTypes";
 import { machineScopedManifestPluginId } from "../../../shared/machinePluginIds";
 import { requirePluginBackendRevision } from "../../../shared/pluginBackendProtocol";
-import { isPiWebBundledPluginId, isPiWebPluginId, isReservedPiWebPluginId } from "../../../shared/pluginIds";
+import { isPiStudioBundledPluginId, isPiStudioPluginId, isReservedPiStudioPluginId } from "../../../shared/pluginIds";
 import { REQUIRED_TERMINAL_PLUGIN_ID, type TerminalPluginMode } from "../../../shared/requiredTerminalPlugin";
 import { resolveAppUrl, type AppUrlContext } from "../appUrl";
 import { adaptPublicPlugin } from "./publicContext";
-import type { PiWebPlugin, PiWebPluginRegistration, PiWebPluginRegistrationDeclaration } from "./types";
+import type { PiStudioPlugin, PiStudioPluginRegistration, PiStudioPluginRegistrationDeclaration } from "./types";
 
 export interface PluginManifestEntry {
   id: string;
@@ -37,22 +37,22 @@ export interface ExternalPluginLoadFailure {
 export interface ExternalPluginLoadResult {
   terminalMode: TerminalPluginMode;
   /** Validated manifest intent, retained even when the corresponding import fails. */
-  declarations: PiWebPluginRegistrationDeclaration[];
-  registrations: PiWebPluginRegistration[];
+  declarations: PiStudioPluginRegistrationDeclaration[];
+  registrations: PiStudioPluginRegistration[];
   failures: ExternalPluginLoadFailure[];
 }
 
-export async function loadExternalPlugins(manifestUrl = "pi-web-plugins/manifest.json", options: LoadExternalPluginsOptions = {}): Promise<ExternalPluginLoadResult> {
+export async function loadExternalPlugins(manifestUrl = "pi-studio-plugins/manifest.json", options: LoadExternalPluginsOptions = {}): Promise<ExternalPluginLoadResult> {
   const resolvedManifestUrl = resolveAppUrl(manifestUrl);
   const manifest = await fetchPluginManifest(resolvedManifestUrl);
 
-  const declarations: PiWebPluginRegistrationDeclaration[] = [];
-  const registrations: PiWebPluginRegistration[] = [];
+  const declarations: PiStudioPluginRegistrationDeclaration[] = [];
+  const registrations: PiStudioPluginRegistration[] = [];
   const failures: ExternalPluginLoadFailure[] = [];
   const selected = manifest.plugins.filter((entry) => options.shouldLoadPlugin?.(entry) !== false);
   const loadModule = options.moduleLoader ?? importPluginModule;
-  const imports = new Map<PluginManifestEntry, Promise<PiWebPlugin>>();
-  const startImport = (entry: PluginManifestEntry): Promise<PiWebPlugin> => {
+  const imports = new Map<PluginManifestEntry, Promise<PiStudioPlugin>>();
+  const startImport = (entry: PluginManifestEntry): Promise<PiStudioPlugin> => {
     const existing = imports.get(entry);
     if (existing !== undefined) return existing;
     const moduleImport = (async () => {
@@ -109,16 +109,16 @@ async function fetchPluginManifest(manifestUrl: string): Promise<PluginManifest>
 
 function parseManifest(value: unknown): PluginManifest {
   if (!isRecord(value) || !Array.isArray(value["plugins"])) throw new Error("Invalid plugin manifest");
-  if (value["lifecycleVersion"] !== PI_WEB_PLUGIN_LIFECYCLE_VERSION) throw new Error("Unsupported plugin manifest lifecycle version");
+  if (value["lifecycleVersion"] !== PI_STUDIO_PLUGIN_LIFECYCLE_VERSION) throw new Error("Unsupported plugin manifest lifecycle version");
   const terminalMode = parseTerminalMode(value["terminalMode"]);
   const plugins = value["plugins"].map((entry) => {
     if (!isRecord(entry) || typeof entry["id"] !== "string" || typeof entry["module"] !== "string" || entry["module"] === "") throw new Error("Invalid plugin manifest entry");
     const id = entry["id"];
-    if (!isPiWebPluginId(id)) throw new Error(`Invalid plugin manifest id: ${id}`);
+    if (!isPiStudioPluginId(id)) throw new Error(`Invalid plugin manifest id: ${id}`);
     const source = optionalString(entry["source"]);
     const scope = optionalString(entry["scope"]);
-    if (isReservedPiWebPluginId(id)
-      && !(isPiWebBundledPluginId(id) && source === "bundled" && scope === "bundled")) {
+    if (isReservedPiStudioPluginId(id)
+      && !(isPiStudioBundledPluginId(id) && source === "bundled" && scope === "bundled")) {
       throw new Error(`Reserved plugin manifest id: ${id}`);
     }
     const backendRevision = parseBackendRevision(entry["backendRevision"]);
@@ -205,7 +205,7 @@ function parseMachineSpecific(value: unknown): boolean {
   return value;
 }
 
-function registrationDeclaration(entry: PluginManifestEntry, machineId: string | undefined): PiWebPluginRegistrationDeclaration {
+function registrationDeclaration(entry: PluginManifestEntry, machineId: string | undefined): PiStudioPluginRegistrationDeclaration {
   return Object.freeze({
     id: machineId === undefined ? entry.id : machineScopedManifestPluginId(machineId, entry.id),
     machineSpecific: entry.machineSpecific,
@@ -215,17 +215,17 @@ function registrationDeclaration(entry: PluginManifestEntry, machineId: string |
   });
 }
 
-function parsePluginModule(module: unknown, moduleUrl: string): PiWebPlugin {
+function parsePluginModule(module: unknown, moduleUrl: string): PiStudioPlugin {
   if (!isRecord(module)) throw new Error(`Plugin module ${moduleUrl} did not export an object`);
   const plugin = module["default"];
   if (isRecord(plugin) && plugin["apiVersion"] !== 4) {
     throw new Error(`Unsupported browser plugin API version for ${moduleUrl}: ${String(plugin["apiVersion"])} (expected 4)`);
   }
-  if (!isPiWebPlugin(plugin)) throw new Error(`Plugin module ${moduleUrl} default export is not a PiWebPlugin`);
+  if (!isPiStudioPlugin(plugin)) throw new Error(`Plugin module ${moduleUrl} default export is not a PiStudioPlugin`);
   return adaptPublicPlugin(plugin);
 }
 
-function isPiWebPlugin(value: unknown): value is PiWebPlugin {
+function isPiStudioPlugin(value: unknown): value is PiStudioPlugin {
   return isRecord(value) && value["apiVersion"] === 4 && typeof value["name"] === "string" && typeof value["activate"] === "function";
 }
 

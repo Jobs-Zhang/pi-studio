@@ -35,7 +35,7 @@ export interface FederatedHttpRouteSpec {
 }
 
 export const FEDERATED_HTTP_ROUTES = [
-  { method: "GET", path: "/pi-web/status" },
+  { method: "GET", path: "/pi-studio/status" },
   { method: "GET", path: "/config" },
   { method: "PUT", path: "/config" },
   { method: "GET", path: "/plugins" },

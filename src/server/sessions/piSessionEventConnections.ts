@@ -1,18 +1,18 @@
 import type { createEventBus } from "@earendil-works/pi-coding-agent";
-import type { PiWebHostPiSessionConnection } from "../../server-plugin-api.js";
+import type { PiStudioHostPiSessionConnection } from "../../server-plugin-api.js";
 
 type EventBus = ReturnType<typeof createEventBus>;
 
 /** Buses belong to concrete native sessions, never to a cwd or a reusable id. */
 export class PiSessionEventConnections {
-  private readonly sessions = new WeakMap<object, { bus: EventBus; connections: Set<PiWebHostPiSessionConnection> }>();
+  private readonly sessions = new WeakMap<object, { bus: EventBus; connections: Set<PiStudioHostPiSessionConnection> }>();
 
   register(session: object, bus: EventBus): void {
     this.close(session);
     this.sessions.set(session, { bus, connections: new Set() });
   }
 
-  connect(session: object, lifetime: AbortSignal): PiWebHostPiSessionConnection {
+  connect(session: object, lifetime: AbortSignal): PiStudioHostPiSessionConnection {
     lifetime.throwIfAborted();
     const hosted = this.sessions.get(session);
     if (hosted === undefined) throw new Error("Hosted session does not have a package event bus");
@@ -30,7 +30,7 @@ export class PiSessionEventConnections {
       controller.signal.throwIfAborted();
       if (typeof channel !== "string" || channel.trim() === "") throw new Error("PI event channel must be non-empty");
     };
-    const connection: PiWebHostPiSessionConnection = Object.freeze({
+    const connection: PiStudioHostPiSessionConnection = Object.freeze({
       signal: controller.signal,
       on: (channel: string, handler: (data: unknown) => void | Promise<void>): (() => void) => {
         assertChannel(channel);

@@ -6,7 +6,7 @@ import { isNodeErrorWithCode } from "./pathSafety.js";
  * Relative path, from the workspace the removal command runs in, of the optional
  * repo-provided hook that runs before a provider's workspace removal command.
  */
-const WORKTREE_PRE_REMOVE_HOOK_RELATIVE_PATH = ".pi-web/hooks/worktree-pre-remove";
+const WORKTREE_PRE_REMOVE_HOOK_RELATIVE_PATH = ".pi-studio/hooks/worktree-pre-remove";
 
 /** Executability probe for the pre-remove hook; injectable so removal stays testable without a real filesystem. */
 export interface WorktreePreRemoveHookProbe {

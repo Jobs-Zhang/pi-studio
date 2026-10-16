@@ -1,6 +1,6 @@
-import type { FileContentResponse, FileTreeEntry, FileTreeResponse } from "@jmfederico/pi-web/plugin-api";
+import type { FileContentResponse, FileTreeEntry, FileTreeResponse } from "@pi-studio/pi-studio/plugin-api";
 
-export const RELAYS_ROOT = ".pi-web/relays";
+export const RELAYS_ROOT = ".pi-studio/relays";
 
 /** Documents that anchor a relay packet, in display order. Any other files follow alphabetically. */
 export const RELAY_ANCHOR_DOCUMENTS: readonly string[] = ["status.md", "charter.md", "operations.md", "log.md"];

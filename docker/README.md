@@ -1,27 +1,27 @@
-# PI WEB Docker (beta)
+# PI STUDIO Docker (beta)
 
 This Docker setup is beta. It is useful for trusted local/server testing and development, but it may still have rough edges and is intentionally documented only here for now.
 
-PI WEB has two Docker modes:
+PI STUDIO has two Docker modes:
 
 - **Runtime/server mode** builds a local image from npm packages and runs split `sessiond` + `web` services. This is for users and servers.
-- **Development mode** builds from this checkout and runs the same split shape while letting the web/API/client services autoreload. This is for hacking on PI WEB.
+- **Development mode** builds from this checkout and runs the same split shape while letting the web/API/client services autoreload. This is for hacking on PI STUDIO.
 
-No prebuilt image or registry is required in either mode. The single human-facing Docker entrypoint is `pi-web-docker`: runtime mode is the default, and development mode is explicit with `--dev`.
+No prebuilt image or registry is required in either mode. The single human-facing Docker entrypoint is `pi-studio-docker`: runtime mode is the default, and development mode is explicit with `--dev`.
 
 ## Trust model: read this first
 
 The Docker setup is for trusted single-user or trusted-admin environments. It is not a sandbox and it is not suitable for untrusted multi-tenant use.
 
-By design, the runtime containers get deliberate host access so PI WEB agents can work on real host paths:
+By design, the runtime containers get deliberate host access so PI STUDIO agents can work on real host paths:
 
 - `/var/run/docker.sock` is mounted into the containers. The Docker socket is root-equivalent on the Docker host.
 - On native Linux Docker Engine, existing `/home`, `/srv`, and `/opt` paths are mounted read/write, `/` is mounted read-only at `/host` for inspection, and `hostexec` can run explicit commands in the Linux host namespaces.
 - On Docker Desktop for Mac, existing `/Users`, `/Volumes`, and `/private` paths are mounted read/write. `hostexec` is disabled because Docker Desktop containers run inside a Linux VM and cannot enter native macOS namespaces.
 
-Only install this on machines where the PI WEB user, the selected workspaces, and the browser/API clients are trusted. Review scripts before piping them to `sh` if you do not already trust this repository.
+Only install this on machines where the PI STUDIO user, the selected workspaces, and the browser/API clients are trusted. Review scripts before piping them to `sh` if you do not already trust this repository.
 
-The web port is bound to `127.0.0.1` by default. Do **not** expose PI WEB directly to the public internet. For remote access, use one of:
+The web port is bound to `127.0.0.1` by default. Do **not** expose PI STUDIO directly to the public internet. For remote access, use one of:
 
 - an SSH tunnel;
 - a VPN/private network address such as Tailscale, NetBird, or WireGuard;
@@ -40,110 +40,110 @@ Prerequisites:
 
 The installer fails closed on unknown or unsupported Docker setups, such as remote Docker contexts, `DOCKER_HOST` overrides outside the supported local Unix socket, rootless/alternate Linux sockets, Docker Desktop for Linux, Colima, or OrbStack. It prints the detected host OS, Docker context, endpoint, `DOCKER_HOST`, socket source, and Docker OS before exiting, and it does not recreate services.
 
-The Docker bootstrap does not require Node.js or npm on the host. It only needs a supported Docker/Compose setup plus `curl` or `wget`; Node and PI WEB are installed inside the local Docker image.
+The Docker bootstrap does not require Node.js or npm on the host. It only needs a supported Docker/Compose setup plus `curl` or `wget`; Node and PI STUDIO are installed inside the local Docker image.
 
 Install with the bootstrap one-liner:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/jmfederico/pi-web/main/docker/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/pi-studio/pi-studio/main/docker/install.sh | sh
 ```
 
-The one-liner is idempotent. Each run refreshes Docker assets from the requested Git ref, writes host-specific `.env` values, rebuilds the local image from npm with `--pull --no-cache`, and recreates the split services without deleting persistent data. After installation, use the canonical runtime command in the install directory, for example `~/.local/share/pi-web-docker/pi-web-docker update`.
+The one-liner is idempotent. Each run refreshes Docker assets from the requested Git ref, writes host-specific `.env` values, rebuilds the local image from npm with `--pull --no-cache`, and recreates the split services without deleting persistent data. After installation, use the canonical runtime command in the install directory, for example `~/.local/share/pi-studio-docker/pi-studio-docker update`.
 
 Defaults:
 
-- install directory: `~/.local/share/pi-web-docker` (or `$XDG_DATA_HOME/pi-web-docker`);
+- install directory: `~/.local/share/pi-studio-docker` (or `$XDG_DATA_HOME/pi-studio-docker`);
 - persistent data: `<install-dir>/data`, mounted at `/data`;
 - browser URL: <http://127.0.0.1:8504>;
-- npm packages: latest `@jmfederico/pi-web`; Pi Coding Agent is resolved as PI WEB's npm peer dependency (newest compatible version) and the peer-provided `pi` binary is linked into the image.
+- npm packages: latest `@pi-studio/pi-studio`; Pi Coding Agent is resolved as PI STUDIO's npm peer dependency (newest compatible version) and the peer-provided `pi` binary is linked into the image.
 
-Updating recreates the Docker `sessiond` container. Active Pi agent runtimes in this Docker install may stop, so update while sessions are idle. Persisted PI WEB state, Pi config, and session history under the data directory are kept.
+Updating recreates the Docker `sessiond` container. Active Pi agent runtimes in this Docker install may stop, so update while sessions are idle. Persisted PI STUDIO state, Pi config, and session history under the data directory are kept.
 
-A runtime update always runs the installer in the install directory, so every update refreshes the Docker asset files, regenerates the Compose environment, rebuilds the image, and recreates the services. Changes to `compose.yml`, the `Dockerfile`, `pi-web-docker`, and the internal helpers therefore reach a running install no matter where the update was started.
+A runtime update always runs the installer in the install directory, so every update refreshes the Docker asset files, regenerates the Compose environment, rebuilds the image, and recreates the services. Changes to `compose.yml`, the `Dockerfile`, `pi-studio-docker`, and the internal helpers therefore reach a running install no matter where the update was started.
 
 The installer picks its behavior from where it runs, without a flag. On the host it detects the Docker host setup and records it in `.env`. Inside a container, such as an update started from the Updates panel, it reuses those recorded facts, because a container cannot observe its host: from inside a Linux container, a Docker Desktop for Mac host looks like native Linux Docker. Rerun the installer on the host after changing the host itself, for example moving the Docker socket or changing the docker group.
 
-Inside the Docker runtime, the Updates panel uses `pi-web-docker` for status, update, and restart commands. Update and restart commands first start a detached helper container with the same Docker/host mounts and generated Compose environment, including the project name, ports/data paths, helper image, and generated UID/GID/Docker group. After scheduling the helper, the command streams that helper's logs inline and prints the `docker logs -f` command needed to reconnect. The helper still runs independently, so work continues even when `web`, `sessiond`, or the PI WEB terminal that launched the command exits.
+Inside the Docker runtime, the Updates panel uses `pi-studio-docker` for status, update, and restart commands. Update and restart commands first start a detached helper container with the same Docker/host mounts and generated Compose environment, including the project name, ports/data paths, helper image, and generated UID/GID/Docker group. After scheduling the helper, the command streams that helper's logs inline and prints the `docker logs -f` command needed to reconnect. The helper still runs independently, so work continues even when `web`, `sessiond`, or the PI STUDIO terminal that launched the command exits.
 
 ### Command matrix
 
-From a production/runtime install directory, run `./pi-web-docker <command>`. From a checkout, run `./docker/pi-web-docker --dev <command>` for development mode. Inside PI WEB Docker containers and in the Updates panel, the command name is `pi-web-docker`; development commands include the explicit `--dev` flag, for example `pi-web-docker --dev status`.
+From a production/runtime install directory, run `./pi-studio-docker <command>`. From a checkout, run `./docker/pi-studio-docker --dev <command>` for development mode. Inside PI STUDIO Docker containers and in the Updates panel, the command name is `pi-studio-docker`; development commands include the explicit `--dev` flag, for example `pi-studio-docker --dev status`.
 
 | Command | Runtime/default | Development | Notes |
 | --- | --- | --- | --- |
-| `install` | one-liner above or `./pi-web-docker install [installer args]` | Not available | Production bootstrap/install only; accepts the installer options below. |
-| `start` | `./pi-web-docker start` | `./docker/pi-web-docker --dev start` | Starts the split `web` and `sessiond` stack. |
-| `stop` | `./pi-web-docker stop` | `./docker/pi-web-docker --dev stop` | Stops containers without deleting persistent data. |
-| `restart` | `./pi-web-docker restart` | `./docker/pi-web-docker --dev restart` | Restarts `web` and `sessiond`. |
-| `restart-web` | `./pi-web-docker restart-web` | `./docker/pi-web-docker --dev restart-web` | Restarts only the web/API service. |
-| `restart-sessiond` | `./pi-web-docker restart-sessiond` | `./docker/pi-web-docker --dev restart-sessiond` | Restarts the session daemon; active agent runtimes may stop in that Docker stack. |
-| `update` | `./pi-web-docker update` | `./docker/pi-web-docker --dev update` | Updates and recreates the stack. Runtime host updates rerun the installer to refresh Docker assets first. Development updates fast-forward the checkout, then rebuild, and require a clean Git checkout with no Git operation in progress. |
-| `status` | `./pi-web-docker status` | `./docker/pi-web-docker --dev status` | Shows Docker Compose service status. |
-| `logs` | `./pi-web-docker logs [web\|sessiond]` | `./docker/pi-web-docker --dev logs [web\|sessiond\|data-init]` | Follows logs; omitting a target follows all services. |
-| `shell` | `./pi-web-docker shell [web\|sessiond]` | `./docker/pi-web-docker --dev shell [web\|sessiond]` | Opens Bash in `web` by default. |
-| `doctor` | `./pi-web-docker doctor` | `./docker/pi-web-docker --dev doctor` | Prints static Docker command diagnostics and generated asset paths. |
-| `cli` | `./pi-web-docker cli <pi-web args...>` | `./docker/pi-web-docker --dev cli <pi-web args...>` | Proxies the existing `pi-web` CLI in the `web` container. |
+| `install` | one-liner above or `./pi-studio-docker install [installer args]` | Not available | Production bootstrap/install only; accepts the installer options below. |
+| `start` | `./pi-studio-docker start` | `./docker/pi-studio-docker --dev start` | Starts the split `web` and `sessiond` stack. |
+| `stop` | `./pi-studio-docker stop` | `./docker/pi-studio-docker --dev stop` | Stops containers without deleting persistent data. |
+| `restart` | `./pi-studio-docker restart` | `./docker/pi-studio-docker --dev restart` | Restarts `web` and `sessiond`. |
+| `restart-web` | `./pi-studio-docker restart-web` | `./docker/pi-studio-docker --dev restart-web` | Restarts only the web/API service. |
+| `restart-sessiond` | `./pi-studio-docker restart-sessiond` | `./docker/pi-studio-docker --dev restart-sessiond` | Restarts the session daemon; active agent runtimes may stop in that Docker stack. |
+| `update` | `./pi-studio-docker update` | `./docker/pi-studio-docker --dev update` | Updates and recreates the stack. Runtime host updates rerun the installer to refresh Docker assets first. Development updates fast-forward the checkout, then rebuild, and require a clean Git checkout with no Git operation in progress. |
+| `status` | `./pi-studio-docker status` | `./docker/pi-studio-docker --dev status` | Shows Docker Compose service status. |
+| `logs` | `./pi-studio-docker logs [web\|sessiond]` | `./docker/pi-studio-docker --dev logs [web\|sessiond\|data-init]` | Follows logs; omitting a target follows all services. |
+| `shell` | `./pi-studio-docker shell [web\|sessiond]` | `./docker/pi-studio-docker --dev shell [web\|sessiond]` | Opens Bash in `web` by default. |
+| `doctor` | `./pi-studio-docker doctor` | `./docker/pi-studio-docker --dev doctor` | Prints static Docker command diagnostics and generated asset paths. |
+| `cli` | `./pi-studio-docker cli <pi-studio args...>` | `./docker/pi-studio-docker --dev cli <pi-studio args...>` | Proxies the existing `pi-studio` CLI in the `web` container. |
 
-Do not run `docker compose down -v` unless you intentionally want to remove Compose-managed volumes. The default persistent PI WEB data is a bind mount, but avoiding `-v` keeps the update/stop flow conservative.
+Do not run `docker compose down -v` unless you intentionally want to remove Compose-managed volumes. The default persistent PI STUDIO data is a bind mount, but avoiding `-v` keeps the update/stop flow conservative.
 
 ### Installer options
 
 The installer accepts flags and equivalent environment variables:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/jmfederico/pi-web/main/docker/install.sh \
+curl -fsSL https://raw.githubusercontent.com/pi-studio/pi-studio/main/docker/install.sh \
   | sh -s -- \
-      --install-dir ~/.local/share/pi-web-docker \
-      --data-dir ~/.local/share/pi-web-docker/data \
+      --install-dir ~/.local/share/pi-studio-docker \
+      --data-dir ~/.local/share/pi-studio-docker/data \
       --bind-address 127.0.0.1 \
       --port 8504 \
-      --pi-web-version latest
+      --pi-studio-version latest
 ```
 
 Common environment variables written to `.env`:
 
 | Variable | Purpose |
 | --- | --- |
-| `PI_WEB_UID`, `PI_WEB_GID` | user/group used by the runtime containers and the image's `pi-web` account |
+| `PI_STUDIO_UID`, `PI_STUDIO_GID` | user/group used by the runtime containers and the image's `pi-studio` account |
 | `DOCKER_GID` | extra group used for Docker socket access |
-| `PI_WEB_DOCKER_DATA_DIR` | persistent data bind mount |
-| `PI_WEB_DOCKER_INSTALL_DIR` | absolute runtime install directory mounted back into the containers for Docker helper commands |
-| `PI_WEB_DOCKER_REF` | Git ref used when `pi-web-docker update` refreshes Docker asset templates |
-| `PI_WEB_DOCKER_HOST_PROFILE`, `PI_WEB_DOCKER_SOCKET_SOURCE`, `HOSTEXEC_MODE` | Docker host facts: detected host profile, host Docker socket path, and host-command capability toggle |
-| `PI_WEB_DOCKER_EXTRA_HOST_PATHS` | optional whitespace-separated existing absolute paths to bind-mount read/write at the same path |
-| `PI_WEB_BIND_ADDR`, `PI_WEB_PORT` | host bind address and port |
-| `PI_WEB_VERSION` | npm version/range for `@jmfederico/pi-web`; Pi Coding Agent resolves from PI WEB's npm peer dependency |
-| `PI_WEB_OPENSUSE_IMAGE` | openSUSE base image used for the runtime build |
-| `PI_WEB_NODEJS_MAJOR` | Node.js major package to install, defaulting to `22` |
-| `PI_WEB_NODEJS_REPO` | Node.js zypper repository URL, `auto`, or `disabled` |
-| `PI_WEB_EXTRA_ZYPPER_PACKAGES` | extra openSUSE packages installed during the image build |
-| `PI_WEB_IMAGE` | local image tag to build and run |
-| `COMPOSE_PROJECT_NAME` | Docker Compose project name used by host-side lifecycle commands and detached update/restart helpers; defaults to `pi-web` and is not exported to the long-lived services |
+| `PI_STUDIO_DOCKER_DATA_DIR` | persistent data bind mount |
+| `PI_STUDIO_DOCKER_INSTALL_DIR` | absolute runtime install directory mounted back into the containers for Docker helper commands |
+| `PI_STUDIO_DOCKER_REF` | Git ref used when `pi-studio-docker update` refreshes Docker asset templates |
+| `PI_STUDIO_DOCKER_HOST_PROFILE`, `PI_STUDIO_DOCKER_SOCKET_SOURCE`, `HOSTEXEC_MODE` | Docker host facts: detected host profile, host Docker socket path, and host-command capability toggle |
+| `PI_STUDIO_DOCKER_EXTRA_HOST_PATHS` | optional whitespace-separated existing absolute paths to bind-mount read/write at the same path |
+| `PI_STUDIO_BIND_ADDR`, `PI_STUDIO_PORT` | host bind address and port |
+| `PI_STUDIO_VERSION` | npm version/range for `@pi-studio/pi-studio`; Pi Coding Agent resolves from PI STUDIO's npm peer dependency |
+| `PI_STUDIO_OPENSUSE_IMAGE` | openSUSE base image used for the runtime build |
+| `PI_STUDIO_NODEJS_MAJOR` | Node.js major package to install, defaulting to `22` |
+| `PI_STUDIO_NODEJS_REPO` | Node.js zypper repository URL, `auto`, or `disabled` |
+| `PI_STUDIO_EXTRA_ZYPPER_PACKAGES` | extra openSUSE packages installed during the image build |
+| `PI_STUDIO_IMAGE` | local image tag to build and run |
+| `COMPOSE_PROJECT_NAME` | Docker Compose project name used by host-side lifecycle commands and detached update/restart helpers; defaults to `pi-studio` and is not exported to the long-lived services |
 | `HOSTEXEC_IMAGE` | helper image used by `hostexec` |
 
 Host-derived IDs and the Docker host facts are refreshed on every rerun **on the host** unless you explicitly override the IDs. A rerun from inside a container reuses the recorded values instead; see [Updating](#runtime-installupdate). User-facing values such as data directory, bind address, port, image names, upload limit, extra host paths, base image, Node.js settings, extra packages, and npm package selection are preserved from an existing `.env` unless you pass a flag or environment override.
 
-The installer also writes a generated `compose.override.yml` in the install directory. `pi-web-docker` loads the generated `.env` and Compose override explicitly for runtime commands and passes the generated `COMPOSE_PROJECT_NAME` to Docker Compose, so an unrelated ambient Compose project name cannot redirect lifecycle commands. The project name stays scoped to this lifecycle control path instead of entering web, terminal, or agent environments. Re-run `pi-web-docker install` or `pi-web-docker update` instead of editing generated files by hand. Extra environment variables for the containers go in `container.env` instead; see [Container environment](#container-environment).
+The installer also writes a generated `compose.override.yml` in the install directory. `pi-studio-docker` loads the generated `.env` and Compose override explicitly for runtime commands and passes the generated `COMPOSE_PROJECT_NAME` to Docker Compose, so an unrelated ambient Compose project name cannot redirect lifecycle commands. The project name stays scoped to this lifecycle control path instead of entering web, terminal, or agent environments. Re-run `pi-studio-docker install` or `pi-studio-docker update` instead of editing generated files by hand. Extra environment variables for the containers go in `container.env` instead; see [Container environment](#container-environment).
 
 ### Base image and tooling
 
-The Docker runtime and development images are openSUSE Tumbleweed based by default. They install Node.js 22, npm, `npx`, and Corepack through zypper, using the openSUSE Node.js build service repository when needed for the selected architecture. The image's `pi-web` account is created with `PI_WEB_UID:PI_WEB_GID` and `/data/home` as its home directory, so shells have a passwd entry instead of showing `I have no name!` while user config stays in the persistent `/data` mount. The image also includes common agent/development tools such as Git/Git LFS, GitHub CLI, OpenSSH, Python with pip/virtualenv and headers, native build tooling, `jq`, `ripgrep`, `fd`, `fzf`, `bat`, `vim`, ShellCheck, archive tools, network utilities, and the Docker CLI with Compose and Buildx plugins.
+The Docker runtime and development images are openSUSE Tumbleweed based by default. They install Node.js 22, npm, `npx`, and Corepack through zypper, using the openSUSE Node.js build service repository when needed for the selected architecture. The image's `pi-studio` account is created with `PI_STUDIO_UID:PI_STUDIO_GID` and `/data/home` as its home directory, so shells have a passwd entry instead of showing `I have no name!` while user config stays in the persistent `/data` mount. The image also includes common agent/development tools such as Git/Git LFS, GitHub CLI, OpenSSH, Python with pip/virtualenv and headers, native build tooling, `jq`, `ripgrep`, `fd`, `fzf`, `bat`, `vim`, ShellCheck, archive tools, network utilities, and the Docker CLI with Compose and Buildx plugins.
 
 Install extra distro packages without writing a hook by setting a whitespace-delimited package list:
 
 ```bash
-PI_WEB_EXTRA_ZYPPER_PACKAGES="go rustup kubernetes-client" \
-  curl -fsSL https://raw.githubusercontent.com/jmfederico/pi-web/main/docker/install.sh | sh
+PI_STUDIO_EXTRA_ZYPPER_PACKAGES="go rustup kubernetes-client" \
+  curl -fsSL https://raw.githubusercontent.com/pi-studio/pi-studio/main/docker/install.sh | sh
 ```
 
 You can also pass installer flags such as `--opensuse-image`, `--nodejs-major`, `--nodejs-repo`, and `--extra-zypper-packages`, or edit the generated `.env` and rerun the installer.
 
 ### Custom image hooks
 
-The runtime image can be extended without changing PI WEB's Dockerfile. Put local Bash scripts ending in `.sh` under:
+The runtime image can be extended without changing PI STUDIO's Dockerfile. Put local Bash scripts ending in `.sh` under:
 
 ```text
-~/.local/share/pi-web-docker/custom-image.d/
+~/.local/share/pi-studio-docker/custom-image.d/
 ```
 
 The installer preserves that directory, includes the `*.sh` files in the Docker build context, and runs each script as `root` during the image build in lexical order. Use this for optional tools such as `glab`, `kubectl`, cloud CLIs, or language toolchains that you do not want in the default image.
@@ -151,16 +151,16 @@ The installer preserves that directory, includes the `*.sh` files in the Docker 
 Example:
 
 ```bash
-mkdir -p ~/.local/share/pi-web-docker/custom-image.d
-cat >~/.local/share/pi-web-docker/custom-image.d/10-extra-tools.sh <<'EOF'
+mkdir -p ~/.local/share/pi-studio-docker/custom-image.d
+cat >~/.local/share/pi-studio-docker/custom-image.d/10-extra-tools.sh <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 zypper --gpg-auto-import-keys --non-interactive refresh
 zypper --non-interactive install --no-recommends glab kubernetes-client
 zypper clean --all
 EOF
-chmod +x ~/.local/share/pi-web-docker/custom-image.d/10-extra-tools.sh
-curl -fsSL https://raw.githubusercontent.com/jmfederico/pi-web/main/docker/install.sh | sh
+chmod +x ~/.local/share/pi-studio-docker/custom-image.d/10-extra-tools.sh
+curl -fsSL https://raw.githubusercontent.com/pi-studio/pi-studio/main/docker/install.sh | sh
 ```
 
 Keep credentials out of these scripts. Authenticate tools after the container starts so secrets live in the persistent `/data` mount, for example through `/data/home` and `/data/config`.
@@ -175,42 +175,42 @@ Files in that development hook directory are ignored by Git except for the place
 
 ### Agent environment facts
 
-Sessions started by a PI WEB Docker deployment get one short block of environment facts appended to their system prompt, after any `SYSTEM.md` / `APPEND_SYSTEM.md` content of your own. The block exists because a Docker deployment changes what is true about the machine an agent works on, in ways nothing in the working directory reveals:
+Sessions started by a PI STUDIO Docker deployment get one short block of environment facts appended to their system prompt, after any `SYSTEM.md` / `APPEND_SYSTEM.md` content of your own. The block exists because a Docker deployment changes what is true about the machine an agent works on, in ways nothing in the working directory reveals:
 
 - shell commands, edits, and tool installs happen in the container, not on the Docker host;
-- the container filesystem is discarded on the next image build, so tools installed mid-session disappear, while `PI_WEB_EXTRA_ZYPPER_PACKAGES` and `custom-image.d/*.sh` hooks persist;
+- the container filesystem is discarded on the next image build, so tools installed mid-session disappear, while `PI_STUDIO_EXTRA_ZYPPER_PACKAGES` and `custom-image.d/*.sh` hooks persist;
 - `/data` persists, selected host paths are mounted read/write at identical absolute paths, and the host root is mounted read-only at `/host`;
 - the Docker socket is mounted, and `hostexec` is either available or explicitly disabled for this host profile;
 - in development mode, the checkout is bind-mounted at `/workspace` and `/workspace/node_modules` is a separate container-managed mount rather than the host directory.
 
-The block states facts only and gives no workflow advice, so your own context and prompt files stay authoritative. Facts are derived from the running container, including its mount table, so extra mounts from `PI_WEB_DOCKER_EXTRA_HOST_PATHS` are described automatically without extra configuration. No deployment descriptor variables were added to the container environment for this, so nothing new is inherited by the commands agents run.
+The block states facts only and gives no workflow advice, so your own context and prompt files stay authoritative. Facts are derived from the running container, including its mount table, so extra mounts from `PI_STUDIO_DOCKER_EXTRA_HOST_PATHS` are described automatically without extra configuration. No deployment descriptor variables were added to the container environment for this, so nothing new is inherited by the commands agents run.
 
-To turn the block off, set `"environmentFacts": false` in the PI WEB config file (`/data/config/pi-web/config.json` in these containers), or set `PI_WEB_ENVIRONMENT_FACTS=false` for the `sessiond` service. The environment value accepts `0|1|true|false` and takes precedence over the config file; the default is on. Restart `sessiond` after changing it, and note that sessions keep the system prompt they started with, so the change applies to sessions started afterwards.
+To turn the block off, set `"environmentFacts": false` in the PI STUDIO config file (`/data/config/pi-studio/config.json` in these containers), or set `PI_STUDIO_ENVIRONMENT_FACTS=false` for the `sessiond` service. The environment value accepts `0|1|true|false` and takes precedence over the config file; the default is on. Restart `sessiond` after changing it, and note that sessions keep the system prompt they started with, so the change applies to sessions started afterwards.
 
-This switch only has an effect where PI WEB has facts to add, which today means Docker deployments.
+This switch only has an effect where PI STUDIO has facts to add, which today means Docker deployments.
 
 ### Version pinning
 
-Pi Coding Agent is resolved from PI WEB's npm peer dependency, and Docker links the peer-provided `pi` binary into `PATH`. Pin the PI WEB npm package when you want to stay on a specific PI WEB release:
+Pi Coding Agent is resolved from PI STUDIO's npm peer dependency, and Docker links the peer-provided `pi` binary into `PATH`. Pin the PI STUDIO npm package when you want to stay on a specific PI STUDIO release:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/jmfederico/pi-web/main/docker/install.sh \
-  | sh -s -- --pi-web-version 1.202606.4
+curl -fsSL https://raw.githubusercontent.com/pi-studio/pi-studio/main/docker/install.sh \
+  | sh -s -- --pi-studio-version 1.202606.4
 ```
 
 You can also edit `.env` in the install directory:
 
 ```dotenv
-PI_WEB_VERSION=1.202606.4
+PI_STUDIO_VERSION=1.202606.4
 ```
 
-Then rerun the one-liner to rebuild/recreate with that pin. Use `PI_WEB_VERSION=latest` when you want the runtime to track the newest PI WEB release and the newest Pi package compatible with PI WEB's peer dependency range.
+Then rerun the one-liner to rebuild/recreate with that pin. Use `PI_STUDIO_VERSION=latest` when you want the runtime to track the newest PI STUDIO release and the newest Pi package compatible with PI STUDIO's peer dependency range.
 
 To pin the Docker asset templates themselves, fetch the installer from a specific Git branch, tag, or commit and pass the same ref as the asset source:
 
 ```bash
 ref=<git-ref>
-curl -fsSL "https://raw.githubusercontent.com/jmfederico/pi-web/$ref/docker/install.sh" \
+curl -fsSL "https://raw.githubusercontent.com/pi-studio/pi-studio/$ref/docker/install.sh" \
   | sh -s -- --asset-ref "$ref"
 ```
 
@@ -219,23 +219,23 @@ curl -fsSL "https://raw.githubusercontent.com/jmfederico/pi-web/$ref/docker/inst
 Shared extra environment variables for the `sessiond` and `web` containers belong in the persistent data directory:
 
 ```text
-$PI_WEB_DOCKER_DATA_DIR/container.env
+$PI_STUDIO_DOCKER_DATA_DIR/container.env
 ```
 
-By default that resolves to `$HOME/.local/share/pi-web-docker/data/container.env`. Runtime and development mode read the same file because they [share `/data`](#sharing-runtime-and-development-state). The installer and `pi-web-docker --dev` create it once with a commented template, with owner-only permissions, and never rewrite it, so it is safe to keep long-lived values there. `pi-web-docker doctor` prints the resolved path for the selected mode.
+By default that resolves to `$HOME/.local/share/pi-studio-docker/data/container.env`. Runtime and development mode read the same file because they [share `/data`](#sharing-runtime-and-development-state). The installer and `pi-studio-docker --dev` create it once with a commented template, with owner-only permissions, and never rewrite it, so it is safe to keep long-lived values there. `pi-studio-docker doctor` prints the resolved path for the selected mode.
 
-Every `KEY=value` line joins the environment of both PI WEB services, and agent sessions, terminals, and the processes they start inherit it. Use it for proxy settings, provider credentials, and the runtime-only environment variables in the [configuration reference](https://pi-web.dev/config):
+Every `KEY=value` line joins the environment of both PI STUDIO services, and agent sessions, terminals, and the processes they start inherit it. Use it for proxy settings, provider credentials, and the runtime-only environment variables in the [configuration reference](https://pi-studio.dev/config):
 
 ```dotenv
 HTTPS_PROXY=http://proxy.example.internal:3128
 NO_PROXY=localhost,127.0.0.1
-PI_WEB_OFFLINE=1
+PI_STUDIO_OFFLINE=1
 ```
 
-For **development-only** values, edit `<repo>/.pi-web/docker-compose-dev.container.env`. The dev launcher creates this gitignored file once with owner-only permissions and never rewrites it. Both dev services load it after the shared file, so matching keys override shared values; production never loads it. `pi-web-docker --dev doctor` reports its path. For example, keep dev's saved remote machines separate without changing other shared state:
+For **development-only** values, edit `<repo>/.pi-studio/docker-compose-dev.container.env`. The dev launcher creates this gitignored file once with owner-only permissions and never rewrites it. Both dev services load it after the shared file, so matching keys override shared values; production never loads it. `pi-studio-docker --dev doctor` reports its path. For example, keep dev's saved remote machines separate without changing other shared state:
 
 ```dotenv
-PI_WEB_MACHINES_FILE=/data/pi-web/machines-dev.json
+PI_STUDIO_MACHINES_FILE=/data/pi-studio/machines-dev.json
 ```
 
 Omitted keys inherit the shared file (or the application's default when neither file sets them). Explicit Compose `environment:` values still win over either env file. These files use Docker Compose dotenv syntax, not shell scripts.
@@ -245,17 +245,17 @@ Both images default to `LANG=C.UTF-8`, giving terminals and agent tools a UTF-8 
 Apply changes by recreating the affected containers. Recreating `sessiond` interrupts active sessions; schedule this when those sessions can be stopped:
 
 ```bash
-~/.local/share/pi-web-docker/pi-web-docker start
-./docker/pi-web-docker --dev start
+~/.local/share/pi-studio-docker/pi-studio-docker start
+./docker/pi-studio-docker --dev start
 ```
 
 The `restart`, `restart-web`, and `restart-sessiond` commands reuse the existing containers, so they keep the environment those containers already have.
 
-The values PI WEB sets for a container stay authoritative: `HOME`, `XDG_CONFIG_HOME`, `PI_WEB_DATA_DIR`, `PI_WEB_SESSIOND_SOCKET`, `PI_CODING_AGENT_DIR`, `PI_WEB_MAX_UPLOAD_BYTES`, `HOSTEXEC_MODE`, `HOSTEXEC_IMAGE`, the `PI_WEB_DOCKER_*` keys, and the web server's `PI_WEB_HOST` and `PI_WEB_PORT` keep their generated values even when `container.env` lists them. Change those through installer flags, `.env`, or `.pi-web/docker-compose-dev.local.env`.
+The values PI STUDIO sets for a container stay authoritative: `HOME`, `XDG_CONFIG_HOME`, `PI_STUDIO_DATA_DIR`, `PI_STUDIO_SESSIOND_SOCKET`, `PI_CODING_AGENT_DIR`, `PI_STUDIO_MAX_UPLOAD_BYTES`, `HOSTEXEC_MODE`, `HOSTEXEC_IMAGE`, the `PI_STUDIO_DOCKER_*` keys, and the web server's `PI_STUDIO_HOST` and `PI_STUDIO_PORT` keep their generated values even when `container.env` lists them. Change those through installer flags, `.env`, or `.pi-studio/docker-compose-dev.local.env`.
 
-The generated `.env` and `.pi-web/docker-compose-dev.generated.env` files serve a different purpose: Docker Compose reads them to fill in placeholders in the Compose files, so keys added there configure Compose itself and do not reach the container process environment.
+The generated `.env` and `.pi-studio/docker-compose-dev.generated.env` files serve a different purpose: Docker Compose reads them to fill in placeholders in the Compose files, so keys added there configure Compose itself and do not reach the container process environment.
 
-Interactive terminals and agent tools resolve the same commands. Web terminals start login shells, and openSUSE's `/etc/profile` resets `PATH` to a minimal value, so the image ships `/etc/profile.d/pi-web-path-parity.sh`, which merges back the inherited entries the reset dropped. Terminals therefore settle on the same `PATH` that agent sessions inherit from the session daemon, including image-level entries such as development mode's `/workspace/node_modules/.bin` and any `PATH` override from `container.env`.
+Interactive terminals and agent tools resolve the same commands. Web terminals start login shells, and openSUSE's `/etc/profile` resets `PATH` to a minimal value, so the image ships `/etc/profile.d/pi-studio-path-parity.sh`, which merges back the inherited entries the reset dropped. Terminals therefore settle on the same `PATH` that agent sessions inherit from the session daemon, including image-level entries such as development mode's `/workspace/node_modules/.bin` and any `PATH` override from `container.env`.
 
 ## Localhost binding and remote access
 
@@ -271,7 +271,7 @@ ssh -L 8504:127.0.0.1:8504 user@server
 For a trusted VPN/private interface, bind to that private address:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/jmfederico/pi-web/main/docker/install.sh \
+curl -fsSL https://raw.githubusercontent.com/pi-studio/pi-studio/main/docker/install.sh \
   | sh -s -- --bind-address 100.x.y.z --port 8504
 ```
 
@@ -279,11 +279,11 @@ If you use a reverse proxy, keep the container bound to localhost or a private a
 
 ## `hostexec` examples
 
-`hostexec [--root] <command...>` is the native Linux host command bridge provided by this Docker setup. It is enabled only for the `linux-native-docker` profile and intentionally does not abstract package managers or detect distributions. By default, commands run as the same numeric user/group as the PI WEB container. Use `--root` only for administrative host commands.
+`hostexec [--root] <command...>` is the native Linux host command bridge provided by this Docker setup. It is enabled only for the `linux-native-docker` profile and intentionally does not abstract package managers or detect distributions. By default, commands run as the same numeric user/group as the PI STUDIO container. Use `--root` only for administrative host commands.
 
 On Docker Desktop for Mac, `hostexec` exits with a clear disabled message because the Docker daemon and containers run inside a Linux VM, not in native macOS namespaces. Docker CLI and Docker Compose commands still work through the mounted Docker socket.
 
-Run it from a PI WEB session, a PI WEB terminal, or by execing into the runtime container on native Linux:
+Run it from a PI STUDIO session, a PI STUDIO terminal, or by execing into the runtime container on native Linux:
 
 ```bash
 hostexec uname -a
@@ -296,7 +296,7 @@ hostexec --root apt-get update
 From the host shell, for a quick smoke test:
 
 ```bash
-cd ~/.local/share/pi-web-docker
+cd ~/.local/share/pi-studio-docker
 docker compose exec web hostexec uname -a
 ```
 
@@ -304,46 +304,46 @@ On native Linux, `hostexec` starts a temporary privileged helper container throu
 
 ## Development Docker setup
 
-Use this mode when developing PI WEB from this checkout. It bind-mounts the source tree, keeps dependencies in a Docker volume, stores PI WEB/Pi data in the same host data directory as runtime mode by default, and preserves the split runtime model:
+Use this mode when developing PI STUDIO from this checkout. It bind-mounts the source tree, keeps dependencies in a Docker volume, stores PI STUDIO/Pi data in the same host data directory as runtime mode by default, and preserves the split runtime model:
 
 - `sessiond` runs `npm run start:sessiond` as the long-lived owner of Pi agent runtimes;
 - `web` runs `npm run dev:web` and `npm run dev:client` so API, plugin, and Vite changes can autoreload without restarting `sessiond`.
 
-Use `./docker/pi-web-docker --dev restart` to restart both services. It handles plugin-build readiness and restart order for you. Restarting interrupts active sessions, so wait for important work to finish first.
+Use `./docker/pi-studio-docker --dev restart` to restart both services. It handles plugin-build readiness and restart order for you. Restarting interrupts active sessions, so wait for important work to finish first.
 
 From the repository root, use the canonical Docker command so the same fail-closed host profile detection is applied as runtime mode:
 
 ```bash
-./docker/pi-web-docker --dev start
+./docker/pi-studio-docker --dev start
 ```
 
-The command creates `.pi-web/docker-compose-dev.local.env` on first run, writes `.pi-web/docker-compose-dev.generated.env` and `.pi-web/docker-compose-dev.host.generated.yml`, then runs Docker Compose with `docker/compose.dev.yml` plus that generated host override. The generated environment includes the host repository root as `PI_WEB_DOCKER_DEV_REPO_ROOT`. Development Compose exposes the checkout at both `/workspace` and that original host path, with the same container-managed dependency volume at both paths; the generated host override supplies only the profile-specific host mounts. Edit only the `.local.env` file for persistent dev settings; the `.generated.env` and `.host.generated.yml` files are refreshed by the command. Extra environment variables for the dev containers go in the shared `container.env` or the dev-only `.pi-web/docker-compose-dev.container.env`; see [Container environment](#container-environment).
+The command creates `.pi-studio/docker-compose-dev.local.env` on first run, writes `.pi-studio/docker-compose-dev.generated.env` and `.pi-studio/docker-compose-dev.host.generated.yml`, then runs Docker Compose with `docker/compose.dev.yml` plus that generated host override. The generated environment includes the host repository root as `PI_STUDIO_DOCKER_DEV_REPO_ROOT`. Development Compose exposes the checkout at both `/workspace` and that original host path, with the same container-managed dependency volume at both paths; the generated host override supplies only the profile-specific host mounts. Edit only the `.local.env` file for persistent dev settings; the `.generated.env` and `.host.generated.yml` files are refreshed by the command. Extra environment variables for the dev containers go in the shared `container.env` or the dev-only `.pi-studio/docker-compose-dev.container.env`; see [Container environment](#container-environment).
 
 Values used by the command are resolved in this order:
 
-1. `.pi-web/docker-compose-dev.local.env`;
-2. previous generated values in `.pi-web/docker-compose-dev.generated.env`, when present;
+1. `.pi-studio/docker-compose-dev.local.env`;
+2. previous generated values in `.pi-studio/docker-compose-dev.generated.env`, when present;
 3. current shell environment, on first generation only;
-4. runtime installer env, usually `$HOME/.local/share/pi-web-docker/.env`;
+4. runtime installer env, usually `$HOME/.local/share/pi-studio-docker/.env`;
 5. built-in defaults.
 
-`COMPOSE_PROJECT_NAME`, `PI_WEB_UID`, and `PI_WEB_GID` are the exceptions to runtime-env reuse. Development mode defaults the Compose project to `pi-web-dev` and defaults the container user/group to the current host user, unless you set values in the shell or `.pi-web/docker-compose-dev.local.env`. This keeps development and runtime stacks from accidentally sharing one Docker Compose project and prevents bind-mounted checkout files from being written as root or as a different runtime service user.
+`COMPOSE_PROJECT_NAME`, `PI_STUDIO_UID`, and `PI_STUDIO_GID` are the exceptions to runtime-env reuse. Development mode defaults the Compose project to `pi-studio-dev` and defaults the container user/group to the current host user, unless you set values in the shell or `.pi-studio/docker-compose-dev.local.env`. This keeps development and runtime stacks from accidentally sharing one Docker Compose project and prevents bind-mounted checkout files from being written as root or as a different runtime service user.
 
-If you already ran the runtime installer, dev mode therefore reuses shared defaults such as Docker group, data directory, extra host paths, image build inputs, upload limit, and bind address unless you set a more specific value in the shell or `.local.env`. If an older `.pi-web/docker-compose-dev.env` exists, the first run copies its dev bind/port values into `.local.env` so previous local exposure settings are easy to see and edit.
+If you already ran the runtime installer, dev mode therefore reuses shared defaults such as Docker group, data directory, extra host paths, image build inputs, upload limit, and bind address unless you set a more specific value in the shell or `.local.env`. If an older `.pi-studio/docker-compose-dev.env` exists, the first run copies its dev bind/port values into `.local.env` so previous local exposure settings are easy to see and edit.
 
-To expose the dev API and Vite UI beyond localhost persistently, edit `.pi-web/docker-compose-dev.local.env`:
+To expose the dev API and Vite UI beyond localhost persistently, edit `.pi-studio/docker-compose-dev.local.env`:
 
 ```dotenv
-PI_WEB_DEV_API_BIND_ADDR=0.0.0.0
-PI_WEB_DEV_BIND_ADDR=0.0.0.0
+PI_STUDIO_DEV_API_BIND_ADDR=0.0.0.0
+PI_STUDIO_DEV_BIND_ADDR=0.0.0.0
 ```
 
 For temporary overrides, prefix the command:
 
 ```bash
-PI_WEB_DEV_API_BIND_ADDR=0.0.0.0 \
-PI_WEB_DEV_BIND_ADDR=0.0.0.0 \
-  ./docker/pi-web-docker --dev start
+PI_STUDIO_DEV_API_BIND_ADDR=0.0.0.0 \
+PI_STUDIO_DEV_BIND_ADDR=0.0.0.0 \
+  ./docker/pi-studio-docker --dev start
 ```
 
 Development `update` is intentionally fail-closed. Before starting a Docker helper or build, it requires this repository to be a clean Git checkout, including no staged, modified, or untracked files, and no merge, rebase, cherry-pick, revert, sequenced operation, or bisect in progress. It never stashes, removes, or rewrites developer work; resolve, commit, stash, or remove that work explicitly and rerun the update. This guard applies only to `update`: `start` and restart commands remain available for normal development against an intentionally dirty checkout.
@@ -355,7 +355,7 @@ The fast-forward is best effort. When the branch has no upstream, `HEAD` is deta
 You can run the dev stack in the background with:
 
 ```bash
-./docker/pi-web-docker --dev start
+./docker/pi-studio-docker --dev start
 ```
 
 Open the Vite UI at <http://127.0.0.1:8505>. The dev API is published on <http://127.0.0.1:8504>.
@@ -363,61 +363,61 @@ Open the Vite UI at <http://127.0.0.1:8505>. The dev API is published on <http:/
 Useful development commands:
 
 ```bash
-./docker/pi-web-docker --dev status
-./docker/pi-web-docker --dev logs web
-./docker/pi-web-docker --dev logs data-init
-./docker/pi-web-docker --dev restart-web
-./docker/pi-web-docker --dev restart-sessiond
-./docker/pi-web-docker --dev update
-./docker/pi-web-docker --dev stop
+./docker/pi-studio-docker --dev status
+./docker/pi-studio-docker --dev logs web
+./docker/pi-studio-docker --dev logs data-init
+./docker/pi-studio-docker --dev restart-web
+./docker/pi-studio-docker --dev restart-sessiond
+./docker/pi-studio-docker --dev update
+./docker/pi-studio-docker --dev stop
 ```
 
-Restart `sessiond` manually after changes that affect `src/server/sessiond.ts`, daemon ownership, or session-daemon-only code paths. Restarting only `web` is enough for ordinary API/client/browser-plugin development reloads. For server-plugin changes, wait for the web-owned build to finish, then restart sessiond. Commands launched from the Updates panel use the same detached `pi-web-docker` helper as runtime mode, stream the helper's logs inline after it starts, and keep update/restart work running after the current PI WEB terminal or container exits. In both modes detached helpers load the generated Docker env and run as the generated `PI_WEB_UID:PI_WEB_GID` with the generated Docker group; development helpers still refuse UID 0 unless `--allow-root` is explicit.
+Restart `sessiond` manually after changes that affect `src/server/sessiond.ts`, daemon ownership, or session-daemon-only code paths. Restarting only `web` is enough for ordinary API/client/browser-plugin development reloads. For server-plugin changes, wait for the web-owned build to finish, then restart sessiond. Commands launched from the Updates panel use the same detached `pi-studio-docker` helper as runtime mode, stream the helper's logs inline after it starts, and keep update/restart work running after the current PI STUDIO terminal or container exits. In both modes detached helpers load the generated Docker env and run as the generated `PI_STUDIO_UID:PI_STUDIO_GID` with the generated Docker group; development helpers still refuse UID 0 unless `--allow-root` is explicit.
 
-The dev setup intentionally has the same Docker socket and profile-specific host mounts as the runtime setup. The same trust warnings apply. The command refuses to run development mode as UID 0, or to generate a dev env with `PI_WEB_UID=0`, unless you pass `--allow-root`; use that override only when root-owned checkout writes are intentional.
+The dev setup intentionally has the same Docker socket and profile-specific host mounts as the runtime setup. The same trust warnings apply. The command refuses to run development mode as UID 0, or to generate a dev env with `PI_STUDIO_UID=0`, unless you pass `--allow-root`; use that override only when root-owned checkout writes are intentional.
 
-On startup, a short `data-init` service creates the shared `/data` subdirectories and gives them to `PI_WEB_UID:PI_WEB_GID`. This handles the common Flatcar/Docker case where a missing bind-mount directory is created as root by the Docker daemon. Because the image also builds its `pi-web` account with those IDs, rebuild the image if you change `PI_WEB_UID` or `PI_WEB_GID`.
+On startup, a short `data-init` service creates the shared `/data` subdirectories and gives them to `PI_STUDIO_UID:PI_STUDIO_GID`. This handles the common Flatcar/Docker case where a missing bind-mount directory is created as root by the Docker daemon. Because the image also builds its `pi-studio` account with those IDs, rebuild the image if you change `PI_STUDIO_UID` or `PI_STUDIO_GID`.
 
 ### Sharing runtime and development state
 
 Runtime and dev mode both use `/data` inside the containers. By default they now point at the same host directory:
 
 ```text
-$HOME/.local/share/pi-web-docker/data
+$HOME/.local/share/pi-studio-docker/data
 ```
 
 Pi session files are therefore shared at:
 
 ```text
-$HOME/.local/share/pi-web-docker/data/pi-agent/sessions/
+$HOME/.local/share/pi-studio-docker/data/pi-agent/sessions/
 ```
 
 The [`container.env`](#container-environment) file for extra container environment variables is shared through the same directory:
 
 ```text
-$HOME/.local/share/pi-web-docker/data/container.env
+$HOME/.local/share/pi-studio-docker/data/container.env
 ```
 
-Set `PI_WEB_DOCKER_DATA_DIR=/some/path` for both modes if you want that shared data somewhere else.
+Set `PI_STUDIO_DOCKER_DATA_DIR=/some/path` for both modes if you want that shared data somewhere else.
 
 Use this shared directory to switch between runtime and dev mode, not to run both at the same time. Stop one Compose stack before starting the other so two session daemons do not share the same socket/state directory concurrently.
 
-For sessions to appear under the same workspace in both modes, use the same project path in PI WEB. On Linux, prefer host-mounted paths such as `/home/core/<repo>`, `/srv/<project>`, or `/opt/<project>`. On Mac, prefer paths under `/Users/<you>/...`. The dev container also exposes this checkout as `/workspace` so the PI WEB dev server can run from it, but sessions started against `/workspace` are organized under that different working-directory path and will not line up with runtime sessions for the host-mounted path.
+For sessions to appear under the same workspace in both modes, use the same project path in PI STUDIO. On Linux, prefer host-mounted paths such as `/home/core/<repo>`, `/srv/<project>`, or `/opt/<project>`. On Mac, prefer paths under `/Users/<you>/...`. The dev container also exposes this checkout as `/workspace` so the PI STUDIO dev server can run from it, but sessions started against `/workspace` are organized under that different working-directory path and will not line up with runtime sessions for the host-mounted path.
 
 Development mode owns one persistent `node_modules` volume, mounted at both `/workspace/node_modules` and `<host-repository-path>/node_modules` inside the application containers. Commands run from either checkout path use the same dependencies. The host checkout's own `node_modules` is hidden inside these containers and is neither used nor modified; manage a separate native host installation with its own npm commands.
 
 Development startup keeps that volume synchronized with the dependency tree built into the dev image. When `package.json`, `package-lock.json`, the Node image, or another dependency-build input changes, `start` or `update` rebuilds the image and `data-init` refreshes the volume before `sessiond` starts. Unchanged dependency-build inputs can reuse Docker's build cache; updates do not force an unnecessary reinstall. Manual volume removal is not required.
 
-If Compose is invoked directly without rebuilding after a manifest change, `data-init` stops with a mismatch message instead of starting against stale dependencies. Run `./docker/pi-web-docker --dev start` or `./docker/pi-web-docker --dev update` to rebuild and synchronize it.
+If Compose is invoked directly without rebuilding after a manifest change, `data-init` stops with a mismatch message instead of starting against stale dependencies. Run `./docker/pi-studio-docker --dev start` or `./docker/pi-studio-docker --dev update` to rebuild and synchronize it.
 
 ## Local checkout validation
 
 For installer validation from a checkout without starting containers:
 
 ```bash
-PI_WEB_DOCKER_SKIP_COMPOSE=1 \
-PI_WEB_DOCKER_ASSET_DIR="$PWD/docker" \
-PI_WEB_DOCKER_HOME="$(mktemp -d)" \
+PI_STUDIO_DOCKER_SKIP_COMPOSE=1 \
+PI_STUDIO_DOCKER_ASSET_DIR="$PWD/docker" \
+PI_STUDIO_DOCKER_HOME="$(mktemp -d)" \
 sh docker/install.sh
 ```
 
@@ -425,9 +425,9 @@ For Compose validation after generating host overrides:
 
 ```bash
 tmp_home=$(mktemp -d)
-PI_WEB_DOCKER_SKIP_COMPOSE=1 \
-PI_WEB_DOCKER_ASSET_DIR="$PWD/docker" \
-PI_WEB_DOCKER_HOME="$tmp_home" \
+PI_STUDIO_DOCKER_SKIP_COMPOSE=1 \
+PI_STUDIO_DOCKER_ASSET_DIR="$PWD/docker" \
+PI_STUDIO_DOCKER_HOME="$tmp_home" \
 sh docker/install.sh
 
 docker compose -f "$tmp_home/compose.yml" -f "$tmp_home/compose.override.yml" config

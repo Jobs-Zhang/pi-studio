@@ -1,6 +1,7 @@
-import type { PluginActivationContext, WorkspacePanelContext } from "@jmfederico/pi-web/plugin-api";
+import type { PluginActivationContext, WorkspacePanelContext } from "@pi-studio/pi-studio/plugin-api";
 import type { LogEntry } from "./protocol.js";
 import { renderCaptainMarkdown } from "./markdown.js";
+import { t } from "./messages.js";
 
 type Html = PluginActivationContext["html"];
 export interface SourceSession { id: string; name: string }
@@ -8,7 +9,7 @@ export function selectedSourceSession(context: WorkspacePanelContext): SourceSes
   if (context.state?.selectedMachine && context.state.selectedMachine.id !== context.machine.id) return;
   const selected = context.state?.selectedSession;
   if (!selected || selected.archived || selected.pending || selected.cwd !== context.workspace.path) return;
-  return { id: selected.id, name: selected.name !== undefined && selected.name.trim() !== "" ? selected.name : `Session ${selected.id.slice(0, 8)}` };
+  return { id: selected.id, name: selected.name !== undefined && selected.name.trim() !== "" ? selected.name : t("session.fallbackName", { id: selected.id.slice(0, 8) }) };
 }
 export interface CaptainPanelView {
   entries: LogEntry[]; selected?: LogEntry; status: string;
@@ -31,38 +32,38 @@ export function renderCaptainPanel(html: Html, view: CaptainPanelView) {
   const disabled = !view.connected || view.connecting || view.pending || working || !view.source || pirateSelected;
   const selected = view.selected;
   const sourceSessionId = selected?.sourceSessionId;
-  const status = view.connecting ? "Connecting…" : !view.connected ? "Connection lost" : view.pending ? "Fetching the last reply…"
-    : working ? "The captain is translating…" : !view.source ? "Select a session in this workspace first." : pirateSelected ? "Select a different session — this one is the pirate."
-      : "Ready to translate";
+  const status = view.connecting ? t("status.connectingShort") : !view.connected ? t("status.connectionLost") : view.pending ? t("status.fetching")
+    : working ? t("status.translating") : !view.source ? t("status.selectSession") : pirateSelected ? t("status.pirateSelected")
+      : t("status.ready");
   return html`<style>${styles}</style>
-    <section class="captains-log" aria-label="Captain's Log">
-      <div class="captain-heading"><h2>⚓ Captain's Log</h2><p class="muted">Your last reply, retold by a theatrical pirate.</p></div>
-      <div class="captain-source"><span class="muted">Selected session</span><strong>${view.source?.name ?? "No session selected"}</strong></div>
-      <button class="captain-primary" ?disabled=${disabled} @click=${view.onTranslate}>Let the Captain tell it</button>
+    <section class="captains-log" aria-label=${t("panel.aria")}>
+      <div class="captain-heading"><h2>${t("panel.heading")}</h2><p class="muted">${t("panel.subtitle")}</p></div>
+      <div class="captain-source"><span class="muted">${t("panel.selectedSession")}</span><strong>${view.source?.name ?? t("panel.noSession")}</strong></div>
+      <button class="captain-primary" ?disabled=${disabled} @click=${view.onTranslate}>${t("panel.translate")}</button>
       <p class="captain-status" role="status" aria-live="polite">${status}
-        ${!view.connected && !view.connecting ? html`<button @click=${view.onReconnect}>Reconnect</button>` : null}
+        ${!view.connected && !view.connecting ? html`<button @click=${view.onReconnect}>${t("panel.reconnect")}</button>` : null}
       </p>
-      ${!view.connected && !view.connecting ? html`<p class="captain-notice">Reconnect to see the result. The captain may still be working; your request will not be sent again.</p>` : null}
+      ${!view.connected && !view.connecting ? html`<p class="captain-notice">${t("panel.reconnectNotice")}</p>` : null}
       ${view.notice !== undefined && view.notice !== "" ? html`<p class="captain-notice" role="alert">${view.notice}</p>` : null}
-      ${selected ? html`<article class="captain-reply" aria-label="Pirate translation">
-        <div class="captain-reply-heading"><strong>${selected.status === "running" ? "Translating…" : selected.id === view.entries[0]?.id ? "Last translation" : "Earlier translation"}</strong><time datetime=${selected.createdAt}>${dateLabel(selected.createdAt)}</time></div>
-        ${selected.status === "completed" ? html`<div class="captain-answer">${selected.text ? renderCaptainMarkdown(html, selected.text) : "Receiving the captain's reply…"}</div>`
-          : selected.status === "running" ? html`<p class="muted">Reading the source reply and turning it into pirate. No message is sent to the source conversation.</p>`
-            : html`<div class="captain-notice" role="alert"><strong>${selected.status === "interrupted" ? "Translation interrupted" : "Couldn't translate that reply"}</strong><p>${selected.text || "Check Diagnostics for details, then try again when the session is ready."}</p></div>`}
-        ${sourceSessionId !== undefined && sourceSessionId !== "" ? html`<button @click=${() => { view.onOpenSource(sourceSessionId); }}>Open source session</button>` : null}
-      </article>` : html`<p class="captain-empty muted">Pick a conversation, then translate its latest finished assistant reply. The original stays untouched.</p>`}
+      ${selected ? html`<article class="captain-reply" aria-label=${t("reply.aria")}>
+        <div class="captain-reply-heading"><strong>${selected.status === "running" ? t("reply.translating") : selected.id === view.entries[0]?.id ? t("reply.last") : t("reply.earlier")}</strong><time datetime=${selected.createdAt}>${dateLabel(selected.createdAt)}</time></div>
+        ${selected.status === "completed" ? html`<div class="captain-answer">${selected.text ? renderCaptainMarkdown(html, selected.text) : t("reply.receiving")}</div>`
+          : selected.status === "running" ? html`<p class="muted">${t("reply.reading")}</p>`
+            : html`<div class="captain-notice" role="alert"><strong>${selected.status === "interrupted" ? t("reply.interrupted") : t("reply.failed")}</strong><p>${selected.text || t("reply.failedHint")}</p></div>`}
+        ${sourceSessionId !== undefined && sourceSessionId !== "" ? html`<button @click=${() => { view.onOpenSource(sourceSessionId); }}>${t("reply.openSource")}</button>` : null}
+      </article>` : html`<p class="captain-empty muted">${t("panel.empty")}</p>`}
       <div class="captain-secondary">
-        ${view.entries.length > 1 ? html`<details><summary>Previous translations <span class="muted">(${view.entries.length})</span></summary>
+        ${view.entries.length > 1 ? html`<details><summary>${t("history.summary")} <span class="muted">(${view.entries.length})</span></summary>
           <div class="captain-history">${view.entries.map((entry) => html`<button class=${entry.id === selected?.id ? "selected" : ""} ?disabled=${!view.connected} @click=${() => { view.onRead(entry.id); }}>
-            <span>${dateLabel(entry.createdAt)} · ${entry.status === "completed" ? "Translated" : entry.status === "running" ? "Working" : "Not completed"}</span>
+            <span>${dateLabel(entry.createdAt)} · ${entry.status === "completed" ? t("history.translated") : entry.status === "running" ? t("history.working") : t("history.notCompleted")}</span>
           </button>`)}</div>
         </details>` : null}
-        <details class="captain-diagnostics"><summary>Diagnostics</summary>
+        <details class="captain-diagnostics"><summary>${t("diagnostics.summary")}</summary>
           <p>${view.status}</p>
-          ${selected ? html`<dl><dt>Machine</dt><dd>${view.machineName}</dd><dt>Source session</dt><dd>${selected.sourceSessionId ?? "Unknown"}</dd><dt>Pirate session</dt><dd>${selected.sessionId || "Not created"}</dd><dt>Request</dt><dd>${selected.id}</dd></dl>
+          ${selected ? html`<dl><dt>${t("diagnostics.machine")}</dt><dd>${view.machineName}</dd><dt>${t("diagnostics.sourceSession")}</dt><dd>${selected.sourceSessionId ?? t("diagnostics.unknown")}</dd><dt>${t("diagnostics.pirateSession")}</dt><dd>${selected.sessionId || t("diagnostics.notCreated")}</dd><dt>${t("diagnostics.request")}</dt><dd>${selected.id}</dd></dl>
             <p>${selected.question}</p><ol>${selected.stages.map((stage) => html`<li>${stage}</li>`)}</ol>` : null}
         </details>
-        <p class="captain-footnote muted">Uses your configured model. Reuses the pirate while it's available; otherwise starts one automatically.</p>
+        <p class="captain-footnote muted">${t("panel.footnote")}</p>
       </div>
     </section>`;
 }

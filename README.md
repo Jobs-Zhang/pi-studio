@@ -1,25 +1,25 @@
-# PI WEB
+# PI STUDIO
 
-[![CI](https://github.com/jmfederico/pi-web/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/jmfederico/pi-web/actions/workflows/ci.yml)
-[![npm version](https://img.shields.io/npm/v/@jmfederico/pi-web)](https://www.npmjs.com/package/@jmfederico/pi-web)
-[![Node.js](https://img.shields.io/node/v/@jmfederico/pi-web)](package.json)
+[![CI](https://github.com/pi-studio/pi-studio/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/pi-studio/pi-studio/actions/workflows/ci.yml)
+[![npm version](https://img.shields.io/npm/v/@pi-studio/pi-studio)](https://www.npmjs.com/package/@pi-studio/pi-studio)
+[![Node.js](https://img.shields.io/node/v/@pi-studio/pi-studio)](package.json)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-**PI WEB is a web UI for [Pi Coding Agent](https://github.com/earendil-works/pi/tree/main/packages/coding-agent) that keeps agent sessions running in real workspaces on your machine or server.**
+**PI STUDIO is a web UI for [Pi Coding Agent](https://github.com/earendil-works/pi/tree/main/packages/coding-agent) that keeps agent sessions running in real workspaces on your machine or server.**
 
 Run agents where your code, tools, credentials, and build caches live. Supervise them from any browser.
 
-Website and docs: <https://pi-web.dev/>
+Website and docs: <https://pi-studio.dev/>
 
-![PI WEB](docs/assets/pi-web-banner.png)
+![PI STUDIO](docs/assets/pi-studio-banner.png)
 
-![PI WEB desktop screenshot](docs/assets/pi-web-desktop.png)
+![PI STUDIO desktop screenshot](docs/assets/pi-studio-desktop.png)
 
-## Why PI WEB?
+## Why PI STUDIO?
 
 Agentic development works better when the work environment is persistent.
 
-PI WEB lets you:
+PI STUDIO lets you:
 
 - keep Pi Coding Agent sessions alive after browser disconnects;
 - run agents inside real repositories and git worktrees;
@@ -39,12 +39,12 @@ Requirements:
 - Pi Coding Agent 1.x, configured for your user
 - git and the development tools your agents need
 
-Install and start PI WEB as per-user services:
+Install and start PI STUDIO as per-user services:
 
 ```bash
-npm install -g @jmfederico/pi-web --allow-scripts=node-pty
-pi-web install
-pi-web doctor
+npm install -g @pi-studio/pi-studio --allow-scripts=node-pty
+pi-studio install
+pi-studio doctor
 ```
 
 On npm 12, the scoped flag lets `node-pty` prepare its required native module without enabling install scripts for other dependencies.
@@ -58,25 +58,25 @@ http://127.0.0.1:8504
 Useful commands:
 
 ```bash
-pi-web status
-pi-web logs
-pi-web restart
-pi-web doctor
-pi-web version
-pi-web uninstall
+pi-studio status
+pi-studio logs
+pi-studio restart
+pi-studio doctor
+pi-studio version
+pi-studio uninstall
 ```
 
 <!-- Keep README guidance concise. Put install variants, troubleshooting,
 configuration, and operational details in docs/, then link from here. -->
 
-For more install options, including one-line install, Pi package install, WSL/manual usage, and remote access, see the [installation guide](https://pi-web.dev/install).
+For more install options, including one-line install, Pi package install, WSL/manual usage, and remote access, see the [installation guide](https://pi-studio.dev/install).
 
 ## Core model
 
-PI WEB organizes work like this:
+PI STUDIO organizes work like this:
 
 ```text
-Machine     a local or remote PI WEB runtime endpoint
+Machine     a local or remote PI STUDIO runtime endpoint
 Project     a folder on that machine
 Workspace   a provider-owned working folder; bundled Git discovers worktrees, otherwise the project folder
 Session     a Pi Coding Agent chat running inside a workspace
@@ -92,48 +92,48 @@ A typical flow:
 
 ## Remote-first development
 
-PI WEB is designed for remote AI-driven development.
+PI STUDIO is designed for remote AI-driven development.
 
-Instead of tying agent work to your laptop session, run PI WEB on a machine that stays available: a server, desktop, cloud VM, home lab machine, or remote dev box.
+Instead of tying agent work to your laptop session, run PI STUDIO on a machine that stays available: a server, desktop, cloud VM, home lab machine, or remote dev box.
 
-Use a private network, SSH tunnel, trusted reverse proxy, or federated PI WEB machine setup when accessing it remotely.
+Use a private network, SSH tunnel, trusted reverse proxy, or federated PI STUDIO machine setup when accessing it remotely.
 
-Read more: [Remote-first development](https://pi-web.dev/remote-first)
+Read more: [Remote-first development](https://pi-studio.dev/remote-first)
 
 ## Machines and fleets
 
-PI WEB can register other PI WEB runtimes as remote machines. One browser-facing PI WEB instance can proxy projects, files, git state, sessions, terminals, activity, Pi package management, and selected-machine settings from trusted remote machines.
+PI STUDIO can register other PI STUDIO runtimes as remote machines. One browser-facing PI STUDIO instance can proxy projects, files, git state, sessions, terminals, activity, Pi package management, and selected-machine settings from trusted remote machines.
 
-When a remote machine is selected, Settings tabs label their target. Pi packages, PI WEB plugin enablement, session daemon toggles, external file access, and upload defaults target the selected machine. Gateway/server settings such as host, port, allowed hosts, registered machines/tokens, and keyboard shortcuts stay local to the gateway/browser.
+When a remote machine is selected, Settings tabs label their target. Pi packages, PI STUDIO plugin enablement, session daemon toggles, external file access, and upload defaults target the selected machine. Gateway/server settings such as host, port, allowed hosts, registered machines/tokens, and keyboard shortcuts stay local to the gateway/browser.
 
-Read more: [Fleet and machines guide](https://pi-web.dev/machines)
+Read more: [Fleet and machines guide](https://pi-studio.dev/machines)
 
-## PI WEB plugins
+## PI STUDIO plugins
 
-Extend PI WEB with trusted plugins for panels, tools, and workspace workflows. Use **Settings → PI WEB plugins** to enable or disable them on the selected machine.
+Extend PI STUDIO with trusted plugins for panels, tools, and workspace workflows. Use **Settings → PI STUDIO plugins** to enable or disable them on the selected machine.
 
-Pi packages are a separate Pi package-manager concept. A Pi package may include a PI WEB plugin, but installing a package and enabling it are different operations. Server-backed changes require a session-daemon restart; see the plugin guide for lifecycle and recovery details.
+Pi packages are a separate Pi package-manager concept. A Pi package may include a PI STUDIO plugin, but installing a package and enabling it are different operations. Server-backed changes require a session-daemon restart; see the plugin guide for lifecycle and recovery details.
 
-Read more: [PI WEB plugin guide](https://pi-web.dev/plugins)
+Read more: [PI STUDIO plugin guide](https://pi-studio.dev/plugins)
 
 ## Configuration
 
 Global config lives at:
 
 ```text
-$PI_WEB_CONFIG
-~/.config/pi-web/config.json
+$PI_STUDIO_CONFIG
+~/.config/pi-studio/config.json
 ```
 
-Project-local PI WEB config lives at:
+Project-local PI STUDIO config lives at:
 
 ```text
-<project>/.pi-web/config.json
+<project>/.pi-studio/config.json
 ```
 
-Common configuration includes host/port, path access, uploads, PI WEB plugin enablement, shortcuts, and session daemon options. In Settings, machine-affecting config targets the selected machine; gateway host/port/allowed-hosts, remote machine registration, tokens, and keyboard shortcuts stay local.
+Common configuration includes host/port, path access, uploads, PI STUDIO plugin enablement, shortcuts, and session daemon options. In Settings, machine-affecting config targets the selected machine; gateway host/port/allowed-hosts, remote machine registration, tokens, and keyboard shortcuts stay local.
 
-Read more: [Configuration reference](https://pi-web.dev/config)
+Read more: [Configuration reference](https://pi-studio.dev/config)
 
 ## Development
 
@@ -166,19 +166,19 @@ npm run verify
 
 ## Security model
 
-PI WEB assumes trusted users, trusted repositories, and trusted server paths.
+PI STUDIO assumes trusted users, trusted repositories, and trusted server paths.
 
 It is not a sandbox, permission system, or multi-tenant platform. Do not expose it directly to the public internet without a trusted network, firewall, VPN, SSH tunnel, or authenticated reverse proxy.
 
 ## Documentation
 
-- [Website](https://pi-web.dev/)
-- [Install](https://pi-web.dev/install)
-- [Remote-first development](https://pi-web.dev/remote-first)
-- [Machines / fleet](https://pi-web.dev/machines)
-- [Configuration](https://pi-web.dev/config)
-- [Plugins](https://pi-web.dev/plugins)
-- [FAQ](https://pi-web.dev/faq)
+- [Website](https://pi-studio.dev/)
+- [Install](https://pi-studio.dev/install)
+- [Remote-first development](https://pi-studio.dev/remote-first)
+- [Machines / fleet](https://pi-studio.dev/machines)
+- [Configuration](https://pi-studio.dev/config)
+- [Plugins](https://pi-studio.dev/plugins)
+- [FAQ](https://pi-studio.dev/faq)
 
 ## License
 

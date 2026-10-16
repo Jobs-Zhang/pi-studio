@@ -23,7 +23,7 @@ export class InMemoryWorkspaceSelectionMemory implements WorkspaceSelectionMemor
   }
 }
 
-const workspaceSelectionStorageKey = "pi-web:workspace-selection:v1";
+const workspaceSelectionStorageKey = "pi-studio:workspace-selection:v1";
 
 export class SessionStorageWorkspaceSelectionMemory implements WorkspaceSelectionMemory {
   private readonly workspaceIdsByProject: PersistentValueMap<string>;

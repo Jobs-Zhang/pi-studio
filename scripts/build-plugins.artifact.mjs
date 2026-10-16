@@ -6,7 +6,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { Window } from "happy-dom";
 import ts from "typescript";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { PI_WEB_PLUGIN_ARTIFACT_MAX_BYTES, PI_WEB_PLUGIN_ARTIFACT_MAX_ENTRIES } from "../src/server/piWebPluginCatalog.js";
+import { PI_STUDIO_PLUGIN_ARTIFACT_MAX_BYTES, PI_STUDIO_PLUGIN_ARTIFACT_MAX_ENTRIES } from "../src/server/piStudioPluginCatalog.js";
 import { PluginRegistry } from "../src/client/src/plugins/registry.js";
 
 // Delivery-only: run after npm run build. Never build or mutate checkout artifacts here.
@@ -14,7 +14,7 @@ const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 let tempDir;
 
 beforeEach(async () => {
-  tempDir = await mkdtemp(join(tmpdir(), "pi-web-build-plugins-"));
+  tempDir = await mkdtemp(join(tmpdir(), "pi-studio-build-plugins-"));
 });
 
 afterEach(async () => {
@@ -40,8 +40,8 @@ describe("plugin delivery artifacts", () => {
     const fixtureRoot = repoRoot;
     const readyPath = join(fixtureRoot, "dist", ".plugins-ready");
     expect(await readFile(readyPath, "utf8")).toBe("ready\n");
-    const sourcePlugins = await bundledServerPlugins(join(fixtureRoot, "pi-web-plugins"));
-    const builtPluginsRoot = join(fixtureRoot, "dist", "pi-web-plugins");
+    const sourcePlugins = await bundledServerPlugins(join(fixtureRoot, "pi-studio-plugins"));
+    const builtPluginsRoot = join(fixtureRoot, "dist", "pi-studio-plugins");
     const builtPlugins = await bundledServerPlugins(builtPluginsRoot);
     expect(sourcePlugins.length).toBeGreaterThan(0);
     expect(sourcePlugins.every((plugin) => plugin.moduleType === "module")).toBe(true);
@@ -82,13 +82,13 @@ describe("plugin delivery artifacts", () => {
     expect(packagedFiles.some((path) => path.includes("/node_modules/") || /^examples\/[^/]+\/dist\//u.test(path))).toBe(false);
     expect(packagedFiles).not.toContain("dist/plugin-api/unstable.d.ts");
     expect(packagedFiles).not.toContain("plugin-api/unstable.d.ts");
-    const builtPluginFiles = (await recursiveFiles(builtPluginsRoot)).map((path) => `dist/pi-web-plugins/${path}`).sort();
-    expect(packagedFiles.filter((path) => path.startsWith("dist/pi-web-plugins/")).sort()).toEqual(builtPluginFiles);
+    const builtPluginFiles = (await recursiveFiles(builtPluginsRoot)).map((path) => `dist/pi-studio-plugins/${path}`).sort();
+    expect(packagedFiles.filter((path) => path.startsWith("dist/pi-studio-plugins/")).sort()).toEqual(builtPluginFiles);
     expect(builtPluginFiles.some((path) => /\.(?:test|spec)\./u.test(path))).toBe(false);
     expect(builtPluginFiles.some((path) => path.includes("/relays/"))).toBe(false);
-    const filesPluginFiles = builtPluginFiles.filter((path) => path.startsWith("dist/pi-web-plugins/files/"));
+    const filesPluginFiles = builtPluginFiles.filter((path) => path.startsWith("dist/pi-studio-plugins/files/"));
     expect(filesPluginFiles).toEqual(
-      expect.arrayContaining(["dist/pi-web-plugins/files/package.json", "dist/pi-web-plugins/files/browser/pi-web-plugin.js"])
+      expect.arrayContaining(["dist/pi-studio-plugins/files/package.json", "dist/pi-studio-plugins/files/browser/pi-studio-plugin.js"])
     );
     expect(filesPluginFiles.some((path) => /\/browser\/assets\/viewerDependencies-[^/]+\.js$/u.test(path))).toBe(false);
     expect(filesPluginFiles.some((path) => /\/browser\/assets\/files-icon-[^/]+\.svg$/u.test(path))).toBe(true);
@@ -96,12 +96,12 @@ describe("plugin delivery artifacts", () => {
     expect(packagedFiles).toEqual(expect.arrayContaining(filesPluginFiles));
     // pi-packages/ ships Pi packages (like relays) alongside bundled plugins
     // without becoming a bundled/local discovery root for them (see
-    // PiWebPluginCatalog). The delivery build emits
+    // PiStudioPluginCatalog). The delivery build emits
     // them into their own dist directory and packs them into the tarball.
     const builtPackagesRoot = join(fixtureRoot, "dist", "pi-packages");
     const builtPackageFiles = (await recursiveFiles(builtPackagesRoot)).map((path) => `dist/pi-packages/${path}`).sort();
     expect(builtPackageFiles).toContain("dist/pi-packages/relays/package.json");
-    expect(builtPackageFiles).toContain("dist/pi-packages/relays/pi-web-plugin.js");
+    expect(builtPackageFiles).toContain("dist/pi-packages/relays/pi-studio-plugin.js");
     expect(builtPackageFiles).toContain("dist/pi-packages/relays/prompts/relay.md");
     expect(builtPackageFiles).toContain("dist/pi-packages/relays/prompts/relay-worktree.md");
     expect(builtPackageFiles).toContain("dist/pi-packages/relays/skills/relay/SKILL.md");
@@ -114,16 +114,16 @@ describe("plugin delivery artifacts", () => {
   });
   describe("Mermaid browser package build", () => {
     it("ships a self-contained sandbox engine and browser entry within artifact limits", { timeout: 60_000 }, async () => {
-      const target = join(repoRoot, "dist/pi-web-plugins/mermaid");
+      const target = join(repoRoot, "dist/pi-studio-plugins/mermaid");
       const files = await recursiveFiles(target);
-      expect(files).toEqual(["browser/mermaid-engine.js", "browser/pi-web-plugin.js", "package.json"]);
+      expect(files).toEqual(["browser/mermaid-engine.js", "browser/pi-studio-plugin.js", "package.json"]);
       let bytes = 0;
       for (const file of files) bytes += (await stat(join(target, file))).size;
-      expect(bytes).toBeLessThan(PI_WEB_PLUGIN_ARTIFACT_MAX_BYTES);
+      expect(bytes).toBeLessThan(PI_STUDIO_PLUGIN_ARTIFACT_MAX_BYTES);
       const engine = await readFile(join(target, "browser/mermaid-engine.js"), "utf8");
       expect(moduleSpecifiers(engine)).toEqual([]);
       expect(engine).not.toMatch(/\bimport\s*\(/u);
-      const entry = await readFile(join(target, "browser/pi-web-plugin.js"), "utf8");
+      const entry = await readFile(join(target, "browser/pi-studio-plugin.js"), "utf8");
       expect(moduleSpecifiers(entry)).toEqual([]);
       expect(entry).toContain("./mermaid-engine.js");
       expect(entry).toContain("allow-scripts");
@@ -134,11 +134,11 @@ describe("plugin delivery artifacts", () => {
   describe("Files browser package build", () => {
     it("emits only package metadata and an entry-resident browser graph within catalog bounds", { timeout: 30_000 }, async () => {
       const target = join(tempDir, "files");
-      await cp(join(repoRoot, "dist/pi-web-plugins/files"), target, { recursive: true });
+      await cp(join(repoRoot, "dist/pi-studio-plugins/files"), target, { recursive: true });
 
       const packageFiles = await recursiveFiles(target);
       expect(packageFiles.filter((path) => !path.startsWith("browser/"))).toEqual(["package.json"]);
-      expect(packageFiles).toContain("browser/pi-web-plugin.js");
+      expect(packageFiles).toContain("browser/pi-studio-plugin.js");
       expect(packageFiles.some((path) => /^browser\/assets\/viewerDependencies-[^/]+\.js$/u.test(path))).toBe(false);
       expect(packageFiles.some((path) => /^browser\/assets\/files-icon-[^/]+\.svg$/u.test(path))).toBe(true);
       expect(packageFiles.some((path) => path.endsWith(".map"))).toBe(false);
@@ -148,11 +148,11 @@ describe("plugin delivery artifacts", () => {
       expect(metadata).toMatchObject({
         private: true,
         type: "module",
-        piWeb: {
+        piStudio: {
           plugins: [{
             id: "files",
             browserRoot: "browser",
-            module: "browser/pi-web-plugin.js",
+            module: "browser/pi-studio-plugin.js",
             machineSpecific: false,
           }],
         },
@@ -160,11 +160,11 @@ describe("plugin delivery artifacts", () => {
 
       const browserRoot = join(target, "browser");
       const browserJavaScript = packageFiles.filter((path) => path.startsWith("browser/") && path.endsWith(".js"));
-      expect(browserJavaScript).toEqual(["browser/pi-web-plugin.js"]);
+      expect(browserJavaScript).toEqual(["browser/pi-studio-plugin.js"]);
       for (const packagePath of browserJavaScript) {
         const file = join(target, packagePath);
         const sourceText = await readFile(file, "utf8");
-        expect(sourceText).not.toMatch(/@jmfederico\/pi-web|src\/client\/src|(?:\.\.\/)+src\//u);
+        expect(sourceText).not.toMatch(/@pi-studio\/pi-studio|src\/client\/src|(?:\.\.\/)+src\//u);
         for (const specifier of moduleSpecifiers(sourceText)) {
           expect(specifier, `${packagePath} contains a bare or absolute runtime import`).toMatch(/^\.\.?\//u);
           const dependency = resolve(dirname(file), specifier);
@@ -173,7 +173,7 @@ describe("plugin delivery artifacts", () => {
         }
       }
 
-      const entryPath = join(browserRoot, "pi-web-plugin.js");
+      const entryPath = join(browserRoot, "pi-studio-plugin.js");
       const entrySource = await readFile(entryPath, "utf8");
       expect(moduleSpecifiers(entrySource).filter((specifier) => specifier.endsWith(".js"))).toEqual([]);
 
@@ -183,8 +183,8 @@ describe("plugin delivery artifacts", () => {
       await mkdir(artifactProbeRoot, { recursive: true });
       await cp(browserRoot, firstBrowserRoot, { recursive: true });
       await cp(browserRoot, secondBrowserRoot, { recursive: true });
-      const firstModuleUrl = pathToFileURL(join(firstBrowserRoot, "pi-web-plugin.js"));
-      const secondModuleUrl = pathToFileURL(join(secondBrowserRoot, "pi-web-plugin.js"));
+      const firstModuleUrl = pathToFileURL(join(firstBrowserRoot, "pi-studio-plugin.js"));
+      const secondModuleUrl = pathToFileURL(join(secondBrowserRoot, "pi-studio-plugin.js"));
       const remoteBContent = "const selectedOnRemoteB: string = 'healthy';";
       const { builtModule, secondBuiltModule, registrations, viewerProbe } = await withBrowserGlobals(async () => {
         const imported = await import(firstModuleUrl.href);
@@ -199,8 +199,8 @@ describe("plugin delivery artifacts", () => {
           signal: new AbortController().signal,
           lifetimeSignal: new AbortController().signal,
         });
-        const firstElementConstructor = customElements.get("pi-web-files-panel");
-        const firstCodeViewerConstructor = customElements.get("pi-web-files-code-viewer");
+        const firstElementConstructor = customElements.get("pi-studio-files-panel");
+        const firstCodeViewerConstructor = customElements.get("pi-studio-files-code-viewer");
         const registry = new PluginRegistry();
         await registry.register({ id: "remote-1.files", sourcePluginId: "files", machineId: "remote-1", plugin: imported.default });
         await registry.register({ id: "remote-2.files", sourcePluginId: "files", machineId: "remote-2", plugin: secondImported.default });
@@ -215,7 +215,7 @@ describe("plugin delivery artifacts", () => {
         // real CodeMirror editor without consulting A's old artifact root.
         await rm(join(firstBrowserRoot, "assets"), { recursive: true, force: true });
         const secondDependencies = await secondImported.loadFilesViewerDependencies();
-        const codeViewer = document.createElement("pi-web-files-code-viewer");
+        const codeViewer = document.createElement("pi-studio-files-code-viewer");
         codeViewer.content = remoteBContent;
         codeViewer.language = "typescript";
         document.body.append(codeViewer);
@@ -227,9 +227,9 @@ describe("plugin delivery artifacts", () => {
           registrations: {
             panelMachineIds: panels.map((panel) => panel.machineId),
             firstElementConstructor,
-            secondElementConstructor: customElements.get("pi-web-files-panel"),
+            secondElementConstructor: customElements.get("pi-studio-files-panel"),
             firstCodeViewerConstructor,
-            secondCodeViewerConstructor: customElements.get("pi-web-files-code-viewer"),
+            secondCodeViewerConstructor: customElements.get("pi-studio-files-code-viewer"),
             firstContextBound: firstRendered?.values.includes(firstContext) === true,
             secondContextBound: secondRendered?.values.includes(secondContext) === true,
             firstRuntime: firstRendered?.values.find((value) => value instanceof imported.FilesRuntime),
@@ -267,8 +267,8 @@ describe("plugin delivery artifacts", () => {
 
       let bytes = 0;
       for (const file of packageFiles) bytes += (await stat(join(target, file))).size;
-      expect(bytes).toBeLessThan(PI_WEB_PLUGIN_ARTIFACT_MAX_BYTES);
-      expect(await recursiveEntryCount(target)).toBeLessThan(PI_WEB_PLUGIN_ARTIFACT_MAX_ENTRIES);
+      expect(bytes).toBeLessThan(PI_STUDIO_PLUGIN_ARTIFACT_MAX_BYTES);
+      expect(await recursiveEntryCount(target)).toBeLessThan(PI_STUDIO_PLUGIN_ARTIFACT_MAX_ENTRIES);
 
     });
   });
@@ -280,9 +280,9 @@ async function bundledServerPlugins(pluginsRoot) {
     if (!entry.isDirectory()) continue;
     const metadata = JSON.parse(await readFile(join(pluginsRoot, entry.name, "package.json"), "utf8"));
     if (!isRecord(metadata)) throw new Error(`Bundled plugin package metadata is invalid: ${entry.name}`);
-    const piWeb = metadata["piWeb"];
-    if (!isRecord(piWeb)) continue;
-    const declarations = piWeb["plugins"];
+    const piStudio = metadata["piStudio"];
+    if (!isRecord(piStudio)) continue;
+    const declarations = piStudio["plugins"];
     if (!Array.isArray(declarations)) throw new Error(`Bundled plugin declarations are invalid: ${entry.name}`);
     for (const declaration of declarations) {
       if (!isRecord(declaration)) throw new Error(`Bundled plugin declaration is invalid: ${entry.name}`);
@@ -381,7 +381,7 @@ function builtWorkspacePanelContext(machineId) {
     workspace: { id: "workspace-1", projectId: "project-1", path: "/repo", label: "repo", isMain: true },
     files: {
       capabilityVersion: 1,
-      defaultUploadFolder: ".pi-web/uploads",
+      defaultUploadFolder: ".pi-studio/uploads",
       maxInlinePreviewBytes: 1024,
       readFile: () => Promise.reject(new Error("not used")),
       listFiles: () => Promise.reject(new Error("not used")),
@@ -448,7 +448,7 @@ async function withBrowserGlobals(action) {
     "requestAnimationFrame",
     "cancelAnimationFrame",
   ];
-  const ownersKey = Symbol.for("pi-web.files.custom-element-owners.v1");
+  const ownersKey = Symbol.for("pi-studio.files.custom-element-owners.v1");
   const previousOwners = Object.getOwnPropertyDescriptor(globalThis, ownersKey);
   Reflect.deleteProperty(globalThis, ownersKey);
   const previous = new Map(names.map((name) => [name, Object.getOwnPropertyDescriptor(globalThis, name)]));

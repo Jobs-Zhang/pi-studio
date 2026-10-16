@@ -1,11 +1,11 @@
-# PI Desktop 启动页 SSH 连接设计
+# PI Studio 启动页 SSH 连接设计
 
 日期：2026-10-13
 分支：feat/desktop-and-app
 
 ## 背景与目标
 
-PI Desktop（`desktop/`，Electron 薄壳）的启动页 `connect.html` 目前只支持直连 URL + 最近使用（纯字符串历史）。当目标 PI WEB 网关位于 SSH 可达的内网时，桌面端无法连接。
+PI Studio（`desktop/`，Electron 薄壳）的启动页 `connect.html` 目前只支持直连 URL + 最近使用（纯字符串历史）。当目标 PI STUDIO 网关位于 SSH 可达的内网时，桌面端无法连接。
 
 本设计为启动页增加 **SSH 连接能力**：
 
@@ -17,7 +17,7 @@ PI Desktop（`desktop/`，Electron 薄壳）的启动页 `connect.html` 目前�
 
 非目标（YAGNI）：
 
-- 通过 SSH 直接执行 pi 会话（远端不装 PI WEB 的场景，另立项目）。
+- 通过 SSH 直接执行 pi 会话（远端不装 PI STUDIO 的场景，另立项目）。
 - SSH agent 转发、跳板编排 UI（`~/.ssh/config` 的 `ProxyJump` 经系统 `ssh` 自然生效）。
 - 多隧道并存管理界面（启动页一次只维护一个活动隧道）。
 - 非 Windows 平台的打包支持（代码跨平台，打包仍按现状 Windows portable）。
@@ -31,7 +31,7 @@ PI Desktop（`desktop/`，Electron 薄壳）的启动页 `connect.html` 目前�
 3. SSH 面板内分两个二级 Tab（`~/.ssh/config` / `账户密码`）：
    - **`~/.ssh/config` 页（纯 config 语义）**：只选主机别名（下拉列出本机 config 别名）+ 环境状态条（一行，仅提示检测结果/缺客户端/无配置）；不展示、不覆盖端口/用户/密钥，**无密码框、无「记住密码」**，认证完全交给系统 ssh（密钥/agent/config）；
    - **`账户密码` 页（全手动）**：SSH 地址（`user@host` 或 IP）+ 端口/用户 + 密码或密钥文件（二选一）+ 「记住密码」勾选框；
-   - 两页共用：远程网关 URL（完整 URL，默认 `http://127.0.0.1:8504`，即 PI WEB 在 SSH 主机上可被访问的地址）。
+   - 两页共用：远程网关 URL（完整 URL，默认 `http://127.0.0.1:8504`，即 PI STUDIO 在 SSH 主机上可被访问的地址）。
 4. 连接按钮 + 状态行（连接中/失败原因，失败保留表单可重试）。
 5. 最近使用：混合列表；SSH 项带 `[SSH]` 徽标，主行显示别名，副行 `user@host:port → 网关 · 上次连接时间`；直连项同现状。悬浮删除单条、`Clear all`。
 6. 快捷键提示（↑↓ 选择、Enter 连接）沿用。
@@ -43,7 +43,7 @@ PI Desktop（`desktop/`，Electron 薄壳）的启动页 `connect.html` 目前�
 - 连接过程：按钮置为「连接中…」，状态行 `正在建立 SSH 隧道…` → 隧道就绪后窗口跳转 `http://127.0.0.1:<本地端口>`；失败显示可读原因（认证失败 / 超时 / 远程网关不可达），config 页认证失败时提示可切「账户密码」页。
 - 最近使用点击：直连项立即连接；**config 条目永不询问密码**，直接重建隧道；手动条目有存密码/密钥则立即重连，否则切到「账户密码」页回填并聚焦密码框。副行区分来源（`来自 ~/.ssh/config` / `user@host:port → 网关`）。
 
-## 数据模型（`~/.pi-desktop/config.json`）
+## 数据模型（`~/.pi-studio-desktop/config.json`）
 
 `recentConnections` 从字符串数组升级为结构化条目（旧字符串迁移为直连条目）：
 
@@ -82,14 +82,14 @@ PI Desktop（`desktop/`，Electron 薄壳）的启动页 `connect.html` 目前�
 | `sshConfig.cjs` | 纯函数解析 `~/.ssh/config`：别名列表、别名 → `{hostName, port, user, identityFile}` 解析，含 `Include`（相对被含文件目录，循环忽略）。无 I/O 的解析函数可测。 |
 | `tunnel.cjs` | 隧道生命周期：`buildSshArgs`（镜像 `sshTunnelManager` 的选项契约）、空闲端口分配、就绪探测、spawn `ssh -N -L`、askpass、close。 |
 | `main.cjs` | 编排：IPC、历史存储/迁移、safeStorage、活动隧道唯一持有者、托盘菜单。 |
-| `preload.cjs` | contextBridge 暴露 `window.piWebDesktop` API。 |
+| `preload.cjs` | contextBridge 暴露 `window.piStudioDesktop` API。 |
 | `connect.html` | 启动页 UI 与交互。 |
 
 隧道实现要点：
 
 - 命令：`ssh -N -L 127.0.0.1:<随机端口>:<网关host>:<网关port> [-p] [-l] [-i] <host>`，选项 `-o ExitOnForwardFailure=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -o StrictHostKeyChecking=accept-new`（首次连接免交互确认，密钥变更仍拒绝）。
 - 就绪判定：TCP 连通本地监听端口即认证成功（`ssh` 认证通过才开监听），与服务端一致；探测在超时前持续重试（首次连接常被拒），并与子进程退出竞速，失败时汇总 stderr 尾部作为错误原因。
-- **密码 askpass**：服务端用 `.sh` 脚本，Windows 的 `ssh.exe` 无法执行该脚本，故桌面端改为**自调用**：askpass 程序指向 `process.execPath`（PI Desktop 自身），子进程 env 加 `PI_WEB_ASKPASS=1`；`main.cjs` 入口最先检查该环境变量，打印密码到 stdout 后立即 `exit(0)`，不启动任何窗口。跨 Windows/POSIX 一致，无需外部脚本。
+- **密码 askpass**：服务端用 `.sh` 脚本，Windows 的 `ssh.exe` 无法执行该脚本，故桌面端改为**自调用**：askpass 程序指向 `process.execPath`（PI Studio 自身），子进程 env 加 `PI_STUDIO_ASKPASS=1`；`main.cjs` 入口最先检查该环境变量，打印密码到 stdout 后立即 `exit(0)`，不启动任何窗口。跨 Windows/POSIX 一致，无需外部脚本。
 - 生命周期：主进程持有唯一活动隧道；新连接建立成功后关闭旧隧道，应用退出时全部关闭。
 - 环境探测：`ssh -V` 判断客户端存在；解析 `~/.ssh/config` 提供别名下拉（Windows 取 `%USERPROFILE%\.ssh\config`，其余取 `~/.ssh/config`）。
 

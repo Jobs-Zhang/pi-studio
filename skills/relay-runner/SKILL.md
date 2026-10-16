@@ -25,7 +25,7 @@ This profile is intentionally strong. A project that wants another way of workin
 
 `spawn_session` is fire-and-forget: the current runner does not receive the successor's output and cannot steer it. The packet is the only thread across the chain. Complete all work and durable-state updates before handoff, then call `spawn_session` at most once as the leg's final operational action. After it returns, provide only a user-facing handoff summary; do not use more tools, mutate state, perform more Relay work, or try to steer the successor. Do not use a tracked subsession for the Relay handoff; tracked subsessions are allowed only as bounded helpers inside a leg when this profile explicitly permits them.
 
-Default the packet root to `.pi-web/relays/<name>/` unless the preparer selects another location. During preflight, create a reviewable draft packet in the checkout where the preparation session is running and mark it not dispatched. For fresh-worktree mode, move the complete packet into the target worktree before handoff and remove the stale drafting copy. Use the base method's three durable-state files plus one profile-owned operational record:
+Default the packet root to `.pi-studio/relays/<name>/` unless the preparer selects another location. During preflight, create a reviewable draft packet in the checkout where the preparation session is running and mark it not dispatched. For fresh-worktree mode, move the complete packet into the target worktree before handoff and remove the stale drafting copy. Use the base method's three durable-state files plus one profile-owned operational record:
 
 - **`charter.md` — goal and edges.** Record Relay identity, the plain-language goal and observable finish line, minimum outcome acceptance, in-scope boundaries, explicit non-goals, material assumptions or human decisions. Keep it free of implementation plans, technical route definitions, quality bars, verification commands, review heuristics, and copied project guidance. Include a technical contract only when the user made that contract part of the desired outcome or a necessary scope edge. Changing the goal or an edge requires explicit human agreement, a charter update, and a log entry.
 - **`operations.md` — runner bindings.** Record the packet and profile identity, canonical project instruction pointers, working location and Git facts, verification commands, packet isolation, commit and checkpoint policy, review budget and delivery mechanism, intervention signal, and any explicit profile adaptation. These are operating facts and policies, not product scope; maintain them without rewriting the charter.
@@ -122,7 +122,7 @@ During preflight, inspect and propose the working mode, base, and location. Draf
 
 In fresh-worktree mode, make leg 1 setup-only when bootstrap is required: perform the recorded bootstrap, confirm success and allowable working-tree state, then hand off without inspecting or implementing the task. If no bootstrap is needed, dispatch the first substantive leg.
 
-Treat the Relay packet as operational state, not delivery work. Use `.pi-web/relays/<name>/` in the drafting checkout during preparation and in the selected target checkout before dispatch. Keep it outside delivery commits and the reviewed diff through an existing ignore rule, a local Git exclusion, or another non-delivery location.
+Treat the Relay packet as operational state, not delivery work. Use `.pi-studio/relays/<name>/` in the drafting checkout during preparation and in the selected target checkout before dispatch. Keep it outside delivery commits and the reviewed diff through an existing ignore rule, a local Git exclusion, or another non-delivery location.
 
 ### Write goal and operations separately
 
@@ -180,9 +180,9 @@ Relay "<name>" leg <identifier> begins now.
 
 Work under the Relay method with the `relay-runner` operational profile.
 Load the `relay` and `relay-runner` skills, then read:
-- .pi-web/relays/<name>/charter.md
-- .pi-web/relays/<name>/operations.md
-- .pi-web/relays/<name>/status.md
+- .pi-studio/relays/<name>/charter.md
+- .pi-studio/relays/<name>/operations.md
+- .pi-studio/relays/<name>/status.md
 
 Do not read log.md end-to-end. Use only targeted entries referenced by charter.md, operations.md, or status.md.
 Run exactly one outcome-led leg under the profile's implementation-first rules. Use status's next outcome and connection priority; adapt the route within the charter. Make work and packet updates durable, then either hand off once or stop with the recorded intervention signal.

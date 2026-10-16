@@ -1,4 +1,4 @@
-const CACHE_PREFIX = "pi-web:chat-history:v2:";
+const CACHE_PREFIX = "pi-studio:chat-history:v2:";
 const CACHE_TTL_MS = 30 * 60 * 1000;
 
 export interface RawMessagePage {

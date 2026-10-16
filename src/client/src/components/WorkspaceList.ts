@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { LitElement, css, html, type PropertyValues, type TemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { trustApi } from "../api";
@@ -118,10 +119,10 @@ export class WorkspaceList extends LitElement implements KeyboardNavigableSectio
   }
 
   private renderHeading() {
-    if (!this.collapsible) return html`<span>Workspaces</span>`;
-    const selectedSummary = this.selected === undefined ? "No workspace selected" : `${this.selected.label}${this.selected.isMain ? " · main" : ""} · ${this.selected.path}`;
+    if (!this.collapsible) return html`<span>${t("workspace.section")}</span>`;
+    const selectedSummary = this.selected === undefined ? t("workspace.noneSelected") : `${this.selected.label}${this.selected.isMain ? " · main" : ""} · ${this.selected.path}`;
     const selectedTitle = this.selected?.path ?? selectedSummary;
-    return html`<button class="section-toggle" aria-expanded=${String(!this.collapsed)} @click=${() => { this.onToggleCollapsed?.(); }}><span class="section-title"><span class="section-name">${this.collapsed ? "▸" : "▾"} Workspaces</span>${this.collapsed ? html`<small class="section-selected" title=${selectedTitle}>${selectedSummary}</small>` : null}</span><small class="section-count">${this.workspaces.length}</small></button>`;
+    return html`<button class="section-toggle" aria-expanded=${String(!this.collapsed)} @click=${() => { this.onToggleCollapsed?.(); }}><span class="section-title"><span class="section-name">${this.collapsed ? "▸" : "▾"} ${t("workspace.section")}</span>${this.collapsed ? html`<small class="section-selected" title=${selectedTitle}>${selectedSummary}</small>` : null}</span><small class="section-count">${this.workspaces.length}</small></button>`;
   }
 
   private renderActivity(workspace: Workspace): TemplateResult | undefined {
@@ -135,7 +136,7 @@ export class WorkspaceList extends LitElement implements KeyboardNavigableSectio
     return html`
       <span class="workspace-primary">
         <span class="workspace-primary-label">${label}</span>
-        ${this.isDeleting(workspace) ? html`<span class="workspace-status">Deleting…</span>` : null}
+        ${this.isDeleting(workspace) ? html`<span class="workspace-status">${t("workspace.deleting")}</span>` : null}
       </span>
       ${items.length === 0 ? null : html`
         <small class="workspace-secondary">
@@ -153,8 +154,8 @@ export class WorkspaceList extends LitElement implements KeyboardNavigableSectio
       <div class="action-menu">
         <button
           class="action-menu-toggle"
-          title="Workspace actions and details"
-          aria-label=${`Actions and details for ${label}`}
+          title=${t("workspace.details")}
+          aria-label=${t("workspace.detailsFor", { name: label })}
           aria-expanded=${String(open)}
           aria-controls=${menuId}
           @click=${(event: MouseEvent) => { event.stopPropagation(); this.toggleMenu(workspace.id, event.currentTarget); }}
@@ -171,12 +172,12 @@ export class WorkspaceList extends LitElement implements KeyboardNavigableSectio
 
   private renderWorkspaceActions(workspace: Workspace): TemplateResult {
     const deleting = this.isDeleting(workspace);
-    const actionLabel = workspace.removal?.actionLabel ?? "Remove workspace";
+    const actionLabel = workspace.removal?.actionLabel ?? t("workspace.remove");
     return html`
       <div class="workspace-menu-actions">
         ${this.renderTrustToggle(workspace)}
         ${canDeleteWorkspace(workspace) ? html`
-          <button class="danger" title=${deleting ? "Workspace removal in progress" : actionLabel} ?disabled=${deleting} @click=${() => { this.delete(workspace); }}>${deleting ? "Removing…" : actionLabel}</button>
+          <button class="danger" title=${deleting ? t("workspace.removalInProgress") : actionLabel} ?disabled=${deleting} @click=${() => { this.delete(workspace); }}>${deleting ? t("workspace.removing") : actionLabel}</button>
         ` : null}
       </div>
     `;
@@ -197,9 +198,9 @@ export class WorkspaceList extends LitElement implements KeyboardNavigableSectio
               ?disabled=${busy || trust?.trusted === undefined}
               @change=${(event: Event) => { if (event.target instanceof HTMLInputElement) void this.setTrust(workspace, event.target.checked); }}
             />
-            <span>Trusted${busy ? "…" : ""}</span>
+            <span>${t("workspace.trusted")}${busy ? "…" : ""}</span>
           </label>
-          <a class="workspace-trust-link" href="https://pi.dev/docs/latest/security" target="_blank" rel="noreferrer">Learn about project trust</a>
+          <a class="workspace-trust-link" href="https://pi.dev/docs/latest/security" target="_blank" rel="noreferrer">${t("workspace.trustLink")}</a>
         </div>
         ${trust?.error === undefined ? null : html`<small class="workspace-trust-error">${trust.error}</small>`}
       </div>
@@ -245,16 +246,16 @@ export class WorkspaceList extends LitElement implements KeyboardNavigableSectio
     return html`
       <dl class="workspace-menu-details">
         <div class="workspace-detail-row">
-          <dt>Workspace</dt>
-          <dd>${label}${this.renderDetailCopyButton(`${workspace.id}:label`, workspace.label, "Copy workspace label")}</dd>
+          <dt>${t("shell.context.workspace")}</dt>
+          <dd>${label}${this.renderDetailCopyButton(`${workspace.id}:label`, workspace.label, t("workspace.copyLabel"))}</dd>
         </div>
         <div class="workspace-detail-row">
-          <dt>Path</dt>
-          <dd title=${workspace.path}>${workspace.path}${this.renderDetailCopyButton(`${workspace.id}:path`, workspace.path, "Copy path")}</dd>
+          <dt>${t("workspace.path")}</dt>
+          <dd title=${workspace.path}>${workspace.path}${this.renderDetailCopyButton(`${workspace.id}:path`, workspace.path, t("workspace.copyPath"))}</dd>
         </div>
         ${items.length === 0 ? null : html`
           <div class="workspace-detail-row">
-            <dt>Details</dt>
+            <dt>${t("workspace.detailsHeading")}</dt>
             <dd><span class="workspace-label">${renderWorkspaceLabelInlineItems(items)}</span></dd>
           </div>
         `}

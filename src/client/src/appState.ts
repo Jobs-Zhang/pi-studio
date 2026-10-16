@@ -1,4 +1,4 @@
-import type { AuthProviderOption, CommandOption, CommandResult, ExtensionDialogAnswer, ExtensionDialogCloseReason, Machine, MachineHealth, MachineRuntime, OAuthFlowState, PendingAskUser, PendingExtensionDialog, PiWebStatusResponse, Project, QueuedSessionMessage, SessionActivity, SessionInfo, SessionModelCatalogEntry, SessionStatus, SessionTreeSnapshot, TerminalCommandRun, Workspace } from "./api";
+import type { AuthProviderOption, CommandOption, CommandResult, ExtensionDialogAnswer, ExtensionDialogCloseReason, Machine, MachineHealth, MachineRuntime, OAuthFlowState, PendingAskUser, PendingExtensionDialog, PiStudioStatusResponse, Project, QueuedSessionMessage, SessionActivity, SessionInfo, SessionModelCatalogEntry, SessionStatus, SessionTreeSnapshot, TerminalCommandRun, Workspace } from "./api";
 import type { ChatLine } from "./components/shared";
 import type { MachineStatusSnapshot } from "../../shared/machineStatus";
 import type { QualifiedContributionId } from "./plugins/ids";
@@ -73,7 +73,7 @@ export interface AppState {
   machineDialogOpen: boolean;
   workspaceTool: QualifiedContributionId | undefined;
   mainView: MainView;
-  piWebStatus: PiWebStatusResponse | undefined;
+  piStudioStatus: PiStudioStatusResponse | undefined;
   /** Browser-local failures retained by their machine/project/workspace/session owner. */
   browserErrors: BrowserErrorMap;
   /** Legacy global browser error surface for unmigrated global operations. */
@@ -166,7 +166,7 @@ export function initialAppState(): AppState {
     machineDialogOpen: false,
     workspaceTool: undefined,
     mainView: "chat",
-    piWebStatus: undefined,
+    piStudioStatus: undefined,
     browserErrors: {},
     error: "",
   };

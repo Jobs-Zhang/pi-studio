@@ -106,7 +106,7 @@ export async function resolveEnabledModelIds(input: {
 
 /**
  * Apply one checkbox-style membership change to the effective enabled ids.
- * pi-web's picker sets membership explicitly per row, so unlike pi's
+ * pi-studio's picker sets membership explicitly per row, so unlike pi's
  * keyboard-driven single-key toggle (which narrows "all" to just that row),
  * enabling an already-enabled or disabling an already-disabled model is a
  * no-op — signalled by returning `currentIds` unchanged (same reference).

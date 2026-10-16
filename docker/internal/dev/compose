@@ -6,15 +6,15 @@ log() {
 }
 
 die() {
-  log "pi-web Docker dev compose: $*"
+  log "pi-studio Docker dev compose: $*"
   exit 1
 }
 
 script_dir=$(unset CDPATH; cd "$(dirname "$0")" && pwd -P)
 repo_root=$(unset CDPATH; cd "$script_dir/../../.." && pwd -P)
-dev_config_file=$repo_root/.pi-web/docker-compose-dev.local.env
-legacy_dev_env_file=$repo_root/.pi-web/docker-compose-dev.env
-generated_env_file=$repo_root/.pi-web/docker-compose-dev.generated.env
+dev_config_file=$repo_root/.pi-studio/docker-compose-dev.local.env
+legacy_dev_env_file=$repo_root/.pi-studio/docker-compose-dev.env
+generated_env_file=$repo_root/.pi-studio/docker-compose-dev.generated.env
 
 # shellcheck source=../host-profile.sh
 # shellcheck disable=SC1091
@@ -85,42 +85,42 @@ write_initial_dev_config() {
   previous_umask=$(umask)
   umask 077
   cat >"$temp_config" <<'EOF'
-# PI WEB Docker dev settings. Safe to edit.
+# PI STUDIO Docker dev settings. Safe to edit.
 #
-# docker/pi-web-docker --dev creates this file once and does not
+# docker/pi-studio-docker --dev creates this file once and does not
 # overwrite it. Put persistent dev Docker settings here.
 #
-# Precedence for values used by docker/pi-web-docker --dev:
+# Precedence for values used by docker/pi-studio-docker --dev:
 #   1. this file
 #   2. previous generated values, when present
 #   3. current shell environment, on first generation only
-#   4. runtime installer env, usually ~/.local/share/pi-web-docker/.env
+#   4. runtime installer env, usually ~/.local/share/pi-studio-docker/.env
 #   5. built-in defaults
 #
 # Generated effective values are written to:
-#   .pi-web/docker-compose-dev.generated.env
+#   .pi-studio/docker-compose-dev.generated.env
 #
 # Bind addresses:
 # - 127.0.0.1 exposes only to this machine.
 # - 0.0.0.0 exposes on all host interfaces. Use only on trusted networks.
 #
-# Uncomment or add values to persist them. PI_WEB_DEV_API_BIND_ADDR
-# controls the web/API server; PI_WEB_DEV_BIND_ADDR controls the Vite UI.
-# PI_WEB_DEV_API_BIND_ADDR=127.0.0.1
-# PI_WEB_DEV_BIND_ADDR=127.0.0.1
-# PI_WEB_DEV_API_PORT=8504
-# PI_WEB_DEV_PORT=8505
+# Uncomment or add values to persist them. PI_STUDIO_DEV_API_BIND_ADDR
+# controls the web/API server; PI_STUDIO_DEV_BIND_ADDR controls the Vite UI.
+# PI_STUDIO_DEV_API_BIND_ADDR=127.0.0.1
+# PI_STUDIO_DEV_BIND_ADDR=127.0.0.1
+# PI_STUDIO_DEV_API_PORT=8504
+# PI_STUDIO_DEV_PORT=8505
 #
-# PI_WEB_DEV_SESSIOND_SOCKET defaults to /data/pi-web/sessiond-dev.sock so the
+# PI_STUDIO_DEV_SESSIOND_SOCKET defaults to /data/pi-studio/sessiond-dev.sock so the
 # dev session daemon does not collide with a runtime stack sharing the same
 # data directory. Override only if you intentionally want a different path.
-# PI_WEB_DEV_SESSIOND_SOCKET=/data/pi-web/sessiond-dev.sock
+# PI_STUDIO_DEV_SESSIOND_SOCKET=/data/pi-studio/sessiond-dev.sock
 #
 # Shared Docker/runtime-style defaults may also be set here:
-# PI_WEB_DOCKER_DATA_DIR=/absolute/path/to/pi-web-docker/data
-# PI_WEB_DOCKER_EXTRA_HOST_PATHS="/absolute/path/one /absolute/path/two"
+# PI_STUDIO_DOCKER_DATA_DIR=/absolute/path/to/pi-studio-docker/data
+# PI_STUDIO_DOCKER_EXTRA_HOST_PATHS="/absolute/path/one /absolute/path/two"
 #
-# PI_WEB_UID and PI_WEB_GID default to the current host user so
+# PI_STUDIO_UID and PI_STUDIO_GID default to the current host user so
 # bind-mounted checkout files are not written as root or another user.
 # Set them here only if you intentionally want a different container user.
 EOF
@@ -130,7 +130,7 @@ EOF
     {
       printf '\n%s\n' "# Values copied from the previous generated dev env file."
       printf '%s\n' "# Keep, edit, or delete these lines as needed."
-      for key in PI_WEB_DEV_API_BIND_ADDR PI_WEB_DEV_BIND_ADDR PI_WEB_DEV_API_PORT PI_WEB_DEV_PORT; do
+      for key in PI_STUDIO_DEV_API_BIND_ADDR PI_STUDIO_DEV_BIND_ADDR PI_STUDIO_DEV_API_PORT PI_STUDIO_DEV_PORT; do
         if value=$(env_file_value "$legacy_dev_env_file" "$key"); then
           printf '%s=%s\n' "$key" "$value"
         fi
@@ -200,137 +200,137 @@ require_unsigned_int() {
 
 enforce_dev_root_safety() {
   uid=$(id -u 2>/dev/null || printf '0')
-  [ "$uid" != 0 ] || is_truthy "${PI_WEB_DOCKER_ALLOW_ROOT:-0}" || die "refusing to run Docker development mode as root; retry with --allow-root if this is intentional"
+  [ "$uid" != 0 ] || is_truthy "${PI_STUDIO_DOCKER_ALLOW_ROOT:-0}" || die "refusing to run Docker development mode as root; retry with --allow-root if this is intentional"
 }
 
 enforce_non_root_dev_uid() {
-  [ "${1:-0}" -ne 0 ] || is_truthy "${PI_WEB_DOCKER_ALLOW_ROOT:-0}" || die "refusing to generate Docker development env with PI_WEB_UID=0; retry with --allow-root if this is intentional"
+  [ "${1:-0}" -ne 0 ] || is_truthy "${PI_STUDIO_DOCKER_ALLOW_ROOT:-0}" || die "refusing to generate Docker development env with PI_STUDIO_UID=0; retry with --allow-root if this is intentional"
 }
 
 enforce_dev_root_safety
 
 # Dev Compose commands also run inside detached helper containers, which cannot
 # observe the Docker host. Reuse the host facts recorded on the last host run.
-if ! pi_web_docker_host_resolve_profile \
-  "$(generated_env_value PI_WEB_DOCKER_HOST_PROFILE 2>/dev/null || true)" \
+if ! pi_studio_docker_host_resolve_profile \
+  "$(generated_env_value PI_STUDIO_DOCKER_HOST_PROFILE 2>/dev/null || true)" \
   "$(generated_env_value HOSTEXEC_MODE 2>/dev/null || true)" \
-  "$(generated_env_value PI_WEB_DOCKER_SOCKET_SOURCE 2>/dev/null || true)"; then
-  pi_web_docker_host_print_detection_failure
+  "$(generated_env_value PI_STUDIO_DOCKER_SOCKET_SOURCE 2>/dev/null || true)"; then
+  pi_studio_docker_host_print_detection_failure
   die "refusing to run Docker Compose for an unsupported or unknown host setup"
 fi
 
-runtime_env_file=${PI_WEB_DOCKER_RUNTIME_ENV_FILE:-}
+runtime_env_file=${PI_STUDIO_DOCKER_RUNTIME_ENV_FILE:-}
 if [ -z "$runtime_env_file" ] && [ -n "${HOME:-}" ]; then
-  runtime_env_file=$HOME/.local/share/pi-web-docker/.env
+  runtime_env_file=$HOME/.local/share/pi-studio-docker/.env
 fi
 
-mkdir -p "$repo_root/.pi-web" || die "could not create .pi-web directory"
+mkdir -p "$repo_root/.pi-studio" || die "could not create .pi-studio directory"
 write_initial_dev_config
 
 host_uid=$(id -u 2>/dev/null || printf '0')
 host_gid=$(id -g 2>/dev/null || printf '0')
-pi_web_uid=$(value_from_config_or_generated_or_env_or_default PI_WEB_UID "$host_uid")
-pi_web_gid=$(value_from_config_or_generated_or_env_or_default PI_WEB_GID "$host_gid")
-docker_gid=$(value_from_config_or_generated_or_env_or_runtime_or_default DOCKER_GID "$(pi_web_docker_host_detect_docker_gid)")
-default_data_dir=${HOME:-$repo_root/.pi-web}/.local/share/pi-web-docker/data
-pi_web_data_dir=$(value_from_config_or_generated_or_env_or_runtime_or_default PI_WEB_DOCKER_DATA_DIR "$default_data_dir")
-pi_web_extra_host_paths=$(value_from_config_or_generated_or_env_or_runtime_or_default PI_WEB_DOCKER_EXTRA_HOST_PATHS "")
-pi_web_opensuse_image=$(value_from_config_or_generated_or_env_or_runtime_or_default PI_WEB_OPENSUSE_IMAGE opensuse/tumbleweed)
-pi_web_nodejs_major=$(value_from_config_or_generated_or_env_or_runtime_or_default PI_WEB_NODEJS_MAJOR 22)
-pi_web_nodejs_repo=$(value_from_config_or_generated_or_env_or_runtime_or_default PI_WEB_NODEJS_REPO auto)
-pi_web_extra_zypper_packages=$(value_from_config_or_generated_or_env_or_runtime_or_default PI_WEB_EXTRA_ZYPPER_PACKAGES "")
-pi_web_dev_image=$(value_from_config_or_generated_or_env_or_runtime_or_default PI_WEB_DEV_IMAGE pi-web:dev)
-compose_project_name=$(value_from_config_or_generated_or_env_or_default COMPOSE_PROJECT_NAME pi-web-dev)
+pi_studio_uid=$(value_from_config_or_generated_or_env_or_default PI_STUDIO_UID "$host_uid")
+pi_studio_gid=$(value_from_config_or_generated_or_env_or_default PI_STUDIO_GID "$host_gid")
+docker_gid=$(value_from_config_or_generated_or_env_or_runtime_or_default DOCKER_GID "$(pi_studio_docker_host_detect_docker_gid)")
+default_data_dir=${HOME:-$repo_root/.pi-studio}/.local/share/pi-studio-docker/data
+pi_studio_data_dir=$(value_from_config_or_generated_or_env_or_runtime_or_default PI_STUDIO_DOCKER_DATA_DIR "$default_data_dir")
+pi_studio_extra_host_paths=$(value_from_config_or_generated_or_env_or_runtime_or_default PI_STUDIO_DOCKER_EXTRA_HOST_PATHS "")
+pi_studio_opensuse_image=$(value_from_config_or_generated_or_env_or_runtime_or_default PI_STUDIO_OPENSUSE_IMAGE opensuse/tumbleweed)
+pi_studio_nodejs_major=$(value_from_config_or_generated_or_env_or_runtime_or_default PI_STUDIO_NODEJS_MAJOR 22)
+pi_studio_nodejs_repo=$(value_from_config_or_generated_or_env_or_runtime_or_default PI_STUDIO_NODEJS_REPO auto)
+pi_studio_extra_zypper_packages=$(value_from_config_or_generated_or_env_or_runtime_or_default PI_STUDIO_EXTRA_ZYPPER_PACKAGES "")
+pi_studio_dev_image=$(value_from_config_or_generated_or_env_or_runtime_or_default PI_STUDIO_DEV_IMAGE pi-studio:dev)
+compose_project_name=$(value_from_config_or_generated_or_env_or_default COMPOSE_PROJECT_NAME pi-studio-dev)
 hostexec_image=$(value_from_config_or_generated_or_env_or_runtime_or_default HOSTEXEC_IMAGE alpine:3.22)
-pi_web_max_upload_bytes=$(value_from_config_or_generated_or_env_or_runtime_or_default PI_WEB_MAX_UPLOAD_BYTES 67108864)
-default_dev_bind_addr=$(value_from_config_or_generated_or_env_or_runtime_or_default PI_WEB_BIND_ADDR 127.0.0.1)
-pi_web_dev_api_bind_addr=$(value_from_config_or_generated_or_env_or_runtime_or_default PI_WEB_DEV_API_BIND_ADDR "$default_dev_bind_addr")
-pi_web_dev_bind_addr=$(value_from_config_or_generated_or_env_or_runtime_or_default PI_WEB_DEV_BIND_ADDR "$default_dev_bind_addr")
-pi_web_dev_api_port=$(value_from_config_or_generated_or_env_or_runtime_or_default PI_WEB_DEV_API_PORT 8504)
-pi_web_dev_port=$(value_from_config_or_generated_or_env_or_runtime_or_default PI_WEB_DEV_PORT 8505)
-pi_web_dev_sessiond_socket=$(value_from_config_or_generated_or_env_or_default PI_WEB_DEV_SESSIOND_SOCKET /data/pi-web/sessiond-dev.sock)
+pi_studio_max_upload_bytes=$(value_from_config_or_generated_or_env_or_runtime_or_default PI_STUDIO_MAX_UPLOAD_BYTES 67108864)
+default_dev_bind_addr=$(value_from_config_or_generated_or_env_or_runtime_or_default PI_STUDIO_BIND_ADDR 127.0.0.1)
+pi_studio_dev_api_bind_addr=$(value_from_config_or_generated_or_env_or_runtime_or_default PI_STUDIO_DEV_API_BIND_ADDR "$default_dev_bind_addr")
+pi_studio_dev_bind_addr=$(value_from_config_or_generated_or_env_or_runtime_or_default PI_STUDIO_DEV_BIND_ADDR "$default_dev_bind_addr")
+pi_studio_dev_api_port=$(value_from_config_or_generated_or_env_or_runtime_or_default PI_STUDIO_DEV_API_PORT 8504)
+pi_studio_dev_port=$(value_from_config_or_generated_or_env_or_runtime_or_default PI_STUDIO_DEV_PORT 8505)
+pi_studio_dev_sessiond_socket=$(value_from_config_or_generated_or_env_or_default PI_STUDIO_DEV_SESSIOND_SOCKET /data/pi-studio/sessiond-dev.sock)
 
-require_unsigned_int PI_WEB_UID "$pi_web_uid"
-require_unsigned_int PI_WEB_GID "$pi_web_gid"
+require_unsigned_int PI_STUDIO_UID "$pi_studio_uid"
+require_unsigned_int PI_STUDIO_GID "$pi_studio_gid"
 require_unsigned_int DOCKER_GID "$docker_gid"
-enforce_non_root_dev_uid "$pi_web_uid"
-case "$pi_web_data_dir" in
+enforce_non_root_dev_uid "$pi_studio_uid"
+case "$pi_studio_data_dir" in
   /*) ;;
-  *) die "PI_WEB_DOCKER_DATA_DIR must be an absolute path, got: $pi_web_data_dir" ;;
+  *) die "PI_STUDIO_DOCKER_DATA_DIR must be an absolute path, got: $pi_studio_data_dir" ;;
 esac
 [ -n "$compose_project_name" ] || die "COMPOSE_PROJECT_NAME must not be empty"
 
-mkdir -p "$pi_web_data_dir" || die "could not create data directory: $pi_web_data_dir"
+mkdir -p "$pi_studio_data_dir" || die "could not create data directory: $pi_studio_data_dir"
 
-container_env_file=$pi_web_data_dir/container.env
-if ! pi_web_docker_write_container_env_template "$container_env_file"; then
+container_env_file=$pi_studio_data_dir/container.env
+if ! pi_studio_docker_write_container_env_template "$container_env_file"; then
   die "could not create container environment file: $container_env_file"
 fi
 
-dev_container_env_file=$repo_root/.pi-web/docker-compose-dev.container.env
+dev_container_env_file=$repo_root/.pi-studio/docker-compose-dev.container.env
 if [ ! -e "$dev_container_env_file" ]; then
   (
     umask 077
     cat >"$dev_container_env_file" <<'EOF'
-# PI WEB development-only container environment. Safe to edit.
+# PI STUDIO development-only container environment. Safe to edit.
 # Loaded after shared container.env for dev web and sessiond only.
 # This file is gitignored and never rewritten. Docker Compose dotenv rules apply.
 # Explicit Compose environment values still take precedence.
 #
-# Apply with pi-web-docker --dev start (recreates changed containers).
+# Apply with pi-studio-docker --dev start (recreates changed containers).
 # Recreating sessiond interrupts active dev sessions; restart does not reload env files.
 #
 # Example: keep dev remote machines separate from production.
-# PI_WEB_MACHINES_FILE=/data/pi-web/machines-dev.json
+# PI_STUDIO_MACHINES_FILE=/data/pi-studio/machines-dev.json
 EOF
   ) || die "could not create dev container environment file: $dev_container_env_file"
 fi
 
 env_file=$generated_env_file
-override_file=$repo_root/.pi-web/docker-compose-dev.host.generated.yml
+override_file=$repo_root/.pi-studio/docker-compose-dev.host.generated.yml
 
-if ! pi_web_docker_host_write_compose_override "$override_file" "$PI_WEB_DETECTED_DOCKER_HOST_PROFILE" "$pi_web_extra_host_paths"; then
+if ! pi_studio_docker_host_write_compose_override "$override_file" "$PI_STUDIO_DETECTED_DOCKER_HOST_PROFILE" "$pi_studio_extra_host_paths"; then
   die "could not write host-specific Compose override"
 fi
 
 umask 077
 temp_env=$env_file.$$
 cat >"$temp_env" <<EOF
-# Generated by docker/pi-web-docker --dev. Do not edit by hand.
-PI_WEB_UID=$pi_web_uid
-PI_WEB_GID=$pi_web_gid
+# Generated by docker/pi-studio-docker --dev. Do not edit by hand.
+PI_STUDIO_UID=$pi_studio_uid
+PI_STUDIO_GID=$pi_studio_gid
 DOCKER_GID=$docker_gid
-PI_WEB_DOCKER_DATA_DIR=$pi_web_data_dir
-PI_WEB_DOCKER_DEV_REPO_ROOT=$repo_root
-PI_WEB_DOCKER_HOST_PROFILE=$PI_WEB_DETECTED_DOCKER_HOST_PROFILE
-PI_WEB_DOCKER_SOCKET_SOURCE=$PI_WEB_DETECTED_DOCKER_SOCKET_SOURCE
-HOSTEXEC_MODE=$PI_WEB_DETECTED_HOSTEXEC_MODE
-PI_WEB_DOCKER_EXTRA_HOST_PATHS=$pi_web_extra_host_paths
-PI_WEB_OPENSUSE_IMAGE=$pi_web_opensuse_image
-PI_WEB_NODEJS_MAJOR=$pi_web_nodejs_major
-PI_WEB_NODEJS_REPO=$pi_web_nodejs_repo
-PI_WEB_EXTRA_ZYPPER_PACKAGES=$pi_web_extra_zypper_packages
-PI_WEB_DEV_IMAGE=$pi_web_dev_image
+PI_STUDIO_DOCKER_DATA_DIR=$pi_studio_data_dir
+PI_STUDIO_DOCKER_DEV_REPO_ROOT=$repo_root
+PI_STUDIO_DOCKER_HOST_PROFILE=$PI_STUDIO_DETECTED_DOCKER_HOST_PROFILE
+PI_STUDIO_DOCKER_SOCKET_SOURCE=$PI_STUDIO_DETECTED_DOCKER_SOCKET_SOURCE
+HOSTEXEC_MODE=$PI_STUDIO_DETECTED_HOSTEXEC_MODE
+PI_STUDIO_DOCKER_EXTRA_HOST_PATHS=$pi_studio_extra_host_paths
+PI_STUDIO_OPENSUSE_IMAGE=$pi_studio_opensuse_image
+PI_STUDIO_NODEJS_MAJOR=$pi_studio_nodejs_major
+PI_STUDIO_NODEJS_REPO=$pi_studio_nodejs_repo
+PI_STUDIO_EXTRA_ZYPPER_PACKAGES=$pi_studio_extra_zypper_packages
+PI_STUDIO_DEV_IMAGE=$pi_studio_dev_image
 COMPOSE_PROJECT_NAME=$compose_project_name
 HOSTEXEC_IMAGE=$hostexec_image
-PI_WEB_MAX_UPLOAD_BYTES=$pi_web_max_upload_bytes
-PI_WEB_DEV_API_BIND_ADDR=$pi_web_dev_api_bind_addr
-PI_WEB_DEV_BIND_ADDR=$pi_web_dev_bind_addr
-PI_WEB_DEV_API_PORT=$pi_web_dev_api_port
-PI_WEB_DEV_PORT=$pi_web_dev_port
-PI_WEB_DEV_SESSIOND_SOCKET=$pi_web_dev_sessiond_socket
+PI_STUDIO_MAX_UPLOAD_BYTES=$pi_studio_max_upload_bytes
+PI_STUDIO_DEV_API_BIND_ADDR=$pi_studio_dev_api_bind_addr
+PI_STUDIO_DEV_BIND_ADDR=$pi_studio_dev_bind_addr
+PI_STUDIO_DEV_API_PORT=$pi_studio_dev_api_port
+PI_STUDIO_DEV_PORT=$pi_studio_dev_port
+PI_STUDIO_DEV_SESSIOND_SOCKET=$pi_studio_dev_sessiond_socket
 EOF
 mv "$temp_env" "$env_file"
 
-if [ "${PI_WEB_DOCKER_HOST_PROFILE_REUSED:-0}" = 1 ]; then
-  log "Reused the recorded PI WEB Docker host profile: $PI_WEB_DETECTED_DOCKER_HOST_PROFILE"
+if [ "${PI_STUDIO_DOCKER_HOST_PROFILE_REUSED:-0}" = 1 ]; then
+  log "Reused the recorded PI STUDIO Docker host profile: $PI_STUDIO_DETECTED_DOCKER_HOST_PROFILE"
 else
-  log "Selected PI WEB Docker host profile: $PI_WEB_DETECTED_DOCKER_HOST_PROFILE"
+  log "Selected PI STUDIO Docker host profile: $PI_STUDIO_DETECTED_DOCKER_HOST_PROFILE"
 fi
 if [ -f "$runtime_env_file" ]; then
   log "Reused runtime Docker environment defaults from: $runtime_env_file"
 fi
-case "$PI_WEB_DETECTED_DOCKER_HOST_PROFILE" in
+case "$PI_STUDIO_DETECTED_DOCKER_HOST_PROFILE" in
   linux-native-docker)
     log "Enabled Linux host mounts and hostexec namespace bridge."
     ;;
@@ -348,7 +348,7 @@ if [ "$#" -eq 0 ]; then
   set -- up --build
 fi
 
-pi_web_docker_compose \
+pi_studio_docker_compose \
   --project-name "$compose_project_name" \
   --env-file "$env_file" \
   -f "$repo_root/docker/compose.dev.yml" \

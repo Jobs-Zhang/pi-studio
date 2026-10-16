@@ -44,7 +44,7 @@ import type { SessionMedia } from "./sessionMediaIndex.js";
 export type SessionRouteRef = ClientSessionRef;
 
 /**
- * Route-facing session contract for PI WEB's HTTP/WebSocket API.
+ * Route-facing session contract for PI STUDIO's HTTP/WebSocket API.
  *
  * Keep transport concerns separate from the bundled Pi SDK implementation so
  * routes remain testable. Pi-specific lifecycle hooks such as auth-change

@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { LitElement, css, html } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import type { SessionRef } from "../../../shared/apiTypes";
@@ -15,7 +16,7 @@ export function transcriptImageSource(part: ChatImagePart, session?: SessionRef,
   return { src: `data:${part.mimeType};base64,${part.data}`, alt: "attached image" };
 }
 
-@customElement("pi-web-transcript-image")
+@customElement("pi-studio-transcript-image")
 export class TranscriptImage extends LitElement {
   @property({ attribute: false }) imagePart: ChatImagePart | undefined;
   @property({ attribute: false }) session: SessionRef | undefined;
@@ -29,11 +30,11 @@ export class TranscriptImage extends LitElement {
   }
 
   override render() {
-    return html`<pi-web-image-presentation
+    return html`<pi-studio-image-presentation
       .source=${this.viewport.ready ? this.source : undefined}
-      description="attached image" label="attached image"
+      description=${t("transcriptImage.attached")} label=${t("transcriptImage.attached")}
       @image-request=${() => { this.viewport.load(); }}
-    ></pi-web-image-presentation>`;
+    ></pi-studio-image-presentation>`;
   }
 
   static override styles = css`:host { display: block; max-width: 100%; min-width: 0; }`;

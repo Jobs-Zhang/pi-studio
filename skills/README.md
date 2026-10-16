@@ -1,6 +1,6 @@
 # skills
 
-Distributable agent skills developed alongside pi-web.
+Distributable agent skills developed alongside pi-studio.
 
 ## relay
 
@@ -11,12 +11,12 @@ It defines the method's concepts and invariants but leaves tools and ways of
 working to an operational profile.
 
 ```bash
-npx skills add jmfederico/pi-web --skill relay -a pi -g
+npx skills add pi-studio/pi-studio --skill relay -a pi -g
 ```
 
 ## relay-runner
 
-The opinionated operational profile used by PI WEB's `/relay` preparation
+The opinionated operational profile used by PI STUDIO's `/relay` preparation
 prompt. The prompt first establishes a shared understanding and obtains explicit
 human approval without pre-planning the chain; this profile then binds the base
 method to Pi session tools and a Git/software-delivery workflow,
@@ -25,7 +25,7 @@ review and remediation, delivery, and intervention. Dispatch and handoff
 prompts select both skills before each fresh runner begins.
 
 ```bash
-npx skills add jmfederico/pi-web --skill relay-runner -a pi -g
+npx skills add pi-studio/pi-studio --skill relay-runner -a pi -g
 ```
 
 `relay-runner` is not standalone; install the base `relay` skill as well when

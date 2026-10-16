@@ -1,4 +1,4 @@
-# Progress Log: PI WEB Desktop Notifications
+# Progress Log: PI STUDIO Desktop Notifications
 
 **Session Started**: 2026-10-09
 
@@ -10,7 +10,7 @@
 ## Progress
 
 ### 2026-10-09 - Session Start
-- Received handoff document at `/tmp/pi-web-desktop-notifications-handoff.md`
+- Received handoff document at `/tmp/pi-studio-desktop-notifications-handoff.md`
 - Read and analyzed current state of codebase
 - Created task plan, findings, and progress files
 - Ready to begin baseline verification
@@ -34,7 +34,7 @@
 ### 2026-10-09 - Phase 4: Packaging for Distribution
 - **Status**: Complete
 - **Finding**: Portable exe (84MB) built successfully via `electron-builder`
-- **Artifact**: `desktop/dist/PI WEB Desktop Portable.exe` (valid PE32 executable)
+- **Artifact**: `desktop/dist/PI STUDIO Desktop Portable.exe` (valid PE32 executable)
 - **Note**: NSIS installer skipped (requires full Wine desktop environment)
 - **Note**: `signAndEditExecutable: false` used to skip code signing (no cert available)
 - **Fix**: Icon path updated from 192px to 512px, author field added

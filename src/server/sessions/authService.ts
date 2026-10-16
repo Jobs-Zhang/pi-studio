@@ -37,7 +37,7 @@ const noopLogger: AuthServiceLogger = { error() { /* no-op */ } };
  * fetches catalogs over the network only when `allowModelNetwork: true`, and
  * `login()`/`logout()`/runtime-API-key mutations synchronize provider state
  * with a hard-coded `allowNetwork: false`, provider-scoped and abortable.
- * Pi-web's own request-path refreshes pass `allowNetwork: false` explicitly
+ * PI Studio's own request-path refreshes pass `allowNetwork: false` explicitly
  * (see below), so no request path can stall on a provider-catalog fetch. The
  * single deliberate network path is the bounded background refresher in
  * modelCatalogRefresher.ts.

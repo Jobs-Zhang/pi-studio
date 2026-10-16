@@ -3,7 +3,7 @@ import { open, realpath, stat, type FileHandle } from "node:fs/promises";
 import { homedir } from "node:os";
 import { resolve } from "node:path";
 import { pipeline, Readable, Transform } from "node:stream";
-import type { FileContentMediaType, PiWebPathAccessConfig } from "../../shared/apiTypes.js";
+import type { FileContentMediaType, PiStudioPathAccessConfig } from "../../shared/apiTypes.js";
 import { classifyWorkspaceFile, MAX_INLINE_PREVIEW_BYTES, MAX_INLINE_PREVIEW_LABEL, workspaceFileName } from "../../shared/workspaceFiles.js";
 import { resolveWorkspacePathAccessTarget } from "./pathAccessPolicy.js";
 
@@ -30,7 +30,7 @@ export interface ReadWorkspaceFilePreviewOptions {
 export async function readWorkspaceFilePreview(
   rootPath: string,
   path: string | undefined,
-  pathAccess?: PiWebPathAccessConfig,
+  pathAccess?: PiStudioPathAccessConfig,
   options: ReadWorkspaceFilePreviewOptions = {},
 ): Promise<WorkspaceFilePreview> {
   if (path === undefined || path === "") throw new Error("path query parameter is required");

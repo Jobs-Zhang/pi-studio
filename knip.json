@@ -8,11 +8,11 @@
     "src/shared/apiTypes.ts",
     "src/server/types.ts",
     "src/server/sessiond.ts",
-    "src/server/piWebPluginService.ts",
-    "extensions/pi-web.ts",
-    "pi-web-plugins/**/pi-web-plugin.ts",
-    "pi-web-plugins/**/server-plugin.ts",
-    "pi-packages/**/pi-web-plugin.ts",
+    "src/server/piStudioPluginService.ts",
+    "extensions/pi-studio.ts",
+    "pi-studio-plugins/**/pi-studio-plugin.ts",
+    "pi-studio-plugins/**/server-plugin.ts",
+    "pi-packages/**/pi-studio-plugin.ts",
     "pi-packages/captains-log/src/browser/index.ts",
     "pi-packages/captains-log/src/server.ts",
     "pi-packages/captains-log/src/companion.ts",
@@ -21,7 +21,7 @@
   "project": [
     "src/**/*.ts",
     "extensions/**/*.ts",
-    "pi-web-plugins/**/*.ts",
+    "pi-studio-plugins/**/*.ts",
     "pi-packages/**/*.ts"
   ],
   "ignoreExportsUsedInFile": true

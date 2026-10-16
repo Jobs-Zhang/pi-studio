@@ -1,3 +1,4 @@
+import { t } from "../../i18n";
 import { css, html, LitElement, type PropertyValues, type TemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import type { QualifiedThemeContribution } from "../../plugins/types";
@@ -27,17 +28,17 @@ export class SettingsThemePanel extends LitElement {
     return html`
       <section class="theme-card" aria-labelledby="theme-heading">
         <header>
-          <h3 id="theme-heading">Theme</h3>
-          <p>Choose a theme on this device, or save a default for browsers that use the default.</p>
+          <h3 id="theme-heading">${t("theme.heading")}</h3>
+          <p>${t("theme.description")}</p>
         </header>
         <div class="current-theme" role="status">
-          <strong>${this.hasLocalOverride ? "Using a theme saved on this device" : "Using the default theme"}</strong>
+          <strong>${this.hasLocalOverride ? t("theme.usingLocal") : t("theme.usingDefault")}</strong>
           <span>Current: ${this.themeName(this.activeThemeId || this.preference.themeId)}</span>
           <span>Default: ${this.themeName(this.defaultPreference.themeId)}${this.defaultPreference.auto ? " · Auto" : ""}</span>
         </div>
         <label class="field">
-          <span>Theme</span>
-          <select aria-label="Theme" .value=${this.draft.themeId} ?disabled=${busy} @change=${(event: Event) => {
+          <span>${t("theme.heading")}</span>
+          <select aria-label=${t("theme.heading")} .value=${this.draft.themeId} ?disabled=${busy} @change=${(event: Event) => {
             if (event.target instanceof HTMLSelectElement) this.draft = { ...this.draft, themeId: event.target.value };
           }}>
             ${!selectedAvailable ? html`<option value=${this.draft.themeId}>${this.draft.themeId} (unavailable)</option>` : null}
@@ -48,14 +49,14 @@ export class SettingsThemePanel extends LitElement {
           <input type="checkbox" .checked=${this.draft.auto} ?disabled=${busy} @change=${(event: Event) => {
             if (event.target instanceof HTMLInputElement) this.draft = { ...this.draft, auto: event.target.checked };
           }}>
-          <span>Auto <small>Follow this device's light/dark preference when the theme has a pair.</small></span>
+          <span>${t("theme.auto")} <small>${t("theme.autoDetail")}</small></span>
         </label>
         <div class="theme-actions">
-          <button class="primary" ?disabled=${busy || !selectedAvailable} @click=${() => this.onUseLocal?.({ ...this.draft })}>Use on this device</button>
-          <button ?disabled=${busy || !selectedAvailable} @click=${() => { void this.onSetDefault?.({ ...this.draft }); }}>Set as default</button>
-          <button ?disabled=${busy || !this.hasLocalOverride} @click=${() => this.onUseDefault?.()}>Use the default</button>
+          <button class="primary" ?disabled=${busy || !selectedAvailable} @click=${() => this.onUseLocal?.({ ...this.draft })}>${t("theme.useOnDevice")}</button>
+          <button ?disabled=${busy || !selectedAvailable} @click=${() => { void this.onSetDefault?.({ ...this.draft }); }}>${t("theme.setAsDefault")}</button>
+          <button ?disabled=${busy || !this.hasLocalOverride} @click=${() => this.onUseDefault?.()}>${t("theme.useDefault")}</button>
         </div>
-        <p class="hint">Setting a default leaves saved device choices unchanged. Use the default to remove this device's override.</p>
+        <p class="hint">${t("theme.hint")}</p>
       </section>
     `;
   }

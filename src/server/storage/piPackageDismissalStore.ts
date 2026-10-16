@@ -1,8 +1,8 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
-import { piWebDataDir } from "../../config.js";
+import { piStudioDataDir } from "../../config.js";
 
-/** A user-initiated removal of a known auto-installable Pi package, recorded so PI WEB does not reinstall it automatically. */
+/** A user-initiated removal of a known auto-installable Pi package, recorded so PI STUDIO does not reinstall it automatically. */
 export interface PiPackageDismissal {
   /** Active agent profile directory the dismissal applies to (per-profile, not global). */
   profileDir: string;
@@ -40,11 +40,11 @@ function parseDismissal(value: unknown): PiPackageDismissal {
 }
 
 export function defaultPiPackageDismissalStorePath(env: NodeJS.ProcessEnv = process.env, cwd = process.cwd()): string {
-  return join(piWebDataDir(env, cwd), "pi-package-dismissals.json");
+  return join(piStudioDataDir(env, cwd), "pi-package-dismissals.json");
 }
 
 export function piPackageDismissalStorePath(env: NodeJS.ProcessEnv = process.env, cwd = process.cwd()): string {
-  const configured = env["PI_WEB_PI_PACKAGE_DISMISSALS_FILE"];
+  const configured = env["PI_STUDIO_PI_PACKAGE_DISMISSALS_FILE"];
   if (configured === undefined || configured === "") return defaultPiPackageDismissalStorePath(env, cwd);
   return resolve(cwd, configured);
 }
@@ -53,8 +53,8 @@ export function piPackageDismissalStorePath(env: NodeJS.ProcessEnv = process.env
  * Data-directory-backed record of which known auto-installable Pi packages a
  * user has dismissed (removed on purpose) per active agent profile directory.
  * This is state, not user-editable configuration, so it lives under
- * `$PI_WEB_DATA_DIR` alongside `projects.json`/`machines.json` rather than in
- * `$PI_WEB_CONFIG`.
+ * `$PI_STUDIO_DATA_DIR` alongside `projects.json`/`machines.json` rather than in
+ * `$PI_STUDIO_CONFIG`.
  */
 export class PiPackageDismissalStore {
   constructor(private readonly filePath = piPackageDismissalStorePath()) {}

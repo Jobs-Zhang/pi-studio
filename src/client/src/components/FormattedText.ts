@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { LitElement, html } from "lit";
 import type { ChatContentRendering } from "../formatting/contentRendering";
 import { customElement, property } from "lit/decorators.js";
@@ -38,8 +39,8 @@ export class FormattedText extends LitElement {
       const button = document.createElement("button");
       button.type = "button";
       button.className = "code-copy-button";
-      button.title = "Copy code block";
-      button.setAttribute("aria-label", "Copy code block");
+      button.title = t("formattedText.copyCode");
+      button.setAttribute("aria-label", t("formattedText.copyCode"));
       const icon = document.createElement("span");
       icon.setAttribute("aria-hidden", "true");
       icon.textContent = "⧉";

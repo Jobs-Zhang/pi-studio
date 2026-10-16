@@ -44,7 +44,7 @@ export interface RequiredTerminalBrowserComposition {
 
 /** Host-owned structural token matching Terminal's package-owned capability. */
 export const REQUIRED_TERMINAL_BROWSER_FACADE_CAPABILITY = Object.freeze({
-  pluginId: "pi-web.terminal",
+  pluginId: "pi-studio.terminal",
   id: "browser-facade",
   version: 1,
   parse: snapshotRequiredTerminalBrowserFacade,

@@ -12,7 +12,7 @@ export type { LocalContributionId, PluginId, QualifiedContributionId } from "./i
 export type HtmlTemplateTag = (strings: TemplateStringsArray, ...values: unknown[]) => TemplateResult;
 export type SvgTemplateTag = (strings: TemplateStringsArray, ...values: unknown[]) => TemplateResult;
 
-export interface PiWebPluginRegistrationDeclaration {
+export interface PiStudioPluginRegistrationDeclaration {
   id: PluginId;
   machineId?: string;
   sourcePluginId?: PluginId;
@@ -22,8 +22,8 @@ export interface PiWebPluginRegistrationDeclaration {
   machineSpecific?: boolean;
 }
 
-export interface PiWebPluginRegistration extends PiWebPluginRegistrationDeclaration {
-  plugin: PiWebPlugin;
+export interface PiStudioPluginRegistration extends PiStudioPluginRegistrationDeclaration {
+  plugin: PiStudioPlugin;
   backendRevision?: string;
   pairedRequestVersion?: 1;
   pairedChannelVersion?: 1;
@@ -39,7 +39,7 @@ export interface WorkspacePluginBinding {
 
 type MaybePromise<T> = T | Promise<T>;
 
-export interface PiWebPlugin {
+export interface PiStudioPlugin {
   apiVersion: 4;
   name: string;
   requires?: readonly PluginCapability[];
@@ -205,7 +205,7 @@ export interface WorkspacePanelTerminal {
   runCommand(input: WorkspaceTerminalCommandInput): Promise<TerminalCommandRunHandle>;
 }
 
-export interface PiWebUnstableRuntimeContext {
+export interface PiStudioUnstableRuntimeContext {
   openSettings?: (section?: SettingsSection) => void;
 }
 
@@ -218,7 +218,7 @@ export interface PluginRuntimeContext {
   state: AppState;
   projects?: PluginProjects;
   prompt: PluginPromptEditor;
-  piWebUnstable?: PiWebUnstableRuntimeContext;
+  piStudioUnstable?: PiStudioUnstableRuntimeContext;
   openActionPalette: () => void;
   focusPrompt: () => void;
   addProject: () => void | Promise<void>;
@@ -239,7 +239,7 @@ export interface PluginRuntimeContext {
   /** Invalidate plugin workspace-panel data for the selected workspace. */
   refreshWorkspacePanels: (panelId?: QualifiedContributionId) => void | Promise<void>;
   refreshAppData: () => void | Promise<void>;
-  checkForPiWebUpdates?: () => void | Promise<void>;
+  checkForPiStudioUpdates?: () => void | Promise<void>;
   reloadPage: () => void;
   deleteWorkspace: (workspace?: Workspace) => void | Promise<void>;
   startSession: () => void | Promise<void>;

@@ -10,7 +10,7 @@ import { pathToFileURL } from "node:url";
 export async function smokeInstalledCaptainsLog({ packageRoot, fixtureRoot }) {
   const captainRoot = join(packageRoot, "dist", "pi-packages", "captains-log");
   const manifest = JSON.parse(await readFile(join(captainRoot, "package.json"), "utf8"));
-  const entry = manifest.piWeb.plugins.find((plugin) => plugin.id === "captains-log");
+  const entry = manifest.piStudio.plugins.find((plugin) => plugin.id === "captains-log");
   assert.ok(entry, "Installed Captain's Log manifest entry missing");
   assert.equal(entry.machineSpecific, true);
   assert.equal(entry.defaultEnabled, false, "Installing must not implicitly enable Captain's Log");

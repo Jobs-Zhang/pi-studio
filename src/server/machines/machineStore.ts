@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { chmod, mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
-import { piWebDataDir } from "../../config.js";
+import { piStudioDataDir } from "../../config.js";
 import { MachineSecretStore } from "./machineSecretStore.js";
 
 /** 连接层读取解密后的凭据，持久化层只写密文。 */
@@ -36,11 +36,11 @@ interface MachineFile {
 const MACHINE_STORE_FILE_MODE = 0o600;
 
 export function defaultMachineStorePath(env: NodeJS.ProcessEnv = process.env, cwd = process.cwd()): string {
-  return join(piWebDataDir(env, cwd), "machines.json");
+  return join(piStudioDataDir(env, cwd), "machines.json");
 }
 
 export function machineStorePath(env: NodeJS.ProcessEnv = process.env, cwd = process.cwd()): string {
-  const configured = env["PI_WEB_MACHINES_FILE"];
+  const configured = env["PI_STUDIO_MACHINES_FILE"];
   if (configured === undefined || configured === "") return defaultMachineStorePath(env, cwd);
   return resolve(cwd, configured);
 }

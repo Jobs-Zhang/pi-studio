@@ -37,7 +37,7 @@ export async function attachmentsToInlineImages(attachments: PromptImageAttachme
 }
 
 export interface SaveAttachmentsOptions {
-  /** Workspace-relative folder to write into. `.pi-web/attachments` only applies when omitted; production save paths pass the resolved effective folder. */
+  /** Workspace-relative folder to write into. `.pi-studio/attachments` only applies when omitted; production save paths pass the resolved effective folder. */
   folder?: string;
   /** Clock injection for deterministic tests. */
   now?: () => Date;

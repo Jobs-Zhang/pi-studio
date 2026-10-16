@@ -1,9 +1,0 @@
-{
-  "name": "@pi-web/info-plugin",
-  "private": true,
-  "piWeb": {
-    "plugins": [
-      { "id": "info", "browserRoot": ".", "module": "pi-web-plugin.js" }
-    ]
-  }
-}

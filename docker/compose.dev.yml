@@ -1,51 +1,51 @@
-name: pi-web-dev
+name: pi-studio-dev
 
-x-pi-web-dev-build: &pi-web-dev-build
+x-pi-studio-dev-build: &pi-studio-dev-build
   context: ..
   dockerfile: docker/Dockerfile.dev
   args:
-    OPENSUSE_IMAGE: ${PI_WEB_OPENSUSE_IMAGE:-opensuse/tumbleweed}
-    NODEJS_MAJOR: ${PI_WEB_NODEJS_MAJOR:-22}
-    NODEJS_REPO: ${PI_WEB_NODEJS_REPO:-auto}
-    PI_WEB_EXTRA_ZYPPER_PACKAGES: ${PI_WEB_EXTRA_ZYPPER_PACKAGES:-}
-    PI_WEB_UID: ${PI_WEB_UID:-1000}
-    PI_WEB_GID: ${PI_WEB_GID:-1000}
+    OPENSUSE_IMAGE: ${PI_STUDIO_OPENSUSE_IMAGE:-opensuse/tumbleweed}
+    NODEJS_MAJOR: ${PI_STUDIO_NODEJS_MAJOR:-22}
+    NODEJS_REPO: ${PI_STUDIO_NODEJS_REPO:-auto}
+    PI_STUDIO_EXTRA_ZYPPER_PACKAGES: ${PI_STUDIO_EXTRA_ZYPPER_PACKAGES:-}
+    PI_STUDIO_UID: ${PI_STUDIO_UID:-1000}
+    PI_STUDIO_GID: ${PI_STUDIO_GID:-1000}
 
-x-pi-web-dev-environment: &pi-web-dev-environment
+x-pi-studio-dev-environment: &pi-studio-dev-environment
   HOME: /data/home
   XDG_CONFIG_HOME: /data/config
-  PI_WEB_DATA_DIR: /data/pi-web
-  PI_WEB_SESSIOND_SOCKET: ${PI_WEB_DEV_SESSIOND_SOCKET:-/data/pi-web/sessiond-dev.sock}
+  PI_STUDIO_DATA_DIR: /data/pi-studio
+  PI_STUDIO_SESSIOND_SOCKET: ${PI_STUDIO_DEV_SESSIOND_SOCKET:-/data/pi-studio/sessiond-dev.sock}
   PI_CODING_AGENT_DIR: /data/pi-agent
   HOSTEXEC_IMAGE: ${HOSTEXEC_IMAGE:-alpine:3.22}
   HOSTEXEC_MODE: ${HOSTEXEC_MODE:-disabled}
-  PI_WEB_UID: ${PI_WEB_UID:-1000}
-  PI_WEB_GID: ${PI_WEB_GID:-1000}
+  PI_STUDIO_UID: ${PI_STUDIO_UID:-1000}
+  PI_STUDIO_GID: ${PI_STUDIO_GID:-1000}
   DOCKER_GID: ${DOCKER_GID:-0}
-  PI_WEB_MAX_UPLOAD_BYTES: ${PI_WEB_MAX_UPLOAD_BYTES:-67108864}
-  PI_WEB_DOCKER_RUNTIME: "1"
-  PI_WEB_DOCKER_MODE: dev
-  PI_WEB_DOCKER_DEV_REPO_ROOT: ${PI_WEB_DOCKER_DEV_REPO_ROOT:?set by docker/pi-web-docker --dev}
-  PI_WEB_DOCKER_HELPER_IMAGE: ${PI_WEB_DEV_IMAGE:-pi-web:dev}
+  PI_STUDIO_MAX_UPLOAD_BYTES: ${PI_STUDIO_MAX_UPLOAD_BYTES:-67108864}
+  PI_STUDIO_DOCKER_RUNTIME: "1"
+  PI_STUDIO_DOCKER_MODE: dev
+  PI_STUDIO_DOCKER_DEV_REPO_ROOT: ${PI_STUDIO_DOCKER_DEV_REPO_ROOT:?set by docker/pi-studio-docker --dev}
+  PI_STUDIO_DOCKER_HELPER_IMAGE: ${PI_STUDIO_DEV_IMAGE:-pi-studio:dev}
   NPM_CONFIG_UPDATE_NOTIFIER: "false"
   NPM_CONFIG_CACHE: /data/npm-cache
 
 # Load shared settings first, then repository-local dev-only overrides.
-x-pi-web-dev-env-file: &pi-web-dev-env-file
-  - ${PI_WEB_DOCKER_DATA_DIR:-${HOME}/.local/share/pi-web-docker/data}/container.env
-  - ../.pi-web/docker-compose-dev.container.env
+x-pi-studio-dev-env-file: &pi-studio-dev-env-file
+  - ${PI_STUDIO_DOCKER_DATA_DIR:-${HOME}/.local/share/pi-studio-docker/data}/container.env
+  - ../.pi-studio/docker-compose-dev.container.env
 
-x-pi-web-dev-data-volume: &pi-web-dev-data-volume
+x-pi-studio-dev-data-volume: &pi-studio-dev-data-volume
   type: bind
-  source: ${PI_WEB_DOCKER_DATA_DIR:-${HOME}/.local/share/pi-web-docker/data}
+  source: ${PI_STUDIO_DOCKER_DATA_DIR:-${HOME}/.local/share/pi-studio-docker/data}
   target: /data
 
-x-pi-web-dev-checkout-volume: &pi-web-dev-checkout-volume
+x-pi-studio-dev-checkout-volume: &pi-studio-dev-checkout-volume
   type: bind
-  source: ${PI_WEB_DOCKER_DEV_REPO_ROOT:?set by docker/pi-web-docker --dev}
+  source: ${PI_STUDIO_DOCKER_DEV_REPO_ROOT:?set by docker/pi-studio-docker --dev}
   target: /workspace
 
-x-pi-web-dev-dependency-volume: &pi-web-dev-dependency-volume
+x-pi-studio-dev-dependency-volume: &pi-studio-dev-dependency-volume
   type: volume
   source: node_modules
   target: /workspace/node_modules
@@ -54,93 +54,93 @@ x-pi-web-dev-dependency-volume: &pi-web-dev-dependency-volume
 
 # Only data-init needs the image dependency seed; broad host mounts belong to
 # the application services and may hide image paths such as /opt.
-x-pi-web-dev-init-volumes: &pi-web-dev-init-volumes
-  - *pi-web-dev-checkout-volume
-  - *pi-web-dev-dependency-volume
-  - *pi-web-dev-data-volume
+x-pi-studio-dev-init-volumes: &pi-studio-dev-init-volumes
+  - *pi-studio-dev-checkout-volume
+  - *pi-studio-dev-dependency-volume
+  - *pi-studio-dev-data-volume
 
 # One checkout and one dependency volume, visible at both container paths.
 # Compose merges mounts by target when the host checkout is already /workspace.
-x-pi-web-dev-volumes: &pi-web-dev-volumes
-  - *pi-web-dev-checkout-volume
-  - *pi-web-dev-dependency-volume
+x-pi-studio-dev-volumes: &pi-studio-dev-volumes
+  - *pi-studio-dev-checkout-volume
+  - *pi-studio-dev-dependency-volume
   - type: bind
-    source: ${PI_WEB_DOCKER_DEV_REPO_ROOT:?set by docker/pi-web-docker --dev}
-    target: ${PI_WEB_DOCKER_DEV_REPO_ROOT:?set by docker/pi-web-docker --dev}
+    source: ${PI_STUDIO_DOCKER_DEV_REPO_ROOT:?set by docker/pi-studio-docker --dev}
+    target: ${PI_STUDIO_DOCKER_DEV_REPO_ROOT:?set by docker/pi-studio-docker --dev}
   - type: volume
     source: node_modules
-    target: ${PI_WEB_DOCKER_DEV_REPO_ROOT:?set by docker/pi-web-docker --dev}/node_modules
+    target: ${PI_STUDIO_DOCKER_DEV_REPO_ROOT:?set by docker/pi-studio-docker --dev}/node_modules
     volume:
       nocopy: true
-  - *pi-web-dev-data-volume
+  - *pi-studio-dev-data-volume
 
 services:
   data-init:
-    build: *pi-web-dev-build
-    image: ${PI_WEB_DEV_IMAGE:-pi-web:dev}
+    build: *pi-studio-dev-build
+    image: ${PI_STUDIO_DEV_IMAGE:-pi-studio:dev}
     command:
       - bash
       - -lc
       - |
         set -euo pipefail
-        mkdir -p /data/home /data/config /data/npm-cache /data/pi-web /data/pi-agent
-        chown -R "${PI_WEB_UID:-1000}:${PI_WEB_GID:-1000}" /data
-        /usr/local/sbin/pi-web-dev-sync-node-modules
+        mkdir -p /data/home /data/config /data/npm-cache /data/pi-studio /data/pi-agent
+        chown -R "${PI_STUDIO_UID:-1000}:${PI_STUDIO_GID:-1000}" /data
+        /usr/local/sbin/pi-studio-dev-sync-node-modules
     user: "0:0"
     security_opt:
       - label=disable
     environment:
-      PI_WEB_UID: ${PI_WEB_UID:-1000}
-      PI_WEB_GID: ${PI_WEB_GID:-1000}
-    volumes: *pi-web-dev-init-volumes
+      PI_STUDIO_UID: ${PI_STUDIO_UID:-1000}
+      PI_STUDIO_GID: ${PI_STUDIO_GID:-1000}
+    volumes: *pi-studio-dev-init-volumes
 
   sessiond:
-    build: *pi-web-dev-build
-    image: ${PI_WEB_DEV_IMAGE:-pi-web:dev}
+    build: *pi-studio-dev-build
+    image: ${PI_STUDIO_DEV_IMAGE:-pi-studio:dev}
     command: ["npm", "run", "start:sessiond"]
     working_dir: /workspace
     depends_on:
       web:
         condition: service_healthy
-    user: "${PI_WEB_UID:-1000}:${PI_WEB_GID:-1000}"
+    user: "${PI_STUDIO_UID:-1000}:${PI_STUDIO_GID:-1000}"
     group_add:
       - "${DOCKER_GID:-0}"
     security_opt:
       - label=disable
-    env_file: *pi-web-dev-env-file
-    environment: *pi-web-dev-environment
-    volumes: *pi-web-dev-volumes
+    env_file: *pi-studio-dev-env-file
+    environment: *pi-studio-dev-environment
+    volumes: *pi-studio-dev-volumes
     healthcheck:
-      test: ["CMD-SHELL", "test -S ${PI_WEB_DEV_SESSIOND_SOCKET:-/data/pi-web/sessiond-dev.sock}"]
+      test: ["CMD-SHELL", "test -S ${PI_STUDIO_DEV_SESSIOND_SOCKET:-/data/pi-studio/sessiond-dev.sock}"]
       interval: 5s
       timeout: 3s
       retries: 24
       start_period: 5s
 
   web:
-    build: *pi-web-dev-build
-    image: ${PI_WEB_DEV_IMAGE:-pi-web:dev}
+    build: *pi-studio-dev-build
+    image: ${PI_STUDIO_DEV_IMAGE:-pi-studio:dev}
     command: ["bash", "-lc", "trap 'kill 0' EXIT; npm run dev:web & npm run dev:client & wait"]
     working_dir: /workspace
     depends_on:
       data-init:
         condition: service_completed_successfully
-    user: "${PI_WEB_UID:-1000}:${PI_WEB_GID:-1000}"
+    user: "${PI_STUDIO_UID:-1000}:${PI_STUDIO_GID:-1000}"
     group_add:
       - "${DOCKER_GID:-0}"
     security_opt:
       - label=disable
-    env_file: *pi-web-dev-env-file
+    env_file: *pi-studio-dev-env-file
     environment:
-      <<: *pi-web-dev-environment
-      PI_WEB_HOST: 0.0.0.0
-      PI_WEB_PORT: "8504"
+      <<: *pi-studio-dev-environment
+      PI_STUDIO_HOST: 0.0.0.0
+      PI_STUDIO_PORT: "8504"
     ports:
-      - "${PI_WEB_DEV_API_BIND_ADDR:-127.0.0.1}:${PI_WEB_DEV_API_PORT:-8504}:8504"
-      - "${PI_WEB_DEV_BIND_ADDR:-127.0.0.1}:${PI_WEB_DEV_PORT:-8505}:8505"
-    volumes: *pi-web-dev-volumes
+      - "${PI_STUDIO_DEV_API_BIND_ADDR:-127.0.0.1}:${PI_STUDIO_DEV_API_PORT:-8504}:8504"
+      - "${PI_STUDIO_DEV_BIND_ADDR:-127.0.0.1}:${PI_STUDIO_DEV_PORT:-8505}:8505"
+    volumes: *pi-studio-dev-volumes
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8504/api/pi-web/health >/dev/null"]
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8504/api/pi-studio/health >/dev/null"]
       interval: 10s
       timeout: 5s
       retries: 12

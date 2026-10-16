@@ -1,4 +1,4 @@
-import type { JsonObject, PiWebPlugin, WorkspacePanelContext } from "@jmfederico/pi-web/plugin-api";
+import type { JsonObject, PiStudioPlugin, WorkspacePanelContext } from "@pi-studio/pi-studio/plugin-api";
 
 const summaries = new Map<string, string>();
 
@@ -42,7 +42,7 @@ const plugin = {
       ],
     },
   }),
-} satisfies PiWebPlugin;
+} satisfies PiStudioPlugin;
 
 export default plugin;
 

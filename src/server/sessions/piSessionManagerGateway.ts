@@ -32,7 +32,7 @@ export class SessionDirResolver {
 
   constructor(options: SessionDirResolverOptions) {
     this.agentDir = options.agentDir;
-    // Session storage override policy: the deprecated PI_WEB_ alias keeps
+    // Session storage override policy: the deprecated PI_STUDIO_ alias keeps
     // winning when both are set, then the canonical pi SDK name (see
     // AGENT_SESSION_DIR_ENV_KEYS).
     this.envSessionDir = AGENT_SESSION_DIR_ENV_KEYS
@@ -300,7 +300,7 @@ export async function listSessionsInDir(sessionDir: string): Promise<PiSessionLi
   // otherwise compare against this process's cwd and drop other projects' sessions.
   // Cwd filtering is applied explicitly by filterSessionsForCwd where needed.
   // Session file headers are written by external tools (Pi CLI, SDK consumers),
-  // so their cwd is canonicalized here before it enters pi-web.
+  // so their cwd is canonicalized here before it enters pi-studio.
   const sessions = await SessionManager.listAll(sessionDir);
   return sessions.map((session) => ({ ...session, cwd: canonicalizeStoredCwd(session.cwd) }));
 }

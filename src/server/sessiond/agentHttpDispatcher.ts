@@ -15,7 +15,7 @@ import { Client, EnvHttpProxyAgent, Pool, setGlobalDispatcher, type Dispatcher }
  * `configureHttpDispatcher(settingsManager.getHttpIdleTimeoutMs())` at
  * bootstrap; the Pi SDK setting `httpIdleTimeoutMs` (agent profile
  * `settings.json`, default 300_000, `0` disables the idle timers) was simply
- * never applied by PI WEB's embedded session runtime. This module is that
+ * never applied by PI STUDIO's embedded session runtime. This module is that
  * missing step for the session daemon.
  *
  * The SDK's own `configureHttpDispatcher` lives in

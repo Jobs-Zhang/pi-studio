@@ -9,7 +9,7 @@ export const KNOWN_PI_PACKAGES: readonly KnownPiPackage[] = [
   {
     id: "@jmfederico/pi-captains-log",
     label: "Captain’s Log",
-    description: "Translate the selected session's last reply into pirate, with a visible Pi message trail. Install, then explicitly enable its PI WEB plugin.",
+    description: "Translate the selected session's last reply into pirate, with a visible Pi message trail. Install, then explicitly enable its PI STUDIO plugin.",
     shippedPathSegments: ["dist", "pi-packages", "captains-log"],
   },
 ];

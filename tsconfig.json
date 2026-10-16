@@ -26,8 +26,8 @@
       "node"
     ],
     "paths": {
-      "@jmfederico/pi-web/plugin-api": ["./src/plugin-api.ts"],
-      "@jmfederico/pi-web/server-plugin-api": ["./src/server-plugin-api.ts"]
+      "@pi-studio/pi-studio/plugin-api": ["./src/plugin-api.ts"],
+      "@pi-studio/pi-studio/server-plugin-api": ["./src/server-plugin-api.ts"]
     }
   },
   "include": [
@@ -35,7 +35,7 @@
     "vite.config.ts",
     "vitest.artifacts.config.ts",
     "extensions/**/*.ts",
-    "pi-web-plugins/**/*.ts",
+    "pi-studio-plugins/**/*.ts",
     "pi-packages/**/*.ts"
   ]
 }

@@ -1,11 +1,11 @@
 import {
-  PI_WEB_HOST_PI_SESSIONS_CAPABILITY,
-  type PiWebHostPiSessionCreated,
-  type PiWebHostWorkspaceSelection,
-  type PiWebHostPiSessionRun,
-  type PiWebHostPiSessionRunCompletion,
-  type PiWebHostPiSessionRunInput,
-  type PiWebHostPiSessionsV1,
+  PI_STUDIO_HOST_PI_SESSIONS_CAPABILITY,
+  type PiStudioHostPiSessionCreated,
+  type PiStudioHostWorkspaceSelection,
+  type PiStudioHostPiSessionRun,
+  type PiStudioHostPiSessionRunCompletion,
+  type PiStudioHostPiSessionRunInput,
+  type PiStudioHostPiSessionsV1,
 } from "../../server-plugin-api.js";
 import type { ProjectService } from "../projects/projectService.js";
 import type { WorkspaceProviderRegistry } from "../workspaces/workspaceProviderRegistry.js";
@@ -40,7 +40,7 @@ interface RunAdmission {
 /** Creates package-attributed PI session admission over host-owned services. */
 export function createServerPluginPiSessionsCapabilityFactory(
   options: CreateServerPluginPiSessionsCapabilityOptions,
-): ServerPluginHostCapabilityFactory<PiWebHostPiSessionsV1> {
+): ServerPluginHostCapabilityFactory<PiStudioHostPiSessionsV1> {
   const maxConcurrentRuns = positiveInteger(
     options.maxConcurrentRunsPerPlugin,
     DEFAULT_MAX_CONCURRENT_RUNS_PER_PLUGIN,
@@ -49,7 +49,7 @@ export function createServerPluginPiSessionsCapabilityFactory(
   const workspaceFactory = createServerPluginWorkspacesCapabilityFactory(options);
 
   return Object.freeze({
-    capability: PI_WEB_HOST_PI_SESSIONS_CAPABILITY,
+    capability: PI_STUDIO_HOST_PI_SESSIONS_CAPABILITY,
     create(context: ServerPluginHostCapabilityContext) {
       const workspaceAuthority = workspaceFactory.create(context).value;
       const admissions = new Set<RunAdmission>();
@@ -68,9 +68,9 @@ export function createServerPluginPiSessionsCapabilityFactory(
       if (context.lifetimeSignal.aborted) revoke();
       else context.lifetimeSignal.addEventListener("abort", lifetimeAbort, { once: true });
 
-      const value: PiWebHostPiSessionsV1 = Object.freeze({
+      const value: PiStudioHostPiSessionsV1 = Object.freeze({
         version: 1,
-        create: async (input: PiWebHostWorkspaceSelection): Promise<PiWebHostPiSessionCreated> => {
+        create: async (input: PiStudioHostWorkspaceSelection): Promise<PiStudioHostPiSessionCreated> => {
           assertActive(context, revoked);
           if (admissions.size >= maxConcurrentRuns) {
             throw capabilityError(context.pluginId, `reached its limit of ${String(maxConcurrentRuns)} concurrent runs`);
@@ -95,7 +95,7 @@ export function createServerPluginPiSessionsCapabilityFactory(
             admission.settle();
           }
         },
-        run: async (input: PiWebHostPiSessionRunInput): Promise<PiWebHostPiSessionRun> => {
+        run: async (input: PiStudioHostPiSessionRunInput): Promise<PiStudioHostPiSessionRun> => {
           assertActive(context, revoked);
           if (admissions.size >= maxConcurrentRuns) {
             throw capabilityError(
@@ -153,7 +153,7 @@ export function createServerPluginPiSessionsCapabilityFactory(
   });
 }
 
-async function completeRun(runCompletion: Promise<void>): Promise<PiWebHostPiSessionRunCompletion> {
+async function completeRun(runCompletion: Promise<void>): Promise<PiStudioHostPiSessionRunCompletion> {
   try {
     await runCompletion;
     return Object.freeze({ status: "completed" });
@@ -170,7 +170,7 @@ function createAdmission(): RunAdmission {
   return { settled, settle };
 }
 
-function failedCompletion(error: unknown): PiWebHostPiSessionRunCompletion {
+function failedCompletion(error: unknown): PiStudioHostPiSessionRunCompletion {
   const message = error instanceof Error ? error.message : String(error);
   return Object.freeze({
     status: "failed",
@@ -189,7 +189,7 @@ function revokedError(context: ServerPluginHostCapabilityContext, cause: unknown
 
 function capabilityError(pluginId: string, message: string, cause?: unknown): Error {
   return new Error(
-    `PI WEB host PI session authority for server plugin ${pluginId} ${message}`,
+    `PI STUDIO host PI session authority for server plugin ${pluginId} ${message}`,
     cause === undefined ? {} : { cause },
   );
 }
@@ -212,7 +212,7 @@ async function waitForSettled(operations: readonly Promise<void>[], signal: Abor
 function abortError(signal: AbortSignal): Error {
   return signal.reason instanceof Error
     ? signal.reason
-    : new DOMException("PI WEB host PI session cleanup was aborted", "AbortError");
+    : new DOMException("PI STUDIO host PI session cleanup was aborted", "AbortError");
 }
 
 function positiveInteger(value: number | undefined, fallback: number, label: string): number {

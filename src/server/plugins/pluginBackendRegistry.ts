@@ -9,7 +9,7 @@ import type {
   ProjectInput,
   WorkspaceProviderMetadata,
 } from "../../server-plugin-api.js";
-import { isPiWebPluginId } from "../../shared/pluginIds.js";
+import { isPiStudioPluginId } from "../../shared/pluginIds.js";
 import {
   boundedPluginBackendChannelCloseReason,
   cloneBoundedPluginBackendJson,
@@ -244,7 +244,7 @@ export class PluginBackendRegistry {
 
   reserveChannel(request: PluginBackendChannelAdmissionRequest): PluginBackendChannelAdmission {
     if (this.channelsAreShuttingDown()) throw channelError("shutdown", 1012, "Plugin backend channels are shutting down");
-    if (!isPiWebPluginId(request.pluginId)) throw channelError("inactive-plugin", 1008, `Server plugin is not active: ${request.pluginId}`);
+    if (!isPiStudioPluginId(request.pluginId)) throw channelError("inactive-plugin", 1008, `Server plugin is not active: ${request.pluginId}`);
     if (request.projectId === "" || request.workspaceId === "") {
       throw channelError("workspace-not-found", 1008, `Workspace not found for server plugin ${request.pluginId} channel`);
     }
@@ -930,7 +930,7 @@ function snapshotContributions(
 }
 
 function parsePluginId(value: string): string {
-  if (!isPiWebPluginId(value)) {
+  if (!isPiStudioPluginId(value)) {
     throw backendError("inactive-plugin", 409, `Server plugin is not active: ${value}`);
   }
   return value;
@@ -995,7 +995,7 @@ function snapshotWorkspace(workspace: WorkspaceListing, projectId: string): Serv
 }
 
 function snapshotProvider(provider: WorkspaceProviderMetadata): WorkspaceProviderMetadata {
-  if (!isPiWebPluginId(provider.pluginId)) throw new Error("Workspace provider plugin id is invalid");
+  if (!isPiStudioPluginId(provider.pluginId)) throw new Error("Workspace provider plugin id is invalid");
   const metadata = provider.metadata === undefined
     ? undefined
     : cloneJsonObject(provider.metadata, "Workspace provider public metadata");

@@ -8,7 +8,7 @@ import { isAbsolute, resolve } from "node:path";
  * 1. HTTP requests (web UI, federation proxies): normalize strictly with
  *    `normalizeRequestCwd` at route parsing. Relative paths are rejected instead
  *    of being silently resolved against the daemon's own working directory.
- * 2. Data pi-web writes itself (archive store records): canonicalized on write
+ * 2. Data pi-studio writes itself (archive store records): canonicalized on write
  *    and on load with `canonicalizeStoredCwd`, so internal `===` comparisons are
  *    safe by construction.
  * 3. Data other writers own (Pi session file headers via the SDK): canonicalized

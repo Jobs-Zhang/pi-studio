@@ -15,11 +15,11 @@ const NEWLINE = 0x0a; // `\n`
 const CARRIAGE_RETURN = 0x0d; // `\r`
 
 /**
- * The header fields PI WEB reads directly from a Pi session file.
+ * The header fields PI STUDIO reads directly from a Pi session file.
  *
  * Pi writes this as the first line of the `.jsonl` session file when the
  * session is created and never rewrites it, except for `parentSession`, which
- * PI WEB itself can clear when detaching a child. `cwd` and `id` are therefore
+ * PI STUDIO itself can clear when detaching a child. `cwd` and `id` are therefore
  * safe to treat as immutable for a given path.
  */
 export interface SessionHeaderSummary {

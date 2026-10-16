@@ -1,4 +1,4 @@
-const draftStoragePrefix = "pi-web:prompt-draft:";
+const draftStoragePrefix = "pi-studio:prompt-draft:";
 
 function draftStorageKey(sessionId: string): string {
   return `${draftStoragePrefix}${sessionId}`;

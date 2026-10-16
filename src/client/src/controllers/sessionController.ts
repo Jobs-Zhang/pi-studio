@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { api as defaultApi, type AskUserCloseResponse, type AskUserSubmission, type CommandResult, type ExtensionDialogAnswer, type ExtensionDialogCloseReason, type ExtensionDialogCloseResponse, type ExtensionDialogOutcome, type MessagePage, type PendingAskUser, type PendingExtensionDialog, type PromptAttachment, type QueuedSessionMessage, type SessionActivity, type SessionBulkFailure, type SessionCleanupExecuteResponse, type SessionInfo, type SessionModelCatalogEntry, type SessionModelScopeMode, type SessionRef, type SessionStatus, type SessionStreamSnapshot, type SessionTreeForkResult, type SessionTreeNavigateResult, type SessionTreeSnapshot, type SessionTreeSummaryChoice, type Workspace } from "../api";
 import type { AppState, ClosedExtensionDialog } from "../appState";
 import { NetworkRequestError } from "../api/http";
@@ -613,8 +614,8 @@ export class SessionController {
     let result: CommandResult;
     try {
       result = await this.api.runCommand(session, "/tree", machineId);
-      if (result.type !== "tree") throw new Error("message" in result ? result.message : "Session history is unavailable.");
-      if (!result.tree.nodes.some((node) => node.id === entryId)) throw new Error("This message is no longer available in session history.");
+      if (result.type !== "tree") throw new Error("message" in result ? result.message : t("session.historyUnavailable"));
+      if (!result.tree.nodes.some((node) => node.id === entryId)) throw new Error(t("session.messageUnavailable"));
     } catch (error) {
       this.reportSessionError(session, machineId, error, errorOwner);
       throw error;
@@ -1692,7 +1693,7 @@ export class SessionController {
     const now = new Date().toISOString();
     const session: ClientPendingStartSessionInfo = {
       id: tempId,
-      path: `pi-web://pending-session/${tempId}`,
+      path: `pi-studio://pending-session/${tempId}`,
       cwd: workspace.path,
       persisted: false,
       name: "New session",
@@ -2477,7 +2478,7 @@ function creatingPendingSessionActivity(sessionId: string, queuedCount = 0): Ses
   return {
     sessionId,
     phase: "active",
-    label: "Creating session",
+    label: t("session.creating"),
     detail: queuedCount > 0 ? `${String(queuedCount)} queued ${queuedCount === 1 ? "message" : "messages"} will send when the backend session is ready` : "Waiting for the backend session to be ready",
     at: new Date().toISOString(),
   };
@@ -2488,7 +2489,7 @@ function failedPendingSessionActivity(sessionId: string, message: string, queued
   return {
     sessionId,
     phase: "error",
-    label: "Session creation failed",
+    label: t("session.creationFailed"),
     detail: `${message}${queuedDetail}`,
     at: new Date().toISOString(),
   };

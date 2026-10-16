@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { LitElement, html, type TemplateResult } from "lit";
 import { customElement, property, query, state } from "lit/decorators.js";
 import type { Workspace } from "../api";
@@ -64,8 +65,8 @@ export class WorkspacePanel extends LitElement {
   override render() {
     const workspace = this.workspace;
     if (workspace === undefined && this.panels.length === 0) return this.renderEmptyState(this.error !== "" ? { title: this.error } : this.emptyState ?? {
-      title: "Select a workspace",
-      body: "Choose a workspace to use its tools.",
+      title: t("workspacePanel.selectWorkspace"),
+      body: t("workspacePanel.selectWorkspaceBody"),
     }, true);
     const visiblePanels = this.panels;
     // An unresolved route may leave a valid remembered tool, but its content is not displayed.
@@ -130,7 +131,7 @@ export class WorkspacePanel extends LitElement {
   }
 
   private renderNavigationButton(hiddenActiveDestination = false) {
-    return this.onShowNavigation === undefined ? null : html`<button type="button" class=${`navigation-menu-button${hiddenActiveDestination ? " selected" : ""}`} title="Navigation" aria-label="Navigation" aria-haspopup="dialog" @click=${this.onShowNavigation}>${renderNavigationMenuIcon()}</button>`;
+    return this.onShowNavigation === undefined ? null : html`<button type="button" class=${`navigation-menu-button${hiddenActiveDestination ? " selected" : ""}`} title=${t("shell.navigation")} aria-label=${t("shell.navigation")} aria-haspopup="dialog" @click=${this.onShowNavigation}>${renderNavigationMenuIcon()}</button>`;
   }
 
   private renderEmptyState(state: WorkspacePanelEmptyState, showNavigation = false): TemplateResult {

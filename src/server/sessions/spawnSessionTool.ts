@@ -1,6 +1,6 @@
 // Server-only npm alias: native Node cannot use Pi's extension module mapping.
 // Keep this out of extensions; see docs/development-checks.md#server-only-typebox.
-import { Type } from "pi-web-typebox";
+import { Type } from "pi-studio-typebox";
 import { KNOWN_THINKING_LEVELS } from "../../shared/thinkingLevels.js";
 import { defineTool, type ExtensionContext } from "@earendil-works/pi-coding-agent";
 
@@ -50,8 +50,8 @@ const SpawnSessionParams = Type.Object({
 });
 
 /**
- * Custom tool that lets the LLM start a new, independent pi-web session and
- * deliver an initial prompt to it. The spawned session is a normal pi-web session
+ * Custom tool that lets the LLM start a new, independent pi-studio session and
+ * deliver an initial prompt to it. The spawned session is a normal pi-studio session
  * a human can open and interact with. The tool is constructed per-session, so it
  * carries the spawning session's cwd for project-scope validation.
  */

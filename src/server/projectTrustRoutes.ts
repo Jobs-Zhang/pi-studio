@@ -9,7 +9,7 @@ import { resolveWorkspaceContext } from "./workspaces/workspaceContext.js";
 
 /**
  * Collaborators the trust routes read from the surrounding app: the active
- * agent directory, which owns `trust.json`. PI WEB always honors pi's
+ * agent directory, which owns `trust.json`. PI STUDIO always honors pi's
  * project-trust settings at session start, so the routes need no opt-in flag.
  */
 export interface ProjectTrustRouteDeps {
@@ -19,7 +19,7 @@ export interface ProjectTrustRouteDeps {
 /**
  * Read/write per-project Pi trust for a workspace. The workspace path is
  * resolved server-side from the project/workspace ids, so a client can only
- * set trust for a path PI WEB already manages — never an arbitrary path.
+ * set trust for a path PI STUDIO already manages — never an arbitrary path.
  */
 export function registerProjectTrustRoutes(
   app: FastifyInstance,

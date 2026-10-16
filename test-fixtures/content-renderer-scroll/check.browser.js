@@ -14,7 +14,7 @@ async (page) => {
     // Wait for Mermaid's postMessage sizing to reach the host.
     await page.waitForFunction((id) => {
       const root = document.querySelector(`#${id}`).firstElementChild.shadowRoot;
-      const host = root.querySelector("pi-web-content-renderer");
+      const host = root.querySelector("pi-studio-content-renderer");
       const preview = host?.shadowRoot.querySelector("scroll-mermaid-preview");
       return preview?.shadowRoot.querySelector("iframe")?.style.height !== "300px";
     }, id);

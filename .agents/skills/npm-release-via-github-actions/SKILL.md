@@ -47,7 +47,7 @@ on:
   workflow_dispatch:
 ```
 
-For the `pi-web` repository, the expected workflow is `.github/workflows/publish.yml`; it publishes with `npm publish --access public --provenance` from GitHub Actions. Use the GitHub Release path by default.
+For the `pi-studio` repository, the expected workflow is `.github/workflows/publish.yml`; it publishes with `npm publish --access public --provenance` from GitHub Actions. Use the GitHub Release path by default.
 
 If there is no GitHub Actions publish workflow, stop and explain that one must be added or fixed. Do not fall back to local `npm publish`.
 
@@ -67,13 +67,13 @@ If there is no GitHub Actions publish workflow, stop and explain that one must b
    - Inspect `.changeset/*.md` files.
    - If there are no changesets but there are user-visible changes to release, pause and ask whether to add a changeset. Do not create a low-quality release note just to proceed.
    - If changesets exist, make sure their text is user-facing.
-   - For `pi-web`, non-breaking changesets must use `patch` even for new features. The package uses CalVer shaped as semver: `MAJOR.YYYYMM.PATCH`. The semver `minor` position is the release month, not feature size.
+   - For `pi-studio`, non-breaking changesets must use `patch` even for new features. The package uses CalVer shaped as semver: `MAJOR.YYYYMM.PATCH`. The semver `minor` position is the release month, not feature size.
    - If a pending changeset uses `minor` for a non-breaking change, edit its frontmatter to `patch` before versioning. Do not ask the user whether to use a patch increase or date change.
    - Use `major` only when the user explicitly requests a breaking/major release.
    - If you believe the pending changes introduce a breaking change but the user has not explicitly requested a major release, pause before versioning and ask the user to confirm whether this should be released as a breaking major version or changed to remain non-breaking.
 
-3. **Compute the `pi-web` CalVer version**
-   - For `pi-web`, always compute the version from the release date as `MAJOR.YYYYMM.PATCH`.
+3. **Compute the `pi-studio` CalVer version**
+   - For `pi-studio`, always compute the version from the release date as `MAJOR.YYYYMM.PATCH`.
    - Use the current date at release time for `YYYYMM` (for example, `date +%Y%m`). Do not ask whether to use a same-month patch increase or a date change.
    - Keep the current `MAJOR` unless the user explicitly requests a breaking/major release. Do not infer or perform a major version bump on your own.
    - Set `PATCH` deterministically:
@@ -139,7 +139,7 @@ If there is no GitHub Actions publish workflow, stop and explain that one must b
      gh release create v<new-version> \
        --target main \
        --title "v<new-version>" \
-       --notes-file /tmp/pi-web-release-notes-v<new-version>.md
+       --notes-file /tmp/pi-studio-release-notes-v<new-version>.md
      ```
    - If a clean notes file is not practical, `--generate-notes` is acceptable, but prefer the Changesets-generated text because it is curated.
    - Creating a non-draft published release triggers `on: release: types: [published]`.

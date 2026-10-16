@@ -8,7 +8,7 @@ export interface ChatDisclosureStorage {
   write(sessionId: string, snapshot: ChatDisclosureSnapshot): void;
 }
 
-const GROUP_STORAGE_PREFIX = "pi-web:chat-groups:";
+const GROUP_STORAGE_PREFIX = "pi-studio:chat-groups:";
 
 const browserChatDisclosureStorage: ChatDisclosureStorage = {
   read(sessionId: string): ChatDisclosureSnapshot | undefined {

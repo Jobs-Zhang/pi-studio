@@ -32,17 +32,17 @@ import {
 } from "./workspaces/workspaceProviderRegistry.js";
 import { sessiondSocketPath } from "../sessiond/config.js";
 import {
-  PI_WEB_HOST_PI_SESSIONS_CAPABILITY,
-  PI_WEB_HOST_PI_SESSION_EVENTS_CAPABILITY,
-  PI_WEB_HOST_WORKSPACES_CAPABILITY,
+  PI_STUDIO_HOST_PI_SESSIONS_CAPABILITY,
+  PI_STUDIO_HOST_PI_SESSION_EVENTS_CAPABILITY,
+  PI_STUDIO_HOST_WORKSPACES_CAPABILITY,
 } from "../server-plugin-api.js";
-import { getPiWebRuntimeComponent } from "./piWebStatus.js";
+import { getPiStudioRuntimeComponent } from "./piStudioStatus.js";
 import { SESSIOND_RUNTIME_CAPABILITIES } from "../shared/capabilities.js";
-import { agentSessionDirEnvOverride, effectivePiWebConfig, maxUploadBytes, offlineModeEnabled, piWebDataDir, PI_CODING_AGENT_DIR_ENV, PI_CODING_AGENT_SESSION_DIR_ENV } from "../config.js";
-import { createFilePiWebConfigService } from "./configRoutes.js";
+import { agentSessionDirEnvOverride, effectivePiStudioConfig, maxUploadBytes, offlineModeEnabled, piStudioDataDir, PI_CODING_AGENT_DIR_ENV, PI_CODING_AGENT_SESSION_DIR_ENV } from "../config.js";
+import { createFilePiStudioConfigService } from "./configRoutes.js";
 import { createActiveAgentProfileDescriptor } from "../sessiond/activeAgentProfile.js";
 import { loadServerPluginRecoveryConfig } from "../serverPluginRecovery.js";
-import { DefaultPiPackageProvider, PiWebPluginCatalog } from "./piWebPluginCatalog.js";
+import { DefaultPiPackageProvider, PiStudioPluginCatalog } from "./piStudioPluginCatalog.js";
 import { createDefaultPiPackageService } from "./piPackageService.js";
 import { PiPackageDismissalStore, piPackageDismissalStorePath } from "./storage/piPackageDismissalStore.js";
 import { reconcileAutoInstallablePiPackages } from "./sessiond/autoInstallPiPackages.js";
@@ -50,7 +50,7 @@ import { applyAgentHttpIdleTimeout } from "./sessiond/agentHttpDispatcher.js";
 import { scrubNonAgentVisibleEnvKeys } from "./sessiond/agentProcessEnvironment.js";
 import { claimSessiondStateOwnership } from "./sessiond/sessiondStateOwnership.js";
 import { dockerEnvironmentPromptSections } from "./sessions/dockerEnvironmentFacts.js";
-import { PI_WEB_SESSION_ENV, sessionEnvironmentPromptSections } from "./sessions/sessionEnvironmentFacts.js";
+import { PI_STUDIO_SESSION_ENV, sessionEnvironmentPromptSections } from "./sessions/sessionEnvironmentFacts.js";
 import { createServerPluginExecFile } from "./plugins/serverPluginExec.js";
 import { createServerPluginRuntime } from "./plugins/serverPluginRuntime.js";
 import { createServerPluginPiSessionsCapabilityFactory } from "./plugins/serverPluginPiSessionsCapability.js";
@@ -76,18 +76,18 @@ import { WorkspaceRemovalService } from "./workspaces/workspaceRemovalService.js
 
 const daemonEnvironment: NodeJS.ProcessEnv = Object.freeze({ ...process.env });
 const serverPluginRecovery = loadServerPluginRecoveryConfig({ env: daemonEnvironment });
-const { config, deprecatedAgentInputs } = effectivePiWebConfig({ env: daemonEnvironment });
+const { config, deprecatedAgentInputs } = effectivePiStudioConfig({ env: daemonEnvironment });
 // The session service re-reads the config file at request time (e.g. for the
 // attachments default folder), so Settings edits apply without a daemon
 // restart; the daemon's own startup toggles keep using the snapshot above.
-const configService = createFilePiWebConfigService({ env: daemonEnvironment });
+const configService = createFilePiStudioConfigService({ env: daemonEnvironment });
 const activeAgentProfile = createActiveAgentProfileDescriptor(config.agent);
 // Normalize the resolved agent state locations into the canonical pi SDK env
 // vars before anything agent-visible can spawn: the embedded SDK's own
 // resolution (getAgentDir(), its session-dir override), terminals, the bash
 // tool, and subsessions then all observe the same values by inheritance. The
 // exported canonical values are fully resolved, so agent processes that also
-// inherit the deprecated PI_WEB_AGENT_* aliases still resolve to the same
+// inherit the deprecated PI_STUDIO_AGENT_* aliases still resolve to the same
 // locations.
 process.env[PI_CODING_AGENT_DIR_ENV] = activeAgentProfile.dir;
 const agentSessionDirOverride = agentSessionDirEnvOverride(daemonEnvironment);
@@ -95,9 +95,9 @@ if (agentSessionDirOverride !== undefined) {
   process.env[PI_CODING_AGENT_SESSION_DIR_ENV] = agentSessionDirOverride;
 }
 // Deliberately agent-visible nesting marker: every process spawned from a
-// session can tell it runs inside this pi-web instance. The session
+// session can tell it runs inside this pi-studio instance. The session
 // environment facts below explain the precautions that follow from it.
-process.env[PI_WEB_SESSION_ENV] = "1";
+process.env[PI_STUDIO_SESSION_ENV] = "1";
 const app = Fastify({ logger: true, bodyLimit: maxUploadBytes(daemonEnvironment, config) });
 if (deprecatedAgentInputs.length > 0) {
   app.log.warn({ deprecatedAgentInputs }, "deprecated agent configuration inputs detected; support will be removed in a future release");
@@ -118,7 +118,7 @@ app.addHook("onRequest", (_request, reply, done) => {
   }
   void reply.code(503).send({ error: "Session daemon is shutting down" });
 });
-const serverPluginCatalog = new PiWebPluginCatalog({
+const serverPluginCatalog = new PiStudioPluginCatalog({
   cwd: process.cwd(),
   agentDir: activeAgentProfile.dir,
   configProvider: () => config,
@@ -143,7 +143,7 @@ process.once("SIGTERM", (signal) => { void requestShutdown(signal); });
 
 // Agent-executed processes (bash tool, terminals, subsessions) are spawned from
 // this process and inherit its environment. The scrub removes only the keys
-// that silently distort the tools agents run; the daemon's PI_WEB_* wiring
+// that silently distort the tools agents run; the daemon's PI_STUDIO_* wiring
 // stays visible on purpose, because a nested instance resolving the same state
 // now fails loudly through the ownership claim below instead of corrupting it
 // silently. The daemon keeps using the captured daemonEnvironment above; its
@@ -184,7 +184,7 @@ async function createSessionDaemonRuntime() {
   } else {
     app.log.info({ httpIdleTimeoutMs: appliedHttpIdleTimeout.timeoutMs }, "applied agent profile HTTP idle timeout to the session daemon HTTP stack");
   }
-  // Best-effort, non-fatal reconciliation of Pi packages PI WEB ships "out of
+  // Best-effort, non-fatal reconciliation of Pi packages PI STUDIO ships "out of
   // the box" (currently just the Relays plugin's @jmfederico/pi-relay
   // package): installs one for the active agent profile, the same way the
   // manual Settings UI Install action would, unless it is already configured
@@ -208,8 +208,8 @@ async function createSessionDaemonRuntime() {
     logger: app.log,
     execFile: createServerPluginExecFile({ env: daemonEnvironment }),
     noticeSink: (source, input) => { serverNotices.record({ ...input, source }); },
-    dataDir: piWebDataDir(daemonEnvironment),
-    lateHostCapabilities: [PI_WEB_HOST_WORKSPACES_CAPABILITY, PI_WEB_HOST_PI_SESSIONS_CAPABILITY, PI_WEB_HOST_PI_SESSION_EVENTS_CAPABILITY],
+    dataDir: piStudioDataDir(daemonEnvironment),
+    lateHostCapabilities: [PI_STUDIO_HOST_WORKSPACES_CAPABILITY, PI_STUDIO_HOST_PI_SESSIONS_CAPABILITY, PI_STUDIO_HOST_PI_SESSION_EVENTS_CAPABILITY],
   });
   let sessionsForFailedConstruction: PiSessionService | undefined;
   let projectLifecycleForFailedConstruction: ProjectLifecycleService | undefined;
@@ -363,7 +363,7 @@ async function createSessionDaemonRuntime() {
       // the captured pre-scrub daemon environment and the config snapshot this
       // daemon actually honors, so it stays accurate for this daemon lifetime
       // and clears only when the inputs are removed and the daemon restarts.
-      ...getPiWebRuntimeComponent("sessiond", SESSIOND_RUNTIME_CAPABILITIES, deprecatedAgentInputs),
+      ...getPiStudioRuntimeComponent("sessiond", SESSIOND_RUNTIME_CAPABILITIES, deprecatedAgentInputs),
       activeAgentProfile,
     });
     let disposed = false;
@@ -462,9 +462,9 @@ async function listenSessionDaemon({ shutdown }: SessionDaemonRuntime): Promise<
     return;
   }
 
-  const portValue = daemonEnvironment["PI_WEB_SESSIOND_PORT"];
+  const portValue = daemonEnvironment["PI_STUDIO_SESSIOND_PORT"];
   const port = portValue !== undefined && portValue !== "" ? Number(portValue) : undefined;
-  const host = daemonEnvironment["PI_WEB_SESSIOND_HOST"] ?? "127.0.0.1";
+  const host = daemonEnvironment["PI_STUDIO_SESSIOND_HOST"] ?? "127.0.0.1";
 
   if (port !== undefined) {
     await app.listen({ port, host });

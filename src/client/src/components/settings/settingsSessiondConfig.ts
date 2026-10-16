@@ -1,18 +1,18 @@
-import type { PiWebConfigResponse, PiWebConfigValues } from "../../api";
+import type { PiStudioConfigResponse, PiStudioConfigValues } from "../../api";
 
-export function spawnSessionsConfigPatch(enabled: boolean): PiWebConfigValues {
+export function spawnSessionsConfigPatch(enabled: boolean): PiStudioConfigValues {
   return { spawnSessions: enabled };
 }
 
-export function subsessionsConfigPatch(enabled: boolean): PiWebConfigValues {
+export function subsessionsConfigPatch(enabled: boolean): PiStudioConfigValues {
   return { subsessions: enabled };
 }
 
-export function askUserConfigPatch(enabled: boolean): PiWebConfigValues {
+export function askUserConfigPatch(enabled: boolean): PiStudioConfigValues {
   return { askUser: enabled };
 }
 
-export function mergeSelectedMachineSessiondConfig(base: PiWebConfigResponse, selectedMachine: PiWebConfigResponse): PiWebConfigResponse {
+export function mergeSelectedMachineSessiondConfig(base: PiStudioConfigResponse, selectedMachine: PiStudioConfigResponse): PiStudioConfigResponse {
   return {
     ...base,
     config: { ...base.config, ...selectedMachine.config },

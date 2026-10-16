@@ -4,14 +4,14 @@ import type {
   JsonValue,
   PluginCapability,
   PluginPeer,
-  PiWebPlugin,
+  PiStudioPlugin,
   Workspace,
   WorkspaceFiles,
   WorkspaceFilesCapabilityV1,
   WorkspaceFilesContextValue,
   WorkspacePanelContext,
   WorkspacePanelFiles,
-} from "@jmfederico/pi-web/plugin-api";
+} from "@pi-studio/pi-studio/plugin-api";
 
 export function checkContentRendering(capability: ContentRenderingCapability, input: ContentRendererInput): void {
   const request = { machineId: "local", text: input.text };
@@ -56,7 +56,7 @@ const publishedCapability: PluginCapability<FixtureIdentityCapabilityV1, 1> = Ob
   parse: identityCapability.parse,
 });
 
-const plugin: PiWebPlugin = {
+const plugin: PiStudioPlugin = {
   apiVersion: 4,
   name: "Browser declaration fixture",
   requires: [identityCapability],

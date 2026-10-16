@@ -3,33 +3,33 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>PI WEB FAQ — Pi web UI troubleshooting</title>
+    <title>PI STUDIO FAQ — Pi web UI troubleshooting</title>
     <meta
       name="description"
-      content="Troubleshoot PI WEB, the web UI for Pi Coding Agent, including install, PATH, services, remote access, and runtime issues."
+      content="Troubleshoot PI STUDIO, the web UI for Pi Coding Agent, including install, PATH, services, remote access, and runtime issues."
     />
-    <link rel="canonical" href="https://pi-web.dev/faq" />
+    <link rel="canonical" href="https://pi-studio.dev/faq" />
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="PI WEB" />
-    <meta property="og:title" content="PI WEB FAQ — Pi web UI troubleshooting" />
+    <meta property="og:site_name" content="PI STUDIO" />
+    <meta property="og:title" content="PI STUDIO FAQ — Pi web UI troubleshooting" />
     <meta
       property="og:description"
-      content="Fix common PI WEB install, service, PATH, remote access, and session issues."
+      content="Fix common PI STUDIO install, service, PATH, remote access, and session issues."
     />
-    <meta property="og:url" content="https://pi-web.dev/faq" />
-    <meta property="og:image" content="https://pi-web.dev/assets/pi-web-banner.png" />
-    <meta property="og:image:alt" content="PI WEB browser UI for persistent Pi Coding Agent sessions" />
+    <meta property="og:url" content="https://pi-studio.dev/faq" />
+    <meta property="og:image" content="https://pi-studio.dev/assets/pi-studio-banner.png" />
+    <meta property="og:image:alt" content="PI STUDIO browser UI for persistent Pi Coding Agent sessions" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="PI WEB FAQ — Pi web UI troubleshooting" />
+    <meta name="twitter:title" content="PI STUDIO FAQ — Pi web UI troubleshooting" />
     <meta
       name="twitter:description"
-      content="Fix common PI WEB install, service, PATH, remote access, and session issues."
+      content="Fix common PI STUDIO install, service, PATH, remote access, and session issues."
     />
-    <meta name="twitter:image" content="https://pi-web.dev/assets/pi-web-banner.png" />
+    <meta name="twitter:image" content="https://pi-studio.dev/assets/pi-studio-banner.png" />
     <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
     <script>
       (() => {
-        const theme = window.localStorage.getItem("pi-web-theme");
+        const theme = window.localStorage.getItem("pi-studio-theme");
         if (theme === "light" || theme === "dark") document.documentElement.dataset.theme = theme;
       })();
     </script>
@@ -44,7 +44,7 @@
   <body>
     <header class="site-header">
       <nav class="container nav" aria-label="Main navigation">
-        <a class="brand" href="./" aria-label="PI WEB home">PI WEB</a>
+        <a class="brand" href="./" aria-label="PI STUDIO home">PI STUDIO</a>
         <div class="nav-links">
           <div class="nav-pages">
             <a href="remote-first">Remote-first</a>
@@ -55,7 +55,7 @@
             <a href="faq" aria-current="page">FAQ</a>
           </div>
           <div class="nav-actions">
-            <a class="github-link" href="https://github.com/jmfederico/pi-web" aria-label="PI WEB on GitHub">
+            <a class="github-link" href="https://github.com/pi-studio/pi-studio" aria-label="PI STUDIO on GitHub">
               <svg class="github-icon" viewBox="0 0 16 16" aria-hidden="true">
                 <path
                   fill="currentColor"
@@ -79,7 +79,7 @@
           <p class="eyebrow"><span class="pulse"></span> FAQ & troubleshooting</p>
           <h1>Fix the things that usually go wrong first.</h1>
           <p>
-            Most PI WEB install issues are environment issues: native service manager availability, PATH setup, Node
+            Most PI STUDIO install issues are environment issues: native service manager availability, PATH setup, Node
             version managers, or remote access expectations.
           </p>
         </div>
@@ -90,7 +90,7 @@
           <aside class="toc" aria-label="FAQ contents">
             <strong>Questions</strong>
             <a href="#is-this-linux-only">What platforms are supported?</a>
-            <a href="#is-pi-web-a-web-ui">Is PI WEB a Pi web UI?</a>
+            <a href="#is-pi-studio-a-web-ui">Is PI STUDIO a Pi web UI?</a>
             <a href="#tools-are-not-found">Tools are failing / node not found</a>
             <a href="#doctor-fails">What does doctor check?</a>
             <a href="#nvm-fnm-asdf">nvm, fnm, or asdf issues</a>
@@ -114,21 +114,21 @@
             <article id="is-this-linux-only" class="faq-item">
               <h2>What platforms are supported?</h2>
               <p>
-                PI WEB can run anywhere its runtime dependencies work. The automatic <code>pi-web install</code> command uses
+                PI STUDIO can run anywhere its runtime dependencies work. The automatic <code>pi-studio install</code> command uses
                 a supported per-user service manager when one is available.
               </p>
               <ul>
-                <li><strong>User-service install:</strong> use <code>npm install -g @jmfederico/pi-web --allow-scripts=node-pty</code> and <code>pi-web install</code>.</li>
+                <li><strong>User-service install:</strong> use <code>npm install -g @pi-studio/pi-studio --allow-scripts=node-pty</code> and <code>pi-studio install</code>.</li>
                 <li><strong>WSL:</strong> if your distro has systemd enabled, the installer may work; otherwise use the manual run path.</li>
                 <li><strong>Native Windows:</strong> outside WSL is not the recommended path today.</li>
               </ul>
             </article>
 
-            <article id="is-pi-web-a-web-ui" class="faq-item">
-              <h2>Is PI WEB a Pi web UI?</h2>
+            <article id="is-pi-studio-a-web-ui" class="faq-item">
+              <h2>Is PI STUDIO a Pi web UI?</h2>
               <p>
-                Yes. PI WEB is a web UI for Pi Coding Agent that runs and supervises persistent sessions from a browser.
-                Unlike simple session viewers, PI WEB is built around real server-side workspaces, long-running session
+                Yes. PI STUDIO is a web UI for Pi Coding Agent that runs and supervises persistent sessions from a browser.
+                Unlike simple session viewers, PI STUDIO is built around real server-side workspaces, long-running session
                 daemons, git worktrees, remote machines, terminals, files, and multi-device supervision.
               </p>
             </article>
@@ -136,8 +136,8 @@
             <article id="tools-are-not-found" class="faq-item">
               <h2>Tools are failing, node is not found, or Pi cannot find commands</h2>
               <p>
-                The shell environment needs to be set up so login shells have the required PATH entries for PI WEB, Pi,
-                and any tools your agents need. PI WEB services run commands through a non-interactive login shell owned
+                The shell environment needs to be set up so login shells have the required PATH entries for PI STUDIO, Pi,
+                and any tools your agents need. PI STUDIO services run commands through a non-interactive login shell owned
                 by systemd or launchd, so an interactive terminal—or even a caller-invoked login shell—can work while the
                 native service fails.
               </p>
@@ -146,7 +146,7 @@
                   <strong>Run diagnostics</strong>
                   <button class="copy-button" data-copy="#doctor-command">Copy</button>
                 </div>
-                <pre id="doctor-command"><code><span class="prompt">$</span> pi-web doctor</code></pre>
+                <pre id="doctor-command"><code><span class="prompt">$</span> pi-studio doctor</code></pre>
               </div>
               <ul>
                 <li><strong>bash:</strong> put PATH setup in <code>~/.bash_profile</code> or <code>~/.profile</code>. If <code>~/.bash_profile</code> exists, source <code>~/.profile</code> from it if needed.</li>
@@ -161,14 +161,14 @@
             </article>
 
             <article id="doctor-fails" class="faq-item">
-              <h2>What does <code>pi-web doctor</code> check?</h2>
+              <h2>What does <code>pi-studio doctor</code> check?</h2>
               <p>
                 Doctor checks whether your login shell can find Node 22.19.0 or newer, npm, Pi, and optional ripgrep.
                 It also checks the tools needed by your services in their service-manager environment, which can differ
                 from your terminal. Follow its login-file guidance when tools are missing.
               </p>
               <p>
-                It also checks terminal support (<code>node-pty</code>), reports installed and running PI WEB versions,
+                It also checks terminal support (<code>node-pty</code>), reports installed and running PI STUDIO versions,
                 and checks Linux user-service lingering when relevant. Read skipped or prospective checks carefully:
                 manual-only platforms skip service-manager checks, and a prospective check is not confirmation that
                 your installed services work. If the service-manager check itself fails, resolve that error before
@@ -187,27 +187,27 @@
                 <li>Prefer version-manager shims when available; for <code>mise</code>, use shims or enable its shim setup rather than relying only on shell activation.</li>
                 <li>Move any required version-manager initialization to your login shell file.</li>
                 <li>Make sure <code>node --version</code> is at least <code>v22.19.0</code> from <code>bash -lc</code>, <code>zsh -lc</code>, or your detected shell.</li>
-                <li>Run <code>pi-web doctor</code> again after changing shell files.</li>
+                <li>Run <code>pi-studio doctor</code> again after changing shell files.</li>
               </ul>
             </article>
 
             <article id="node-pty-native-module" class="faq-item">
-              <h2><code>pi-web-sessiond</code> cannot load <code>pty.node</code></h2>
+              <h2><code>pi-studio-sessiond</code> cannot load <code>pty.node</code></h2>
               <p>
-                npm 12 blocks dependency installation scripts unless they are explicitly approved. If PI WEB was installed
+                npm 12 blocks dependency installation scripts unless they are explicitly approved. If PI STUDIO was installed
                 without approving <code>node-pty</code>, its required native module can be missing even though npm reported a
                 successful installation.
               </p>
-              <p>Reinstall PI WEB with approval limited to <code>node-pty</code>:</p>
+              <p>Reinstall PI STUDIO with approval limited to <code>node-pty</code>:</p>
               <div class="code-card">
                 <div class="copy-row">
                   <strong>Allow the node-pty installation scripts</strong>
                   <button class="copy-button" data-copy="#node-pty-install">Copy</button>
                 </div>
-                <pre id="node-pty-install"><code><span class="prompt">$</span> npm install -g @jmfederico/pi-web --allow-scripts=node-pty</code></pre>
+                <pre id="node-pty-install"><code><span class="prompt">$</span> npm install -g @pi-studio/pi-studio --allow-scripts=node-pty</code></pre>
               </div>
               <p>
-                Then run <code>pi-web install</code> again, or restart <code>pi-web-sessiond</code> if you run PI WEB manually.
+                Then run <code>pi-studio install</code> again, or restart <code>pi-studio-sessiond</code> if you run PI STUDIO manually.
                 The flag does not enable installation scripts for other dependencies.
               </p>
             </article>
@@ -223,26 +223,26 @@
                   <strong>Manual run</strong>
                   <button class="copy-button" data-copy="#manual-faq">Copy</button>
                 </div>
-                <pre id="manual-faq"><code><span class="prompt">$</span> pi-web-sessiond
+                <pre id="manual-faq"><code><span class="prompt">$</span> pi-studio-sessiond
 <span class="comment"># in another terminal</span>
-<span class="prompt">$</span> PI_WEB_PORT=8504 pi-web-server</code></pre>
+<span class="prompt">$</span> PI_STUDIO_PORT=8504 pi-studio-server</code></pre>
               </div>
             </article>
 
             <article id="cannot-open" class="faq-item">
               <h2>I cannot open the web UI</h2>
               <ul>
-                <li>Check <code>pi-web status</code>.</li>
-                <li>Check logs with <code>pi-web logs</code>.</li>
+                <li>Check <code>pi-studio status</code>.</li>
+                <li>Check logs with <code>pi-studio logs</code>.</li>
                 <li>Make sure port <code>8504</code> is not already in use.</li>
                 <li>On a remote server, use an SSH tunnel: <code>ssh -L 8504:127.0.0.1:8504 user@server</code>.</li>
               </ul>
             </article>
 
             <article id="public-internet" class="faq-item">
-              <h2>Can I expose PI WEB to the public internet?</h2>
+              <h2>Can I expose PI STUDIO to the public internet?</h2>
               <p>
-                Do not expose it directly to the public internet. PI WEB assumes trusted users and trusted server paths.
+                Do not expose it directly to the public internet. PI STUDIO assumes trusted users and trusted server paths.
                 For remote access, bind only to an interface that is already private and controlled: for example the
                 server's VPN IP, a private LAN IP, or localhost behind an SSH tunnel.
               </p>
@@ -256,9 +256,9 @@
             </article>
 
             <article id="remote-machines" class="faq-item">
-              <h2>How do I connect another PI WEB machine?</h2>
+              <h2>How do I connect another PI STUDIO machine?</h2>
               <p>
-                Install and run PI WEB on the target machine, make its PI WEB URL reachable from the gateway through a
+                Install and run PI STUDIO on the target machine, make its PI STUDIO URL reachable from the gateway through a
                 trusted path, then open the gateway and choose <strong>Actions → Add Machine</strong>. The browser keeps
                 talking to the gateway while projects, sessions, files, and terminals run on the selected remote runtime.
               </p>
@@ -282,15 +282,15 @@
               </p>
               <ul>
                 <li>When the provider offers a device-code option, choose it instead; it needs no paste.</li>
-                <li>A flow that offers neither a pasted response nor a device code has to be completed on the target machine: cancel, then use <strong>Actions → Open Selected Machine PI WEB</strong>.</li>
+                <li>A flow that offers neither a pasted response nor a device code has to be completed on the target machine: cancel, then use <strong>Actions → Open Selected Machine PI STUDIO</strong>.</li>
               </ul>
               <p><a href="machines#auth-credentials">Read the credential notes →</a></p>
             </article>
 
             <article id="laptop-or-server" class="faq-item">
-              <h2>Should I run PI WEB on my laptop or a server?</h2>
+              <h2>Should I run PI STUDIO on my laptop or a server?</h2>
               <p>
-                You can run it locally, but PI WEB is most useful on a machine that stays on. A remote dev box, home
+                You can run it locally, but PI STUDIO is most useful on a machine that stays on. A remote dev box, home
                 server, cloud VM, or workstation gives agents a stable place to keep working while your laptop becomes
                 just a client.
               </p>
@@ -302,30 +302,30 @@
             </article>
 
             <article id="plugins" class="faq-item">
-              <h2>Can I use local plugins with production PI WEB?</h2>
+              <h2>Can I use local plugins with production PI STUDIO?</h2>
               <p>
-                Yes. Put trusted plugin packages in <code>~/.pi-web/plugins/&lt;plugin-id&gt;/</code>, or symlink a
-                development folder there. If <code>PI_WEB_DATA_DIR</code> is set, use
-                <code>$PI_WEB_DATA_DIR/plugins</code> instead. Browser-only edits need a tab reload. A server-backed edit
+                Yes. Put trusted plugin packages in <code>~/.pi-studio/plugins/&lt;plugin-id&gt;/</code>, or symlink a
+                development folder there. If <code>PI_STUDIO_DATA_DIR</code> is set, use
+                <code>$PI_STUDIO_DATA_DIR/plugins</code> instead. Browser-only edits need a tab reload. A server-backed edit
                 requires a session-daemon restart followed by the reload, which can interrupt active sessions.
               </p>
               <p>
                 See <a href="plugins#install-and-manage">installing and managing plugins</a> for setup and restart steps.
-                If a plugin prevents PI WEB from starting, use the
+                If a plugin prevents PI STUDIO from starting, use the
                 <a href="plugins#trust-and-recovery">offline disable and safe-start commands</a>.
               </p>
             </article>
 
             <article id="worktree-list-out-of-date" class="faq-item">
-              <h2>A worktree I created or deleted outside PI WEB is missing or still listed</h2>
+              <h2>A worktree I created or deleted outside PI STUDIO is missing or still listed</h2>
               <p>
-                PI WEB does not register worktrees. It lists the git worktrees of the selected project on demand, so
+                PI STUDIO does not register worktrees. It lists the git worktrees of the selected project on demand, so
                 worktrees you create or delete with <code>git worktree</code>, a terminal, or another tool are picked up
                 without any adopt or import step. This works the same way on remote machines.
               </p>
               <p>
-                The workspace list is re-read when the PI WEB tab regains focus or becomes visible again, not
-                continuously. If a worktree appeared while you were already looking at PI WEB, switch to another window
+                The workspace list is re-read when the PI STUDIO tab regains focus or becomes visible again, not
+                continuously. If a worktree appeared while you were already looking at PI STUDIO, switch to another window
                 or tab and back, and the list updates. Your selected workspace, session, and scroll position are kept.
               </p>
               <p>
@@ -344,7 +344,7 @@
                 workspace still require your approval before loading.
               </p>
               <p>
-                This changes only what PI WEB sends to the browser; Pi's session files and model inputs stay unchanged.
+                This changes only what PI STUDIO sends to the browser; Pi's session files and model inputs stay unchanged.
                 Update and restart the session daemon on each selected machine to enable separate image delivery.
                 A daemon restart can interrupt active sessions, so wait for important work to finish first.
               </p>
@@ -362,8 +362,8 @@
                   <strong>Session daemon logs</strong>
                   <button class="copy-button" data-copy="#session-logs">Copy</button>
                 </div>
-                <pre id="session-logs"><code><span class="prompt">$</span> pi-web status
-<span class="prompt">$</span> pi-web logs</code></pre>
+                <pre id="session-logs"><code><span class="prompt">$</span> pi-studio status
+<span class="prompt">$</span> pi-studio logs</code></pre>
               </div>
             </article>
 
@@ -396,7 +396,7 @@
                   <strong>Restart the session daemon (Linux systemd)</strong>
                   <button class="copy-button" data-copy="#http-idle-timeout-restart">Copy</button>
                 </div>
-                <pre id="http-idle-timeout-restart"><code><span class="prompt">$</span> systemctl --user restart pi-web-sessiond</code></pre>
+                <pre id="http-idle-timeout-restart"><code><span class="prompt">$</span> systemctl --user restart pi-studio-sessiond</code></pre>
               </div>
             </article>
 
@@ -425,7 +425,7 @@
                   <strong>Logs</strong>
                   <button class="copy-button" data-copy="#logs-command">Copy</button>
                 </div>
-                <pre id="logs-command"><code><span class="prompt">$</span> pi-web logs</code></pre>
+                <pre id="logs-command"><code><span class="prompt">$</span> pi-studio logs</code></pre>
               </div>
             </article>
           </div>
@@ -435,7 +435,7 @@
 
     <footer class="site-footer">
       <div class="container footer-inner">
-        <span>PI WEB FAQ</span>
+        <span>PI STUDIO FAQ</span>
         <div class="footer-links">
           <a href="./">Home</a>
           <a href="remote-first">Remote-first</a>
@@ -443,10 +443,10 @@
           <a href="install">Install</a>
           <a href="config">Config</a>
           <a href="plugins">Plugins</a>
-          <a href="https://github.com/jmfederico/pi-web/issues">Issues</a>
+          <a href="https://github.com/pi-studio/pi-studio/issues">Issues</a>
           <span class="version-switcher" role="group" aria-label="Documentation version">
-            <a class="version-switcher-option" data-version-option="stable" href="https://pi-web.dev/faq" aria-current="true">Stable</a>
-            <a class="version-switcher-option" data-version-option="dev" href="https://pi-web.dev/dev/faq">Dev</a>
+            <a class="version-switcher-option" data-version-option="stable" href="https://pi-studio.dev/faq" aria-current="true">Stable</a>
+            <a class="version-switcher-option" data-version-option="dev" href="https://pi-studio.dev/dev/faq">Dev</a>
           </span>
         </div>
       </div>

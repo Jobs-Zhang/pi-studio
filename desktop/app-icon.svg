@@ -72,5 +72,5 @@
   </rect>
   
   <!-- PI text -->
-  <text x="256" y="470" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="48" font-weight="700" fill="#e6edf3" opacity="0.9">PI WEB</text>
+  <text x="256" y="470" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="48" font-weight="700" fill="#e6edf3" opacity="0.9">PI STUDIO</text>
 </svg>

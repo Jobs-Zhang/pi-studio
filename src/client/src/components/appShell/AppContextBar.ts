@@ -1,3 +1,4 @@
+import { t } from "../../i18n";
 import { LitElement, css, html } from "lit";
 import { customElement, property, query, state } from "lit/decorators.js";
 import type { Machine, Project, SessionInfo, Workspace } from "../../api";
@@ -54,8 +55,8 @@ export class AppContextBar extends LitElement {
     const workspaceLabel = workspaceContextLabel(this.workspace);
     const sessionLabel = sessionContextLabel(this.session);
     return html`
-      <nav class=${this.contextBarClass()} aria-label="Current location">
-        <span class="context-bar-label">Location</span>
+      <nav class=${this.contextBarClass()} aria-label=${t("shell.navigationLabel")}>
+        <span class="context-bar-label">${t("shell.location")}</span>
         <ol class="context-items" @scroll=${this.onContextScroll}>
           ${showMachineChip ? html`
             <li class="context-item">
@@ -73,30 +74,30 @@ export class AppContextBar extends LitElement {
           ` : null}
           <li class="context-item">
             <button type="button" class=${this.project === undefined ? "context-chip empty" : "context-chip"} title=${projectContextTitle(this.project)} aria-label=${`Project: ${projectLabel}. Open project selection.`} @click=${() => { this.onOpenSection?.("projects"); }}>
-              <span class="context-kind">Project</span>
+              <span class="context-kind">${t("shell.context.project")}</span>
               <span class="context-value">${projectLabel}</span>
             </button>
           </li>
           <li class="context-item">
             <button type="button" class=${this.workspace === undefined ? "context-chip empty" : "context-chip"} title=${workspaceContextTitle(this.workspace)} aria-label=${`Workspace: ${workspaceLabel}. Open workspace selection.`} @click=${() => { this.onOpenSection?.("workspaces"); }}>
-              <span class="context-kind">Workspace</span>
+              <span class="context-kind">${t("shell.context.workspace")}</span>
               <span class="context-value">${workspaceLabel}</span>
             </button>
           </li>
           <li class="context-item">
             <button type="button" class=${this.session === undefined ? "context-chip empty" : "context-chip"} title=${sessionContextTitle(this.session)} aria-label=${`Session: ${sessionLabel}. Open session selection.`} @click=${() => { this.onOpenSection?.("sessions"); }}>
-              <span class="context-kind">Session</span>
+              <span class="context-kind">${t("shell.context.session")}</span>
               <span class="context-value">${sessionLabel}</span>
             </button>
           </li>
         </ol>
-        ${this.hasContextActions() ? html`<div class="context-actions">${this.onShowNavigation === undefined ? null : html`<button type="button" class=${`context-action-button${this.hiddenActiveDestination ? " selected" : ""}`} title="Navigation" aria-label="Navigation" aria-haspopup="dialog" @click=${this.onShowNavigation}>${renderNavigationMenuIcon()}</button>`}${this.renderActionsButton()}${this.refreshControl}</div>` : null}
+        ${this.hasContextActions() ? html`<div class="context-actions">${this.onShowNavigation === undefined ? null : html`<button type="button" class=${`context-action-button${this.hiddenActiveDestination ? " selected" : ""}`} title=${t("shell.navigation")} aria-label=${t("shell.navigation")} aria-haspopup="dialog" @click=${this.onShowNavigation}>${renderNavigationMenuIcon()}</button>`}${this.renderActionsButton()}${this.refreshControl}</div>` : null}
       </nav>
     `;
   }
 
   private renderMachineChipContent(machine: Machine | undefined, locationIndicator: boolean) {
-    if (machine === undefined) return html`<span class="context-value">No machine</span>`;
+    if (machine === undefined) return html`<span class="context-value">${t("shell.noMachine")}</span>`;
     // Browser mode keeps the chip a plain machine picker; the location identity
     // (favicon and host) only shows where the browser chrome does not.
     if (!locationIndicator) return html`<span class="context-value">${machineSelectionLabel(machine)}</span>`;
@@ -115,7 +116,7 @@ export class AppContextBar extends LitElement {
   private renderActionsButton() {
     if (this.onShowActions === undefined) return null;
     return html`
-      <button type="button" class="context-action-button" title="Show Actions" aria-label="Show Actions" @click=${(event: MouseEvent) => { event.stopPropagation(); this.onShowActions?.(); }}>
+      <button type="button" class="context-action-button" title=${t("shell.showActions")} aria-label=${t("shell.showActions")} @click=${(event: MouseEvent) => { event.stopPropagation(); this.onShowActions?.(); }}>
         <svg class="context-action-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
           <path d="M13 2 4 14h7l-1 8 10-13h-7V2Z"></path>
         </svg>

@@ -13,7 +13,7 @@ export interface AskDraftAnswer {
 /** Draft answers of one ask, keyed by question id. */
 export type AskDraftAnswers = Record<string, AskDraftAnswer>;
 
-const draftStoragePrefix = "pi-web:ask-draft:";
+const draftStoragePrefix = "pi-studio:ask-draft:";
 
 function draftStorageKey(sessionId: string, askId: string): string {
   return `${draftStoragePrefix}${sessionId}:${askId}`;

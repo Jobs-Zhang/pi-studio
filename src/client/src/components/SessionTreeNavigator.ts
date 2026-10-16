@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { LitElement, css, html, nothing, type PropertyValues, type TemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import type { SessionTreeForkResult, SessionTreeNavigateResult, SessionTreeNodeKind, SessionTreeSnapshot, SessionTreeSummaryChoice } from "../api";
@@ -22,19 +23,19 @@ export interface SessionTreeKindPresentation {
 }
 
 const SESSION_TREE_KIND_PRESENTATION = {
-  user: { label: "User", tone: "user", bookkeeping: false },
-  assistant: { label: "Assistant", tone: "assistant", bookkeeping: false },
-  "tool-result": { label: "Tool result", tone: "tool", bookkeeping: false },
-  bash: { label: "Shell", tone: "shell", bookkeeping: false },
-  "custom-message": { label: "Custom message", tone: "context", bookkeeping: false },
-  compaction: { label: "Compaction", tone: "context", bookkeeping: false },
-  "branch-summary": { label: "Branch summary", tone: "context", bookkeeping: false },
-  "model-change": { label: "Model", tone: "metadata", bookkeeping: true },
-  "thinking-level-change": { label: "Thinking", tone: "metadata", bookkeeping: true },
-  "session-info": { label: "Session info", tone: "metadata", bookkeeping: true },
-  label: { label: "Label", tone: "metadata", bookkeeping: true },
-  custom: { label: "Custom", tone: "metadata", bookkeeping: true },
-  other: { label: "Other", tone: "metadata", bookkeeping: true },
+  user: { label: "sessionKind.user", tone: "user", bookkeeping: false },
+  assistant: { label: "sessionKind.assistant", tone: "assistant", bookkeeping: false },
+  "tool-result": { label: "sessionKind.toolResult", tone: "tool", bookkeeping: false },
+  bash: { label: "sessionKind.shell", tone: "shell", bookkeeping: false },
+  "custom-message": { label: "sessionKind.customMessage", tone: "context", bookkeeping: false },
+  compaction: { label: "sessionKind.compaction", tone: "context", bookkeeping: false },
+  "branch-summary": { label: "sessionKind.branchSummary", tone: "context", bookkeeping: false },
+  "model-change": { label: "sessionKind.model", tone: "metadata", bookkeeping: true },
+  "thinking-level-change": { label: "sessionKind.thinking", tone: "metadata", bookkeeping: true },
+  "session-info": { label: "sessionKind.sessionInfo", tone: "metadata", bookkeeping: true },
+  label: { label: "sessionKind.label", tone: "metadata", bookkeeping: true },
+  custom: { label: "sessionKind.custom", tone: "metadata", bookkeeping: true },
+  other: { label: "sessionKind.other", tone: "metadata", bookkeeping: true },
 } as const satisfies Record<SessionTreeNodeKind, SessionTreeKindPresentation>;
 
 @customElement("session-tree-navigator")
@@ -77,7 +78,7 @@ export class SessionTreeNavigator extends LitElement {
   override render(): TemplateResult {
     return html`
       <modal-surface
-        .label=${"Navigate session tree"}
+        .label=${t("sessionTree.title")}
         .initialFocus=${this.selectedId === undefined ? ".close-button" : "[data-tree-node-id][tabindex='0']"}
         ?busy=${this.busy}
         .onClose=${() => { this.requestDismissal(); }}
@@ -85,10 +86,10 @@ export class SessionTreeNavigator extends LitElement {
       >
         <header>
           <div>
-            <span class="eyebrow">Conversation history</span>
-            <h1>Navigate session tree</h1>
+            <span class="eyebrow">${t("sessionTree.eyebrow")}</span>
+            <h1>${t("sessionTree.title")}</h1>
           </div>
-          <button class="close-button" ?disabled=${this.busy} title="Close session tree" aria-label="Close session tree" @click=${() => { this.onCancel?.(); }}>×</button>
+          <button class="close-button" ?disabled=${this.busy} title=${t("sessionTree.close")} aria-label=${t("sessionTree.close")} @click=${() => { this.onCancel?.(); }}>×</button>
         </header>
         ${this.step === "tree" ? this.renderTreeStep() : this.renderActionStep()}
         ${this.renderFooter()}
@@ -101,18 +102,18 @@ export class SessionTreeNavigator extends LitElement {
     return html`
       <div class="body tree-step">
         <div class="tree-intro">
-          <p>Select the history entry where you would like to continue.</p>
-          <div class="legend" aria-label="Session tree markers">
-            <span><span class="marker active-path-marker" aria-hidden="true"></span>Active path</span>
-            <span><span class="marker active-leaf-marker" aria-hidden="true"></span>Active leaf</span>
+          <p>${t("sessionTree.intro")}</p>
+          <div class="legend" aria-label=${t("sessionTree.markers")}>
+            <span><span class="marker active-path-marker" aria-hidden="true"></span>${t("sessionTree.activePath")}</span>
+            <span><span class="marker active-leaf-marker" aria-hidden="true"></span>${t("sessionTree.activeLeaf")}</span>
           </div>
         </div>
         ${this.statusMessage === "" ? null : html`<div class="dialog-status" role="status">${this.statusMessage}</div>`}
         ${this.error === "" ? null : html`<div class="dialog-error" role="alert">${this.error}</div>`}
         ${rows.length === 0 ? html`
-          <div class="empty" role="status">This session does not contain any selectable history entries.</div>
+          <div class="empty" role="status">${t("sessionTree.empty")}</div>
         ` : html`
-          <div class="tree" role="tree" aria-label="Complete session history">
+          <div class="tree" role="tree" aria-label=${t("sessionTree.treeLabel")}>
             ${rows.map((row) => this.renderTreeRow(row))}
           </div>
         `}
@@ -148,15 +149,15 @@ export class SessionTreeNavigator extends LitElement {
       >
         <span
           class=${`disclosure${row.childIds.length === 0 ? " leaf" : ""}`}
-          title=${row.childIds.length === 0 ? "No child entries" : expanded ? "Collapse branch" : "Expand branch"}
+          title=${row.childIds.length === 0 ? t("sessionTree.noChildren") : expanded ? t("sessionTree.collapse") : t("sessionTree.expand")}
           aria-hidden="true"
           @click=${(event: MouseEvent) => { this.toggleNode(row.node.id, event); }}
         >${row.childIds.length === 0 ? "·" : expanded ? "▾" : "▸"}</span>
         <span class="metadata">
           ${this.renderKindBadge(kindPresentation)}
           <span class="badges">
-            ${row.activePath && !row.activeLeaf ? html`<span class="badge path">Active path</span>` : null}
-            ${row.activeLeaf ? html`<span class="badge leaf">Active leaf</span>` : null}
+            ${row.activePath && !row.activeLeaf ? html`<span class="badge path">${t("sessionTree.activePath")}</span>` : null}
+            ${row.activeLeaf ? html`<span class="badge leaf">${t("sessionTree.activeLeaf")}</span>` : null}
           </span>
         </span>
         <span class="entry">
@@ -179,10 +180,10 @@ export class SessionTreeNavigator extends LitElement {
       <div class="body confirmation-step">
         <div class="confirmation-card">
           <div>
-            <span class="eyebrow">Selected entry</span>
-            <h2>Choose how to continue</h2>
+            <span class="eyebrow">${t("sessionTree.selectedEyebrow")}</span>
+            <h2>${t("sessionTree.chooseHow")}</h2>
           </div>
-          ${selectedNode === undefined ? html`<div class="empty">The selected history entry is no longer available.</div>` : html`
+          ${selectedNode === undefined ? html`<div class="empty">${t("sessionTree.selectionGone")}</div>` : html`
             <div class="selected-entry">
               ${this.renderKindBadge(sessionTreeKindPresentation(selectedNode.kind))}
               <strong dir="auto">${selectedNode.summary}</strong>
@@ -190,19 +191,19 @@ export class SessionTreeNavigator extends LitElement {
             </div>
           `}
           <fieldset ?disabled=${this.busy}>
-            <legend>How would you like to continue?</legend>
-            ${this.renderOperationOption("continue", "Continue in this session", "Branch from the selected entry in this session file and keep its other branches.")}
-            ${this.renderOperationOption("fork", "Fork into a new session", "Create and switch to a separate session file while leaving the original unchanged.")}
+            <legend>${t("sessionTree.howToContinue")}</legend>
+            ${this.renderOperationOption("continue", t("sessionTree.continueInSession"), t("sessionTree.continueInSessionDetail"))}
+            ${this.renderOperationOption("fork", t("sessionTree.fork"), t("sessionTree.forkDetail"))}
           </fieldset>
           ${this.operation === "continue" ? html`
             <fieldset ?disabled=${this.busy}>
-              <legend>Abandoned branch summary</legend>
-              ${this.renderSummaryOption("none", "No summary", "Switch branches without adding a summary entry.")}
-              ${this.renderSummaryOption("default", "Summarize", "Ask Pi to summarize the context being left behind.")}
-              ${this.renderSummaryOption("custom", "Summarize with custom focus", "Guide Pi toward the details that matter for the new branch.")}
+              <legend>${t("sessionTree.abandonedSummary")}</legend>
+              ${this.renderSummaryOption("none", t("sessionTree.noSummary"), t("sessionTree.noSummaryDetail"))}
+              ${this.renderSummaryOption("default", t("sessionTree.summarize"), t("sessionTree.summarizeDetail"))}
+              ${this.renderSummaryOption("custom", t("sessionTree.summarizeCustom"), t("sessionTree.summarizeCustomDetail"))}
               ${this.summaryMode === "custom" ? html`
                 <label class="custom-focus" for="session-tree-custom-focus">
-                  <span>Custom summary focus</span>
+                  <span>${t("sessionTree.customSummaryFocus")}</span>
                   <textarea
                     id="session-tree-custom-focus"
                     rows="5"
@@ -217,7 +218,7 @@ export class SessionTreeNavigator extends LitElement {
             </fieldset>
           ` : null}
           <div class="side-effects-note" role="note">
-            <strong>Conversation context only.</strong> Continuing or forking does not undo filesystem changes, shell commands, tool calls, or other side effects.
+            <strong>${t("sessionTree.contextOnly")}</strong> ${t("sessionTree.contextOnlyDetail")}
           </div>
           ${this.statusMessage === "" ? null : html`<div class="dialog-status" role="status">${this.statusMessage}</div>`}
           ${this.error === "" ? null : html`<div class="dialog-error" role="alert">${this.error}</div>`}
@@ -271,9 +272,9 @@ export class SessionTreeNavigator extends LitElement {
     if (this.step === "tree") {
       return html`
         <footer>
-          <button @click=${() => { this.onCancel?.(); }}>Cancel</button>
+          <button @click=${() => { this.onCancel?.(); }}>${t("common.cancel")}</button>
           <span class="footer-spacer"></span>
-          <button class="primary" ?disabled=${this.selectedId === undefined} @click=${() => { this.continueToAction(); }}>Next</button>
+          <button class="primary" ?disabled=${this.selectedId === undefined} @click=${() => { this.continueToAction(); }}>${t("sessionTree.next")}</button>
         </footer>
       `;
     }
@@ -282,7 +283,7 @@ export class SessionTreeNavigator extends LitElement {
     const summarizing = continuing && this.summaryMode !== "none";
     return html`
       <footer>
-        <button ?disabled=${this.busy} @click=${() => { this.returnToTree(); }}>Back</button>
+        <button ?disabled=${this.busy} @click=${() => { this.returnToTree(); }}>${t("sessionTree.back")}</button>
         <span class="footer-spacer"></span>
         ${this.busy && summarizing ? html`
           <button class="danger" ?disabled=${this.aborting} @click=${() => { void this.abortNavigation(); }}>${this.aborting ? "Cancelling…" : "Cancel summarization"}</button>
@@ -631,7 +632,8 @@ export function sessionTreeEntryReturnsToEditor(kind: SessionTreeNodeKind): bool
 }
 
 export function sessionTreeKindPresentation(kind: SessionTreeNodeKind): SessionTreeKindPresentation {
-  return SESSION_TREE_KIND_PRESENTATION[kind];
+  const presentation = SESSION_TREE_KIND_PRESENTATION[kind];
+  return { ...presentation, label: t(presentation.label) };
 }
 
 function errorMessage(error: unknown): string {

@@ -1,6 +1,6 @@
 /**
  * Container environment facts appended to the system prompt of sessions running
- * in a PI WEB Docker deployment.
+ * in a PI STUDIO Docker deployment.
  *
  * A Docker deployment changes what is true about the machine an agent works on:
  * commands run in a container instead of on the Docker host, most of the
@@ -16,8 +16,8 @@
  *
  * Facts are derived from what the running container can observe — the mount
  * table plus the deployment descriptors Docker Compose already sets — rather
- * than from new environment variables. Agent processes inherit `PI_WEB_DOCKER_*`
- * and `HOSTEXEC_*` keys, and `pi-web-docker` resolves dev settings from its
+ * than from new environment variables. Agent processes inherit `PI_STUDIO_DOCKER_*`
+ * and `HOSTEXEC_*` keys, and `pi-studio-docker` resolves dev settings from its
  * ambient environment, so adding descriptor variables purely to describe the
  * deployment would risk changing what those tools do.
  */
@@ -47,11 +47,11 @@ export interface DockerEnvironmentPromptOptions {
 
 const MOUNT_INFO_PATH = "/proc/self/mountinfo";
 
-/** Persistent PI WEB/Pi state mount, created by the Docker data bind mount. */
+/** Persistent PI STUDIO/Pi state mount, created by the Docker data bind mount. */
 const DATA_MOUNT = "/data";
 /** Read-only view of the Docker host root filesystem. */
 const HOST_ROOT_MOUNT = "/host";
-/** Development mode's bind mount of the PI WEB checkout. */
+/** Development mode's bind mount of the PI STUDIO checkout. */
 const DEV_WORKSPACE_MOUNT = "/workspace";
 const DOCKER_SOCKET_MOUNTS = ["/run/docker.sock", "/var/run/docker.sock"] as const;
 
@@ -110,7 +110,7 @@ export function readContainerMounts(path: string = MOUNT_INFO_PATH): ContainerMo
  *
  * Fields before the ` - ` separator are `id parent major:minor root mountPoint
  * options [optional fields]`; the separator is followed by `fsType source
- * superOptions`. Unparsable lines are skipped: a mount PI WEB cannot describe
+ * superOptions`. Unparsable lines are skipped: a mount PI STUDIO cannot describe
  * simply produces no fact.
  */
 export function parseContainerMounts(mountInfo: string): ContainerMount[] {
@@ -134,18 +134,18 @@ export function parseContainerMounts(mountInfo: string): ContainerMount[] {
 
 /**
  * Build the environment facts block, or `undefined` when the process is not
- * running in a PI WEB Docker deployment.
+ * running in a PI STUDIO Docker deployment.
  */
 export function dockerEnvironmentFacts({ env, mounts }: DockerEnvironmentFactsInput): string | undefined {
   if (!isDockerDeployment(env)) return undefined;
-  const devRepoRoot = nonEmptyEnv(env, "PI_WEB_DOCKER_DEV_REPO_ROOT");
-  const installDir = nonEmptyEnv(env, "PI_WEB_DOCKER_INSTALL_DIR");
-  const dockerCommand = devRepoRoot === undefined ? "pi-web-docker" : "pi-web-docker --dev";
+  const devRepoRoot = nonEmptyEnv(env, "PI_STUDIO_DOCKER_DEV_REPO_ROOT");
+  const installDir = nonEmptyEnv(env, "PI_STUDIO_DOCKER_INSTALL_DIR");
+  const dockerCommand = devRepoRoot === undefined ? "pi-studio-docker" : "pi-studio-docker --dev";
   const imageHookDir = devRepoRoot === undefined
     ? `${installDir ?? "<install-dir>"}/custom-image.d/*.sh`
     : `${devRepoRoot}/docker/custom-image.d/*.sh`;
   const facts = [
-    "Shell commands, file edits, and installed tools act inside the PI WEB container, not on the Docker host.",
+    "Shell commands, file edits, and installed tools act inside the PI STUDIO container, not on the Docker host.",
     `The container filesystem is ephemeral: paths outside the mounts below are lost when the image is rebuilt or the containers are recreated (\`${dockerCommand} update\`).`,
     ...persistentDataFact(mounts, env),
     ...hostPathFacts(mounts),
@@ -153,13 +153,13 @@ export function dockerEnvironmentFacts({ env, mounts }: DockerEnvironmentFactsIn
     ...dockerSocketFact(mounts),
     ...hostExecFact(env),
     ...devWorkspaceFacts(mounts, devRepoRoot),
-    `Distro packages and global npm installs made during a session are part of that ephemeral layer. Image tooling comes from the \`PI_WEB_EXTRA_ZYPPER_PACKAGES\` build input and the build hooks in ${imageHookDir}.`,
+    `Distro packages and global npm installs made during a session are part of that ephemeral layer. Image tooling comes from the \`PI_STUDIO_EXTRA_ZYPPER_PACKAGES\` build input and the build hooks in ${imageHookDir}.`,
   ];
   return [
-    "<pi_web_docker_environment>",
+    "<pi_studio_docker_environment>",
     "Facts about the environment this session runs in:",
     ...facts.map((fact) => `- ${fact}`),
-    "</pi_web_docker_environment>",
+    "</pi_studio_docker_environment>",
   ].join("\n");
 }
 
@@ -189,7 +189,7 @@ export function dockerEnvironmentPromptSections(options: DockerEnvironmentPrompt
 }
 
 function isDockerDeployment(env: NodeJS.ProcessEnv): boolean {
-  const value = env["PI_WEB_DOCKER_RUNTIME"];
+  const value = env["PI_STUDIO_DOCKER_RUNTIME"];
   return value !== undefined && value !== "" && value !== "0" && value.toLowerCase() !== "false";
 }
 
@@ -263,7 +263,7 @@ function devWorkspaceFacts(mounts: readonly ContainerMount[], devRepoRoot: strin
     && mounts.some((mount) => mount.target === `${DEV_WORKSPACE_MOUNT}/node_modules`)
     && mounts.some((mount) => mount.target === hostDependencies);
   return [
-    `The PI WEB checkout this deployment runs is bind-mounted at \`${DEV_WORKSPACE_MOUNT}\`.${hostPath}`,
+    `The PI STUDIO checkout this deployment runs is bind-mounted at \`${DEV_WORKSPACE_MOUNT}\`.${hostPath}`,
     ...(nested.length === 0
       ? []
       : [`Inside it, ${nested.join(", ")} ${nested.length === 1 ? "is a separate container-managed mount" : "are separate container-managed mounts"}, not the host directory of the same path.`]),

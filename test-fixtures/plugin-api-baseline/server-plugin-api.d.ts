@@ -2,7 +2,7 @@ import type { JsonObject, JsonPrimitive, JsonValue, PluginCapability, PluginCapa
 export type { JsonObject, JsonPrimitive, JsonValue, PluginCapability, PluginCapabilityProvision, WorkspaceProviderMetadata, WorkspaceRemovalPresentation, };
 type MaybePromise<T> = T | Promise<T>;
 /** Public server entry exported by a package's `serverModule`. */
-export interface PiWebServerPlugin {
+export interface PiStudioServerPlugin {
     apiVersion: 3;
     name: string;
     /** Exact capability versions that must be active before this plugin starts. */
@@ -99,25 +99,25 @@ export interface ServerPluginExecFileResult {
     stderrTruncated: boolean;
 }
 /** Current host authority selected only by opaque project and workspace ids. */
-export interface PiWebHostWorkspaceSelection {
+export interface PiStudioHostWorkspaceSelection {
     readonly projectId: string;
     readonly workspaceId: string;
 }
 /** Detached project and workspace projections resolved from current host authority. */
-export interface PiWebHostWorkspaceAuthority {
+export interface PiStudioHostWorkspaceAuthority {
     readonly project: ProjectInput;
     readonly workspace: ServerPluginPeerWorkspace;
 }
 /** Package-attributed resolver for current project/workspace authority. */
-export interface PiWebHostWorkspacesV1 {
+export interface PiStudioHostWorkspacesV1 {
     readonly version: 1;
     /** Re-resolve both ids on every call; stale or mismatched selections reject. */
-    readonly resolve: (selection: PiWebHostWorkspaceSelection) => Promise<PiWebHostWorkspaceAuthority>;
+    readonly resolve: (selection: PiStudioHostWorkspaceSelection) => Promise<PiStudioHostWorkspaceAuthority>;
 }
 /** Exact workspaces v1 capability supplied separately for each declaring server plugin. */
-export declare const PI_WEB_HOST_WORKSPACES_CAPABILITY: PluginCapability<PiWebHostWorkspacesV1, 1>;
+export declare const PI_STUDIO_HOST_WORKSPACES_CAPABILITY: PluginCapability<PiStudioHostWorkspacesV1, 1>;
 /** Bounded input for one host-owned Pi session run in current workspace authority. */
-export interface PiWebHostPiSessionRunInput {
+export interface PiStudioHostPiSessionRunInput {
     /** Opaque current project id, limited to 512 characters. */
     readonly projectId: string;
     /** Opaque current workspace id, limited to 512 characters. */
@@ -126,7 +126,7 @@ export interface PiWebHostPiSessionRunInput {
     readonly prompt: string;
 }
 /** Detached final outcome for one host-owned Pi session run. */
-export type PiWebHostPiSessionRunCompletion = {
+export type PiStudioHostPiSessionRunCompletion = {
     readonly status: "completed";
 } | {
     readonly status: "failed";
@@ -136,30 +136,30 @@ export type PiWebHostPiSessionRunCompletion = {
     readonly status: "cancelled";
 };
 /** Published host-owned conversation; creation does not open a messaging connection. */
-export interface PiWebHostPiSessionCreated {
+export interface PiStudioHostPiSessionCreated {
     readonly sessionId: string;
 }
 /** Host-owned conversation identity; initial completion never closes the session. */
-export interface PiWebHostPiSessionRun extends PiWebHostPiSessionCreated {
+export interface PiStudioHostPiSessionRun extends PiStudioHostPiSessionCreated {
     /** Initial submission outcome, including final provider errors; not later user turns. */
-    readonly completion: Promise<PiWebHostPiSessionRunCompletion>;
+    readonly completion: Promise<PiStudioHostPiSessionRunCompletion>;
 }
 /** Bounded initial-run admission. Plugin revocation cancels only unpublished startup. */
-export interface PiWebHostPiSessionsV1 {
+export interface PiStudioHostPiSessionsV1 {
     readonly version: 1;
     /** Publish an observed session without a prompt; connect separately before companion kickoff. */
-    readonly create: (input: PiWebHostWorkspaceSelection) => Promise<PiWebHostPiSessionCreated>;
+    readonly create: (input: PiStudioHostWorkspaceSelection) => Promise<PiStudioHostPiSessionCreated>;
     /** Re-resolve current authority, start one session, and admit its initial prompt. */
-    readonly run: (input: PiWebHostPiSessionRunInput) => Promise<PiWebHostPiSessionRun>;
+    readonly run: (input: PiStudioHostPiSessionRunInput) => Promise<PiStudioHostPiSessionRun>;
 }
 /** Exact PI sessions v1 capability supplied separately for each declaring server plugin. */
-export declare const PI_WEB_HOST_PI_SESSIONS_CAPABILITY: PluginCapability<PiWebHostPiSessionsV1, 1>;
+export declare const PI_STUDIO_HOST_PI_SESSIONS_CAPABILITY: PluginCapability<PiStudioHostPiSessionsV1, 1>;
 /** Exact hosted conversation on the selected machine; creation is separate. */
-export interface PiWebHostPiSessionSelection extends PiWebHostWorkspaceSelection {
+export interface PiStudioHostPiSessionSelection extends PiStudioHostWorkspaceSelection {
     readonly sessionId: string;
 }
 /** Ephemeral connection to one hosted session's native pi.events bus. */
-export interface PiWebHostPiSessionConnection {
+export interface PiStudioHostPiSessionConnection {
     /** Aborts on close, plugin disposal, or hosted runtime replacement/close. */
     readonly signal: AbortSignal;
     /** Subscribe before emitting: replies may arrive synchronously. No replay. */
@@ -169,12 +169,12 @@ export interface PiWebHostPiSessionConnection {
     /** Idempotent; detaches listeners without stopping the conversation. */
     readonly close: () => void;
 }
-export interface PiWebHostPiSessionEventsV1 {
+export interface PiStudioHostPiSessionEventsV1 {
     readonly version: 1;
-    readonly connect: (selection: PiWebHostPiSessionSelection) => Promise<PiWebHostPiSessionConnection>;
+    readonly connect: (selection: PiStudioHostPiSessionSelection) => Promise<PiStudioHostPiSessionConnection>;
 }
 /** Session-local package messaging, not an agent-control or SDK capability. */
-export declare const PI_WEB_HOST_PI_SESSION_EVENTS_CAPABILITY: PluginCapability<PiWebHostPiSessionEventsV1, 1>;
+export declare const PI_STUDIO_HOST_PI_SESSION_EVENTS_CAPABILITY: PluginCapability<PiStudioHostPiSessionEventsV1, 1>;
 /** Resolver containing only the exact capability requirements declared by a plugin. */
 export interface ServerPluginCapabilityResolver {
     readonly resolve: <Value>(capability: PluginCapability<Value>) => Value;

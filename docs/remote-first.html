@@ -3,33 +3,33 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Remote-first Pi web UI — PI WEB</title>
+    <title>Remote-first Pi web UI — PI STUDIO</title>
     <meta
       name="description"
-      content="Why PI WEB keeps Pi Coding Agent sessions running outside your device while any browser becomes a web UI for supervision and review."
+      content="Why PI STUDIO keeps Pi Coding Agent sessions running outside your device while any browser becomes a web UI for supervision and review."
     />
-    <link rel="canonical" href="https://pi-web.dev/remote-first" />
+    <link rel="canonical" href="https://pi-studio.dev/remote-first" />
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="PI WEB" />
-    <meta property="og:title" content="Remote-first Pi web UI — PI WEB" />
+    <meta property="og:site_name" content="PI STUDIO" />
+    <meta property="og:title" content="Remote-first Pi web UI — PI STUDIO" />
     <meta
       property="og:description"
-      content="Run Pi Coding Agent where work can persist, then supervise sessions from any device with PI WEB."
+      content="Run Pi Coding Agent where work can persist, then supervise sessions from any device with PI STUDIO."
     />
-    <meta property="og:url" content="https://pi-web.dev/remote-first" />
-    <meta property="og:image" content="https://pi-web.dev/assets/pi-web-banner.png" />
-    <meta property="og:image:alt" content="PI WEB browser UI for persistent Pi Coding Agent sessions" />
+    <meta property="og:url" content="https://pi-studio.dev/remote-first" />
+    <meta property="og:image" content="https://pi-studio.dev/assets/pi-studio-banner.png" />
+    <meta property="og:image:alt" content="PI STUDIO browser UI for persistent Pi Coding Agent sessions" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Remote-first Pi web UI — PI WEB" />
+    <meta name="twitter:title" content="Remote-first Pi web UI — PI STUDIO" />
     <meta
       name="twitter:description"
-      content="Run Pi Coding Agent where work can persist, then supervise sessions from any device with PI WEB."
+      content="Run Pi Coding Agent where work can persist, then supervise sessions from any device with PI STUDIO."
     />
-    <meta name="twitter:image" content="https://pi-web.dev/assets/pi-web-banner.png" />
+    <meta name="twitter:image" content="https://pi-studio.dev/assets/pi-studio-banner.png" />
     <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
     <script>
       (() => {
-        const theme = window.localStorage.getItem("pi-web-theme");
+        const theme = window.localStorage.getItem("pi-studio-theme");
         if (theme === "light" || theme === "dark") document.documentElement.dataset.theme = theme;
       })();
     </script>
@@ -44,7 +44,7 @@
   <body>
     <header class="site-header">
       <nav class="container nav" aria-label="Main navigation">
-        <a class="brand" href="./" aria-label="PI WEB home">PI WEB</a>
+        <a class="brand" href="./" aria-label="PI STUDIO home">PI STUDIO</a>
         <div class="nav-links">
           <div class="nav-pages">
             <a href="remote-first" aria-current="page">Remote-first</a>
@@ -55,7 +55,7 @@
             <a href="faq">FAQ</a>
           </div>
           <div class="nav-actions">
-            <a class="github-link" href="https://github.com/jmfederico/pi-web" aria-label="PI WEB on GitHub">
+            <a class="github-link" href="https://github.com/pi-studio/pi-studio" aria-label="PI STUDIO on GitHub">
               <svg class="github-icon" viewBox="0 0 16 16" aria-hidden="true">
                 <path
                   fill="currentColor"
@@ -79,7 +79,7 @@
           <p class="eyebrow"><span class="pulse"></span> Remote-first development</p>
           <h1>Your laptop is a window, not the workstation.</h1>
           <p>
-            PI WEB is built around a simple shift: AI-driven development should live where the work can persist, not
+            PI STUDIO is built around a simple shift: AI-driven development should live where the work can persist, not
             where your current keyboard happens to be. You supervise the work; you do not have to host it.
           </p>
         </div>
@@ -117,7 +117,7 @@
             <section id="persistence-first">
               <h2>Persistence should not be a workaround</h2>
               <p>
-                A browser disconnect should not stop an agent. PI WEB keeps the session runtime separate from the
+                A browser disconnect should not stop an agent. PI STUDIO keeps the session runtime separate from the
                 browser and web/API service, so reconnecting brings you back to the running work.
               </p>
               <p>
@@ -157,7 +157,7 @@
             <section id="browser-control">
               <h2>The browser becomes your Pi web UI</h2>
               <p>
-                Your device should not have to be the editor, terminal, build server, and agent runtime. In PI WEB, the
+                Your device should not have to be the editor, terminal, build server, and agent runtime. In PI STUDIO, the
                 browser is the cockpit: supervise sessions, redirect agents, inspect transcripts, and review progress
                 while repositories, tools, and credentials stay on the remote machine.
               </p>
@@ -182,11 +182,11 @@
             <section id="recommended-shape">
               <h2>Recommended shape</h2>
               <p>
-                PI WEB works locally, but it shines on a machine that stays on and is reachable through a private path:
+                PI STUDIO works locally, but it shines on a machine that stays on and is reachable through a private path:
                 SSH tunnel, VPN, private LAN, or an authenticated reverse proxy.
               </p>
               <div class="callout warning">
-                Do not expose PI WEB directly to the public internet. It can run commands and access files with the
+                Do not expose PI STUDIO directly to the public internet. It can run commands and access files with the
                 server user's permissions. Use a trusted private connection or an authenticated reverse proxy.
               </div>
               <div class="doc-actions">
@@ -201,7 +201,7 @@
 
     <footer class="site-footer">
       <div class="container footer-inner">
-        <span>PI WEB · remote-first control for persistent AI agents.</span>
+        <span>PI STUDIO · remote-first control for persistent AI agents.</span>
         <div class="footer-links">
           <a href="./">Home</a>
           <a href="machines">Fleet</a>
@@ -209,10 +209,10 @@
           <a href="config">Config</a>
           <a href="plugins">Plugins</a>
           <a href="faq">FAQ</a>
-          <a href="https://github.com/jmfederico/pi-web">GitHub</a>
+          <a href="https://github.com/pi-studio/pi-studio">GitHub</a>
           <span class="version-switcher" role="group" aria-label="Documentation version">
-            <a class="version-switcher-option" data-version-option="stable" href="https://pi-web.dev/remote-first" aria-current="true">Stable</a>
-            <a class="version-switcher-option" data-version-option="dev" href="https://pi-web.dev/dev/remote-first">Dev</a>
+            <a class="version-switcher-option" data-version-option="stable" href="https://pi-studio.dev/remote-first" aria-current="true">Stable</a>
+            <a class="version-switcher-option" data-version-option="dev" href="https://pi-studio.dev/dev/remote-first">Dev</a>
           </span>
         </div>
       </div>

@@ -1,6 +1,6 @@
-import type { Machine, MachineConnection, MachineConnectionInput, MachineHealth, MachineRuntime, PiWebComponentStatus, PiWebDeprecatedAgentInput, PiWebRuntimeComponent, PiWebRuntimeResponse, PiWebStatusResponse } from "../../shared/apiTypes.js";
-import { parsePiWebRuntimeResponse } from "../../shared/piWebStatusParsing.js";
-import { getPiWebRuntime } from "../piWebStatus.js";
+import type { Machine, MachineConnection, MachineConnectionInput, MachineHealth, MachineRuntime, PiStudioComponentStatus, PiStudioDeprecatedAgentInput, PiStudioRuntimeComponent, PiStudioRuntimeResponse, PiStudioStatusResponse } from "../../shared/apiTypes.js";
+import { parsePiStudioRuntimeResponse } from "../../shared/piStudioStatusParsing.js";
+import { getPiStudioRuntime } from "../piStudioStatus.js";
 import { DEFAULT_REMOTE_HEALTH_TIMEOUT_MS, RemoteMachineClient, type MachineClient, validateConfiguredMachineHeaders } from "./machineClient.js";
 import { MachineStore, type StoredMachine, type StoredMachineConnection } from "./machineStore.js";
 import { SshTunnelManager, type SshConnectionSpec, type SshTunnelHandle, type SshTunnelStatus, type SshTunnelTarget } from "./sshTunnelManager.js";
@@ -16,7 +16,7 @@ export interface CreateMachineInput {
 export type UpdateMachineInput = Partial<CreateMachineInput>;
 
 export interface MachineServiceDependencies {
-  localRuntime?: () => Promise<PiWebRuntimeResponse>;
+  localRuntime?: () => Promise<PiStudioRuntimeResponse>;
   remoteClientFactory?: (machine: StoredMachine) => MachineClient;
   now?: () => Date;
   healthCacheTtlMs?: number;
@@ -133,7 +133,7 @@ export class MachineService {
   private async localHealth(): Promise<MachineHealth> {
     const checkedAt = this.now().toISOString();
     try {
-      const runtime = await (this.deps.localRuntime ?? getPiWebRuntime)();
+      const runtime = await (this.deps.localRuntime ?? getPiStudioRuntime)();
       return {
         machineId: "local",
         ok: true,
@@ -153,8 +153,8 @@ export class MachineService {
     const checkedAt = this.now().toISOString();
     const isSsh = machine.connection.mode === "ssh";
     try {
-      const response = await (await this.clientFor(machine)).requestJson("GET", "/api/pi-web/status", undefined, { timeoutMs: DEFAULT_REMOTE_HEALTH_TIMEOUT_MS });
-      if (response.statusCode >= 200 && response.statusCode < 300 && isPiWebStatusResponse(response.body)) {
+      const response = await (await this.clientFor(machine)).requestJson("GET", "/api/pi-studio/status", undefined, { timeoutMs: DEFAULT_REMOTE_HEALTH_TIMEOUT_MS });
+      if (response.statusCode >= 200 && response.statusCode < 300 && isPiStudioStatusResponse(response.body)) {
         return {
           machineId: id,
           ok: true,
@@ -188,7 +188,7 @@ export class MachineService {
   private async localRuntime(): Promise<MachineRuntime> {
     const checkedAt = this.now().toISOString();
     try {
-      return machineRuntime("local", checkedAt, await (this.deps.localRuntime ?? getPiWebRuntime)());
+      return machineRuntime("local", checkedAt, await (this.deps.localRuntime ?? getPiStudioRuntime)());
     } catch (error) {
       return { machineId: "local", ok: false, checkedAt, error: errorMessage(error) };
     }
@@ -199,8 +199,8 @@ export class MachineService {
     if (machine === undefined) return undefined;
     const checkedAt = this.now().toISOString();
     try {
-      const response = await (await this.clientFor(machine)).requestJson("GET", "/api/pi-web/runtime", undefined, { timeoutMs: DEFAULT_REMOTE_HEALTH_TIMEOUT_MS });
-      const runtime = parsePiWebRuntimeResponse(response.body);
+      const response = await (await this.clientFor(machine)).requestJson("GET", "/api/pi-studio/runtime", undefined, { timeoutMs: DEFAULT_REMOTE_HEALTH_TIMEOUT_MS });
+      const runtime = parsePiStudioRuntimeResponse(response.body);
       if (response.statusCode >= 200 && response.statusCode < 300 && runtime !== undefined) return machineRuntime(id, checkedAt, runtime);
       return { machineId: id, ok: false, checkedAt, error: `Remote runtime returned HTTP ${String(response.statusCode)}` };
     } catch (error) {
@@ -329,7 +329,7 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
-function componentStatusFromRuntime(runtime: PiWebRuntimeComponent): PiWebComponentStatus {
+function componentStatusFromRuntime(runtime: PiStudioRuntimeComponent): PiStudioComponentStatus {
   return {
     component: runtime.component,
     label: runtime.label,
@@ -341,7 +341,7 @@ function componentStatusFromRuntime(runtime: PiWebRuntimeComponent): PiWebCompon
   };
 }
 
-function machineRuntime(machineId: string, checkedAt: string, runtime: PiWebRuntimeResponse): MachineRuntime {
+function machineRuntime(machineId: string, checkedAt: string, runtime: PiStudioRuntimeResponse): MachineRuntime {
   const deprecatedAgentInputs = mergeComponentDeprecatedAgentInputs(runtime.components);
   return {
     machineId,
@@ -361,9 +361,9 @@ function machineRuntime(machineId: string, checkedAt: string, runtime: PiWebRunt
  * same env var can reach both, so identical reports collapse into one warning
  * attributed to the machine rather than one per component.
  */
-function mergeComponentDeprecatedAgentInputs(components: PiWebRuntimeResponse["components"]): PiWebDeprecatedAgentInput[] {
+function mergeComponentDeprecatedAgentInputs(components: PiStudioRuntimeResponse["components"]): PiStudioDeprecatedAgentInput[] {
   const seen = new Set<string>();
-  const merged: PiWebDeprecatedAgentInput[] = [];
+  const merged: PiStudioDeprecatedAgentInput[] = [];
   for (const component of [components.web, components.sessiond]) {
     for (const input of component.deprecatedAgentInputs ?? []) {
       const key = `${input.source}\n${input.name}`;
@@ -375,14 +375,14 @@ function mergeComponentDeprecatedAgentInputs(components: PiWebRuntimeResponse["c
   return merged;
 }
 
-function isPiWebStatusResponse(value: unknown): value is PiWebStatusResponse {
+function isPiStudioStatusResponse(value: unknown): value is PiStudioStatusResponse {
   if (!isRecord(value)) return false;
   const components = value["components"];
   if (!isRecord(components)) return false;
-  return isPiWebComponentStatus(components["web"]) && isPiWebComponentStatus(components["sessiond"]);
+  return isPiStudioComponentStatus(components["web"]) && isPiStudioComponentStatus(components["sessiond"]);
 }
 
-function isPiWebComponentStatus(value: unknown): value is PiWebComponentStatus {
+function isPiStudioComponentStatus(value: unknown): value is PiStudioComponentStatus {
   if (!isRecord(value)) return false;
   const component = value["component"];
   return (component === "web" || component === "sessiond")

@@ -35,7 +35,7 @@ export interface PanelKeyboardResizeOptions {
 export type PanelSizeStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 export type PanelResizeConstraintsBySide = Partial<Record<ResizablePanelSide, PanelResizeConstraints>>;
 
-export const PANEL_SIZE_STORAGE_KEY = "pi-web:panel-sizes:v1";
+export const PANEL_SIZE_STORAGE_KEY = "pi-studio:panel-sizes:v1";
 export const PANEL_RESIZE_CONSTRAINTS = {
   navigation: { minWidth: 180, maxWidth: 4096, defaultWidth: 340, keyboardStep: 24, largeKeyboardStep: 72 },
   workspace: { minWidth: 240, maxWidth: 4096, defaultWidth: 480, keyboardStep: 24, largeKeyboardStep: 72 },

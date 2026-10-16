@@ -1,33 +1,33 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, isAbsolute, join, normalize, resolve } from "node:path";
-import type { PiWebConfigValues, PiWebDeprecatedAgentInput } from "./shared/apiTypes.js";
-import { isPiWebPluginId, piWebPluginIdPattern } from "./shared/pluginIds.js";
+import type { PiStudioConfigValues, PiStudioDeprecatedAgentInput } from "./shared/apiTypes.js";
+import { isPiStudioPluginId, piStudioPluginIdPattern } from "./shared/pluginIds.js";
 import { requireDefaultThemePreference } from "./shared/themePreference.js";
 
-export type PiWebConfig = PiWebConfigValues;
+export type PiStudioConfig = PiStudioConfigValues;
 
-export interface LoadedPiWebConfig {
+export interface LoadedPiStudioConfig {
   path: string;
   exists: boolean;
-  config: PiWebConfig;
+  config: PiStudioConfig;
   /** Deprecated agent-configuration inputs detected in `env` and the loaded file. */
   deprecatedAgentInputs: readonly DeprecatedAgentInput[];
 }
 
-export interface EffectivePiWebConfig extends Omit<PiWebConfig, "uploads" | "attachments" | "spawnSessions" | "subsessions" | "askUser" | "dockerEnvironmentFacts" | "agent" | "extensionDialogsTimeoutMs"> {
-  uploads: NonNullable<PiWebConfig["uploads"]>;
-  attachments: NonNullable<PiWebConfig["attachments"]>;
+export interface EffectivePiStudioConfig extends Omit<PiStudioConfig, "uploads" | "attachments" | "spawnSessions" | "subsessions" | "askUser" | "dockerEnvironmentFacts" | "agent" | "extensionDialogsTimeoutMs"> {
+  uploads: NonNullable<PiStudioConfig["uploads"]>;
+  attachments: NonNullable<PiStudioConfig["attachments"]>;
   spawnSessions: boolean;
   subsessions: boolean;
   askUser: boolean;
   environmentFacts: boolean;
   extensionDialogsTimeoutMs: number;
-  agent: EffectivePiWebAgentConfig;
+  agent: EffectivePiStudioAgentConfig;
 }
 
-export interface LoadedEffectivePiWebConfig extends Omit<LoadedPiWebConfig, "config"> {
-  config: EffectivePiWebConfig;
+export interface LoadedEffectivePiStudioConfig extends Omit<LoadedPiStudioConfig, "config"> {
+  config: EffectivePiStudioConfig;
 }
 
 export interface LoadOptions {
@@ -35,13 +35,13 @@ export interface LoadOptions {
   cwd?: string;
 }
 
-export function defaultPiWebConfigPath(env: NodeJS.ProcessEnv = process.env): string {
+export function defaultPiStudioConfigPath(env: NodeJS.ProcessEnv = process.env): string {
   const xdgConfigHome = env["XDG_CONFIG_HOME"];
-  return join(xdgConfigHome !== undefined && xdgConfigHome !== "" ? xdgConfigHome : join(homedir(), ".config"), "pi-web", "config.json");
+  return join(xdgConfigHome !== undefined && xdgConfigHome !== "" ? xdgConfigHome : join(homedir(), ".config"), "pi-studio", "config.json");
 }
 
-export function defaultPiWebDataDir(): string {
-  return join(homedir(), ".pi-web");
+export function defaultPiStudioDataDir(): string {
+  return join(homedir(), ".pi-studio");
 }
 
 /**
@@ -51,13 +51,13 @@ export function defaultPiWebDataDir(): string {
  */
 export const DEFAULT_MAX_UPLOAD_BYTES = 64 * 1024 * 1024;
 
-export const DEFAULT_UPLOADS_FOLDER = ".pi-web/uploads";
+export const DEFAULT_UPLOADS_FOLDER = ".pi-studio/uploads";
 
 /**
  * Default workspace-relative folder used when saving pasted/dropped prompt
  * attachments for the agent to read with its own tools.
  */
-export const DEFAULT_ATTACHMENT_FOLDER = ".pi-web/attachments";
+export const DEFAULT_ATTACHMENT_FOLDER = ".pi-studio/attachments";
 
 /**
  * Default auto-cancel delay for extension dialogs whose extension set no
@@ -67,37 +67,37 @@ export const DEFAULT_ATTACHMENT_FOLDER = ".pi-web/attachments";
  */
 export const DEFAULT_EXTENSION_DIALOGS_TIMEOUT_MS = 300_000;
 
-export const PI_WEB_AGENT_COMMAND_ENV = "PI_WEB_AGENT_COMMAND";
-export const PI_WEB_AGENT_DIR_ENV = "PI_WEB_AGENT_DIR";
-export const PI_WEB_AGENT_SESSION_DIR_ENV = "PI_WEB_AGENT_SESSION_DIR";
+export const PI_STUDIO_AGENT_COMMAND_ENV = "PI_STUDIO_AGENT_COMMAND";
+export const PI_STUDIO_AGENT_DIR_ENV = "PI_STUDIO_AGENT_DIR";
+export const PI_STUDIO_AGENT_SESSION_DIR_ENV = "PI_STUDIO_AGENT_SESSION_DIR";
 export const PI_CODING_AGENT_DIR_ENV = "PI_CODING_AGENT_DIR";
 export const PI_CODING_AGENT_SESSION_DIR_ENV = "PI_CODING_AGENT_SESSION_DIR";
 
 /**
  * Session storage override env keys in precedence order: the deprecated
- * `PI_WEB_` alias first so it keeps winning when both are set (today's
+ * `PI_STUDIO_` alias first so it keeps winning when both are set (today's
  * precedence, preserved for the deprecation window), then the canonical pi
  * SDK name.
  */
-export const AGENT_SESSION_DIR_ENV_KEYS = [PI_WEB_AGENT_SESSION_DIR_ENV, PI_CODING_AGENT_SESSION_DIR_ENV] as const;
+export const AGENT_SESSION_DIR_ENV_KEYS = [PI_STUDIO_AGENT_SESSION_DIR_ENV, PI_CODING_AGENT_SESSION_DIR_ENV] as const;
 
-export interface EffectivePiWebAgentConfig {
+export interface EffectivePiStudioAgentConfig {
   dir: string;
 }
 
 /**
- * Resolve the pi agent state directory. PI WEB runs sessions on the bundled pi
+ * Resolve the pi agent state directory. PI STUDIO runs sessions on the bundled pi
  * SDK only, so there is no command abstraction: the directory comes from the
- * deprecated `PI_WEB_AGENT_DIR` alias, then the canonical `PI_CODING_AGENT_DIR`,
+ * deprecated `PI_STUDIO_AGENT_DIR` alias, then the canonical `PI_CODING_AGENT_DIR`,
  * then the deprecated `agent.dir` config alias, then the pi SDK default
  * (`~/.pi/agent`, mirrored from the SDK's `getAgentDir()`). The session daemon
  * exports the resolved value as `PI_CODING_AGENT_DIR` at startup, so the
- * embedded SDK's own `getAgentDir()` observes the same directory and pi-web
+ * embedded SDK's own `getAgentDir()` observes the same directory and pi-studio
  * cannot drift from pi.
  */
-export function effectiveAgentConfig(env: NodeJS.ProcessEnv = process.env, config: Pick<PiWebConfig, "agent"> = {}): EffectivePiWebAgentConfig {
+export function effectiveAgentConfig(env: NodeJS.ProcessEnv = process.env, config: Pick<PiStudioConfig, "agent"> = {}): EffectivePiStudioAgentConfig {
   const sources: readonly (readonly [string, string | undefined])[] = [
-    [PI_WEB_AGENT_DIR_ENV, envValue(env, PI_WEB_AGENT_DIR_ENV)],
+    [PI_STUDIO_AGENT_DIR_ENV, envValue(env, PI_STUDIO_AGENT_DIR_ENV)],
     [PI_CODING_AGENT_DIR_ENV, envValue(env, PI_CODING_AGENT_DIR_ENV)],
     ["agent.dir", config.agent?.dir],
   ];
@@ -120,28 +120,28 @@ export function agentSessionDirEnvOverride(env: Readonly<NodeJS.ProcessEnv>): st
  * config file; the canonical wire shape lives in `shared/apiTypes.ts` so the
  * runtime/status pipeline reports exactly what the loader detects.
  */
-export type DeprecatedAgentInput = PiWebDeprecatedAgentInput;
+export type DeprecatedAgentInput = PiStudioDeprecatedAgentInput;
 
-export function detectDeprecatedAgentInputs(env: Readonly<NodeJS.ProcessEnv>, config: Pick<PiWebConfig, "agent"> = {}): DeprecatedAgentInput[] {
+export function detectDeprecatedAgentInputs(env: Readonly<NodeJS.ProcessEnv>, config: Pick<PiStudioConfig, "agent"> = {}): DeprecatedAgentInput[] {
   const inputs: DeprecatedAgentInput[] = [];
-  if (isEnvSet(env[PI_WEB_AGENT_COMMAND_ENV])) inputs.push({ source: "environment", name: PI_WEB_AGENT_COMMAND_ENV });
-  if (isEnvSet(env[PI_WEB_AGENT_DIR_ENV])) inputs.push({ source: "environment", name: PI_WEB_AGENT_DIR_ENV, replacement: PI_CODING_AGENT_DIR_ENV });
-  if (isEnvSet(env[PI_WEB_AGENT_SESSION_DIR_ENV])) inputs.push({ source: "environment", name: PI_WEB_AGENT_SESSION_DIR_ENV, replacement: PI_CODING_AGENT_SESSION_DIR_ENV });
+  if (isEnvSet(env[PI_STUDIO_AGENT_COMMAND_ENV])) inputs.push({ source: "environment", name: PI_STUDIO_AGENT_COMMAND_ENV });
+  if (isEnvSet(env[PI_STUDIO_AGENT_DIR_ENV])) inputs.push({ source: "environment", name: PI_STUDIO_AGENT_DIR_ENV, replacement: PI_CODING_AGENT_DIR_ENV });
+  if (isEnvSet(env[PI_STUDIO_AGENT_SESSION_DIR_ENV])) inputs.push({ source: "environment", name: PI_STUDIO_AGENT_SESSION_DIR_ENV, replacement: PI_CODING_AGENT_SESSION_DIR_ENV });
   if (config.agent?.command !== undefined) inputs.push({ source: "config", name: "agent.command" });
   if (config.agent?.dir !== undefined) inputs.push({ source: "config", name: "agent.dir", replacement: PI_CODING_AGENT_DIR_ENV });
   return inputs;
 }
 
-export function effectiveUploadsConfig(config: Pick<PiWebConfig, "uploads"> = {}): NonNullable<PiWebConfig["uploads"]> {
+export function effectiveUploadsConfig(config: Pick<PiStudioConfig, "uploads"> = {}): NonNullable<PiStudioConfig["uploads"]> {
   return { defaultFolder: config.uploads?.defaultFolder ?? DEFAULT_UPLOADS_FOLDER };
 }
 
-export function effectiveAttachmentsConfig(config: Pick<PiWebConfig, "attachments"> = {}): NonNullable<PiWebConfig["attachments"]> {
+export function effectiveAttachmentsConfig(config: Pick<PiStudioConfig, "attachments"> = {}): NonNullable<PiStudioConfig["attachments"]> {
   return { defaultFolder: config.attachments?.defaultFolder ?? DEFAULT_ATTACHMENT_FOLDER };
 }
 
-export function maxUploadBytes(env: NodeJS.ProcessEnv = process.env, config: PiWebConfig = {}): number {
-  const fromEnv = env["PI_WEB_MAX_UPLOAD_BYTES"];
+export function maxUploadBytes(env: NodeJS.ProcessEnv = process.env, config: PiStudioConfig = {}): number {
+  const fromEnv = env["PI_STUDIO_MAX_UPLOAD_BYTES"];
   if (fromEnv !== undefined && fromEnv !== "") {
     const parsed = Number(fromEnv);
     if (Number.isInteger(parsed) && parsed > 0) return parsed;
@@ -150,49 +150,49 @@ export function maxUploadBytes(env: NodeJS.ProcessEnv = process.env, config: PiW
   return DEFAULT_MAX_UPLOAD_BYTES;
 }
 
-export function piWebDataDir(env: NodeJS.ProcessEnv = process.env, cwd = process.cwd()): string {
-  const configured = env["PI_WEB_DATA_DIR"];
-  if (configured === undefined || configured === "") return defaultPiWebDataDir();
+export function piStudioDataDir(env: NodeJS.ProcessEnv = process.env, cwd = process.cwd()): string {
+  const configured = env["PI_STUDIO_DATA_DIR"];
+  if (configured === undefined || configured === "") return defaultPiStudioDataDir();
   return resolve(cwd, configured);
 }
 
-export function piWebConfigPath(env: NodeJS.ProcessEnv = process.env, cwd = process.cwd()): string {
-  const configured = env["PI_WEB_CONFIG"];
-  if (configured === undefined || configured === "") return defaultPiWebConfigPath(env);
+export function piStudioConfigPath(env: NodeJS.ProcessEnv = process.env, cwd = process.cwd()): string {
+  const configured = env["PI_STUDIO_CONFIG"];
+  if (configured === undefined || configured === "") return defaultPiStudioConfigPath(env);
   return resolve(cwd, configured);
 }
 
-export function loadPiWebConfig(options: LoadOptions = {}): LoadedPiWebConfig {
+export function loadPiStudioConfig(options: LoadOptions = {}): LoadedPiStudioConfig {
   const env = options.env ?? process.env;
-  const path = piWebConfigPath(env, options.cwd ?? process.cwd());
+  const path = piStudioConfigPath(env, options.cwd ?? process.cwd());
   if (!existsSync(path)) return { path, exists: false, config: {}, deprecatedAgentInputs: detectDeprecatedAgentInputs(env) };
 
   const parsed: unknown = JSON.parse(readFileSync(path, "utf8"));
-  if (!isRecord(parsed)) throw new Error(`PI WEB config must be a JSON object: ${path}`);
+  if (!isRecord(parsed)) throw new Error(`PI STUDIO config must be a JSON object: ${path}`);
 
-  const config = parsePiWebConfig(parsed, path);
+  const config = parsePiStudioConfig(parsed, path);
   return { path, exists: true, config, deprecatedAgentInputs: detectDeprecatedAgentInputs(env, config) };
 }
 
-export function effectivePiWebConfig(options: LoadOptions = {}): LoadedEffectivePiWebConfig {
-  return resolveEffectivePiWebConfig(loadPiWebConfig(options), options);
+export function effectivePiStudioConfig(options: LoadOptions = {}): LoadedEffectivePiStudioConfig {
+  return resolveEffectivePiStudioConfig(loadPiStudioConfig(options), options);
 }
 
-export function resolveEffectivePiWebConfig(loaded: LoadedPiWebConfig, options: LoadOptions = {}): LoadedEffectivePiWebConfig {
+export function resolveEffectivePiStudioConfig(loaded: LoadedPiStudioConfig, options: LoadOptions = {}): LoadedEffectivePiStudioConfig {
   const env = options.env ?? process.env;
-  const host = env["PI_WEB_HOST"];
-  const port = env["PI_WEB_PORT"] ?? env["PORT"];
-  const allowedHosts = env["PI_WEB_ALLOWED_HOSTS"];
-  const maxUpload = env["PI_WEB_MAX_UPLOAD_BYTES"];
+  const host = env["PI_STUDIO_HOST"];
+  const port = env["PI_STUDIO_PORT"] ?? env["PORT"];
+  const allowedHosts = env["PI_STUDIO_ALLOWED_HOSTS"];
+  const maxUpload = env["PI_STUDIO_MAX_UPLOAD_BYTES"];
   const agent = effectiveAgentConfig(env, loaded.config);
   return {
     ...loaded,
     config: {
       ...loaded.config,
       ...(host !== undefined && host !== "" ? { host } : {}),
-      ...(port !== undefined && port !== "" ? { port: parsePort(port, "PI_WEB_PORT") } : {}),
+      ...(port !== undefined && port !== "" ? { port: parsePort(port, "PI_STUDIO_PORT") } : {}),
       ...(allowedHosts !== undefined && allowedHosts !== "" ? { allowedHosts: parseAllowedHostsEnv(allowedHosts) } : {}),
-      ...(maxUpload !== undefined && maxUpload !== "" ? { maxUploadBytes: parseMaxUploadBytes(maxUpload, "PI_WEB_MAX_UPLOAD_BYTES") } : {}),
+      ...(maxUpload !== undefined && maxUpload !== "" ? { maxUploadBytes: parseMaxUploadBytes(maxUpload, "PI_STUDIO_MAX_UPLOAD_BYTES") } : {}),
       uploads: effectiveUploadsConfig(loaded.config),
       attachments: effectiveAttachmentsConfig(loaded.config),
       // Always resolved (on by default) so the effective config is the single
@@ -213,10 +213,10 @@ export function resolveEffectivePiWebConfig(loaded: LoadedPiWebConfig, options: 
   };
 }
 
-export function savePiWebConfig(config: PiWebConfig, options: LoadOptions = {}): LoadedPiWebConfig {
+export function savePiStudioConfig(config: PiStudioConfig, options: LoadOptions = {}): LoadedPiStudioConfig {
   const env = options.env ?? process.env;
-  const path = piWebConfigPath(env, options.cwd ?? process.cwd());
-  const normalized = parsePiWebConfig(piWebConfigRecord(config), path);
+  const path = piStudioConfigPath(env, options.cwd ?? process.cwd());
+  const normalized = parsePiStudioConfig(piStudioConfigRecord(config), path);
   effectiveAgentConfig(env, normalized);
   const existing = readExistingConfigObject(path);
   if (existing["agent"] !== undefined) parseAgentConfig(existing["agent"], path);
@@ -236,7 +236,7 @@ export function savePiWebConfig(config: PiWebConfig, options: LoadOptions = {}):
   delete existing["respectProjectTrust"];
   delete existing["environmentFacts"];
   delete existing["agent"];
-  const merged = { ...existing, ...piWebConfigRecord(normalized) };
+  const merged = { ...existing, ...piStudioConfigRecord(normalized) };
   mkdirSync(dirname(path), { recursive: true });
   writeFileSync(path, `${JSON.stringify(merged, null, 2)}\n`, "utf8");
   return { path, exists: true, config: normalized, deprecatedAgentInputs: detectDeprecatedAgentInputs(env, normalized) };
@@ -245,11 +245,11 @@ export function savePiWebConfig(config: PiWebConfig, options: LoadOptions = {}):
 function readExistingConfigObject(path: string): Record<string, unknown> {
   if (!existsSync(path)) return {};
   const parsed: unknown = JSON.parse(readFileSync(path, "utf8"));
-  if (!isRecord(parsed)) throw new Error(`PI WEB config must be a JSON object: ${path}`);
+  if (!isRecord(parsed)) throw new Error(`PI STUDIO config must be a JSON object: ${path}`);
   return parsed;
 }
 
-function piWebConfigRecord(config: PiWebConfig): Record<string, unknown> {
+function piStudioConfigRecord(config: PiStudioConfig): Record<string, unknown> {
   return {
     ...(config.host !== undefined ? { host: config.host } : {}),
     ...(config.port !== undefined ? { port: config.port } : {}),
@@ -269,7 +269,7 @@ function piWebConfigRecord(config: PiWebConfig): Record<string, unknown> {
   };
 }
 
-function parsePiWebConfig(value: Record<string, unknown>, path: string): PiWebConfig {
+function parsePiStudioConfig(value: Record<string, unknown>, path: string): PiStudioConfig {
   return {
     ...(value["host"] !== undefined ? { host: parseString(value["host"], "host", path) } : {}),
     ...(value["port"] !== undefined ? { port: parsePort(value["port"], "port", path) } : {}),
@@ -292,53 +292,53 @@ function parsePiWebConfig(value: Record<string, unknown>, path: string): PiWebCo
 
 function parseMaxUploadBytes(value: unknown, key: string, path = "environment"): number {
   const bytes = typeof value === "number" ? value : typeof value === "string" && value !== "" ? Number(value) : NaN;
-  if (!Number.isInteger(bytes) || bytes < 1) throw new Error(`PI WEB config ${key} must be a positive integer: ${path}`);
+  if (!Number.isInteger(bytes) || bytes < 1) throw new Error(`PI STUDIO config ${key} must be a positive integer: ${path}`);
   return bytes;
 }
 
 function parseSpawnSessions(value: unknown, path: string): boolean {
-  if (typeof value !== "boolean") throw new Error(`PI WEB config spawnSessions must be a boolean: ${path}`);
+  if (typeof value !== "boolean") throw new Error(`PI STUDIO config spawnSessions must be a boolean: ${path}`);
   return value;
 }
 
 /**
  * Whether LLMs may start new sessions via the spawn_session tool. On by default
  * (spawned sessions appear in the session list, so humans notice them); set the
- * env var `PI_WEB_SPAWN_SESSIONS` or the `spawnSessions` config key to `false`
+ * env var `PI_STUDIO_SPAWN_SESSIONS` or the `spawnSessions` config key to `false`
  * to disable. The env var takes precedence over the config file.
  */
-export function spawnSessionsEnabled(env: NodeJS.ProcessEnv = process.env, config: PiWebConfig = {}): boolean {
-  const fromEnv = env["PI_WEB_SPAWN_SESSIONS"];
+export function spawnSessionsEnabled(env: NodeJS.ProcessEnv = process.env, config: PiStudioConfig = {}): boolean {
+  const fromEnv = env["PI_STUDIO_SPAWN_SESSIONS"];
   if (fromEnv !== undefined && fromEnv !== "") return fromEnv === "1" || fromEnv.toLowerCase() === "true";
   return config.spawnSessions ?? true;
 }
 
 function parseSubsessions(value: unknown, path: string): boolean {
-  if (typeof value !== "boolean") throw new Error(`PI WEB config subsessions must be a boolean: ${path}`);
+  if (typeof value !== "boolean") throw new Error(`PI STUDIO config subsessions must be a boolean: ${path}`);
   return value;
 }
 
 /**
  * Whether LLMs may start tracked child sessions via the spawn_subsession
- * family of tools. On by default; set the env var `PI_WEB_SUBSESSIONS` or the
+ * family of tools. On by default; set the env var `PI_STUDIO_SUBSESSIONS` or the
  * `subsessions` config key to `false` to disable. The env var takes precedence
  * over the config file. Subsessions also require spawnSessions to be enabled
  * (they share the same project-scope resolver).
  */
-export function subsessionsEnabled(env: NodeJS.ProcessEnv = process.env, config: PiWebConfig = {}): boolean {
-  const fromEnv = env["PI_WEB_SUBSESSIONS"];
+export function subsessionsEnabled(env: NodeJS.ProcessEnv = process.env, config: PiStudioConfig = {}): boolean {
+  const fromEnv = env["PI_STUDIO_SUBSESSIONS"];
   if (fromEnv !== undefined && fromEnv !== "") return fromEnv === "1" || fromEnv.toLowerCase() === "true";
   return config.subsessions ?? true;
 }
 
 function parseAskUser(value: unknown, path: string): boolean {
-  if (typeof value !== "boolean") throw new Error(`PI WEB config askUser must be a boolean: ${path}`);
+  if (typeof value !== "boolean") throw new Error(`PI STUDIO config askUser must be a boolean: ${path}`);
   return value;
 }
 
 function parseExtensionDialogsTimeoutMs(value: unknown, path: string): number {
   if (typeof value !== "number" || !Number.isInteger(value) || value < 0) {
-    throw new Error(`PI WEB config extensionDialogsTimeoutMs must be a non-negative integer: ${path}`);
+    throw new Error(`PI STUDIO config extensionDialogsTimeoutMs must be a non-negative integer: ${path}`);
   }
   return value;
 }
@@ -346,46 +346,46 @@ function parseExtensionDialogsTimeoutMs(value: unknown, path: string): number {
 /**
  * Whether LLMs may post a question set to the browser via the ask_user tool. On
  * by default: the questions land in the session the user is already watching and
- * nothing happens without them acting. Set the env var `PI_WEB_ASK_USER` or the
+ * nothing happens without them acting. Set the env var `PI_STUDIO_ASK_USER` or the
  * `askUser` config key to `false` to remove the tool. The env var takes
  * precedence over the config file.
  */
-export function askUserEnabled(env: NodeJS.ProcessEnv = process.env, config: PiWebConfig = {}): boolean {
-  const fromEnv = env["PI_WEB_ASK_USER"];
+export function askUserEnabled(env: NodeJS.ProcessEnv = process.env, config: PiStudioConfig = {}): boolean {
+  const fromEnv = env["PI_STUDIO_ASK_USER"];
   if (fromEnv !== undefined && fromEnv !== "") return fromEnv === "1" || fromEnv.toLowerCase() === "true";
   return config.askUser ?? true;
 }
 
 function parseBooleanKey(value: unknown, key: string, path: string): boolean {
-  if (typeof value !== "boolean") throw new Error(`PI WEB config ${key} must be a boolean: ${path}`);
+  if (typeof value !== "boolean") throw new Error(`PI STUDIO config ${key} must be a boolean: ${path}`);
   return value;
 }
 
 /**
- * Whether PI WEB appends deployment environment facts to session system
- * prompts. On by default; set the env var `PI_WEB_ENVIRONMENT_FACTS` or the
+ * Whether PI STUDIO appends deployment environment facts to session system
+ * prompts. On by default; set the env var `PI_STUDIO_ENVIRONMENT_FACTS` or the
  * `environmentFacts` config key to `false` to leave the system prompt
  * untouched. The env var takes precedence over the config file.
  *
- * The facts describe the pi-web session nesting every session runs in; Docker
+ * The facts describe the pi-studio session nesting every session runs in; Docker
  * deployments append container facts on top. The env var deliberately avoids
- * the `PI_WEB_DOCKER_` prefix, which agent processes inherit for
- * `pi-web-docker`.
+ * the `PI_STUDIO_DOCKER_` prefix, which agent processes inherit for
+ * `pi-studio-docker`.
  */
-export function environmentFactsEnabled(env: NodeJS.ProcessEnv = process.env, config: PiWebConfig = {}): boolean {
-  const fromEnv = env["PI_WEB_ENVIRONMENT_FACTS"];
+export function environmentFactsEnabled(env: NodeJS.ProcessEnv = process.env, config: PiStudioConfig = {}): boolean {
+  const fromEnv = env["PI_STUDIO_ENVIRONMENT_FACTS"];
   if (fromEnv !== undefined && fromEnv !== "") return fromEnv === "1" || fromEnv.toLowerCase() === "true";
   return config.environmentFacts ?? true;
 }
 
-const OFFLINE_ENV_KEYS = ["PI_WEB_OFFLINE", "PI_OFFLINE"] as const;
+const OFFLINE_ENV_KEYS = ["PI_STUDIO_OFFLINE", "PI_OFFLINE"] as const;
 
 /**
- * Whether the operator asked PI WEB (or pi itself) to stay offline, meaning
+ * Whether the operator asked PI STUDIO (or pi itself) to stay offline, meaning
  * background network access must be skipped. Matches the "set and non-empty"
  * semantics used for the other runtime-only env switches.
  *
- * Deliberately narrower than `piWebStatus`'s update-check suppression: the
+ * Deliberately narrower than `piStudioStatus`'s update-check suppression: the
  * `*_SKIP_VERSION_CHECK` keys only silence release lookups, while these keys ask
  * for no background network at all.
  */
@@ -394,7 +394,7 @@ export function offlineModeEnabled(env: NodeJS.ProcessEnv = process.env): boolea
 }
 
 function parseString(value: unknown, key: string, path: string): string {
-  if (typeof value !== "string" || value === "") throw new Error(`PI WEB config ${key} must be a non-empty string: ${path}`);
+  if (typeof value !== "string" || value === "") throw new Error(`PI STUDIO config ${key} must be a non-empty string: ${path}`);
   return value;
 }
 
@@ -409,10 +409,10 @@ const DEPRECATED_AGENT_CONFIG_KEYS = new Set(["command", "dir"]);
 
 export type AgentPathHost = "current" | "portable";
 
-export function parseAgentConfig(value: unknown, path: string, pathHost: AgentPathHost = "current"): NonNullable<PiWebConfig["agent"]> {
-  if (!isRecord(value)) throw new Error(`PI WEB config agent must be an object: ${path}`);
+export function parseAgentConfig(value: unknown, path: string, pathHost: AgentPathHost = "current"): NonNullable<PiStudioConfig["agent"]> {
+  if (!isRecord(value)) throw new Error(`PI STUDIO config agent must be an object: ${path}`);
   const unknownKey = Object.keys(value).find((key) => !DEPRECATED_AGENT_CONFIG_KEYS.has(key));
-  if (unknownKey !== undefined) throw new Error(`PI WEB config agent accepts only the deprecated keys "command" and "dir"; unknown key ${JSON.stringify(unknownKey)}: ${path}`);
+  if (unknownKey !== undefined) throw new Error(`PI STUDIO config agent accepts only the deprecated keys "command" and "dir"; unknown key ${JSON.stringify(unknownKey)}: ${path}`);
   const command = value["command"];
   const dir = value["dir"];
   return {
@@ -430,7 +430,7 @@ function parseAgentDir(value: unknown, key: string, path: string, pathHost: Agen
   const isAbsoluteDir = pathHost === "current" ? isHostAbsoluteAgentDir(dir) : isPortableAbsoluteAgentPath(dir);
   if (!isAbsoluteDir && !isHomePath(dir, pathHost)) {
     const absoluteLabel = pathHost === "current" ? "a host-absolute" : "an absolute";
-    throw new Error(`PI WEB config ${key} must be ${absoluteLabel} path or start with ~: ${path}`);
+    throw new Error(`PI STUDIO config ${key} must be ${absoluteLabel} path or start with ~: ${path}`);
   }
   return dir;
 }
@@ -439,7 +439,7 @@ function resolveAgentDirPath(value: string, env: NodeJS.ProcessEnv, key: string,
   const parsed = parseAgentDir(value, key, path, "current");
   const expanded = expandHomePath(parsed, env);
   if (!isHostAbsoluteAgentDir(expanded)) {
-    throw new Error(`PI WEB config ${key} must resolve to a host-absolute path: ${path}`);
+    throw new Error(`PI STUDIO config ${key} must resolve to a host-absolute path: ${path}`);
   }
   return normalize(expanded);
 }
@@ -458,14 +458,14 @@ function isSafeAgentDirPath(value: string): boolean {
 
 function parsePort(value: unknown, key: string, path = "environment"): number {
   const port = typeof value === "number" ? value : typeof value === "string" && value !== "" ? Number(value) : NaN;
-  if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error(`PI WEB config ${key} must be an integer from 1 to 65535: ${path}`);
+  if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error(`PI STUDIO config ${key} must be an integer from 1 to 65535: ${path}`);
   return port;
 }
 
 function parseAllowedHosts(value: unknown, path: string): string[] | true {
   if (value === true) return true;
   if (!isNonEmptyStringArray(value)) {
-    throw new Error(`PI WEB config allowedHosts must be true or an array of non-empty strings: ${path}`);
+    throw new Error(`PI STUDIO config allowedHosts must be true or an array of non-empty strings: ${path}`);
   }
   return value;
 }
@@ -475,8 +475,8 @@ function parseAllowedHostsEnv(value: string): string[] | true {
   return value.split(",").map((host) => host.trim()).filter((host) => host !== "");
 }
 
-export function parsePathAccessConfig(value: unknown, path: string): NonNullable<PiWebConfigValues["pathAccess"]> {
-  if (!isRecord(value)) throw new Error(`PI WEB config pathAccess must be an object: ${path}`);
+export function parsePathAccessConfig(value: unknown, path: string): NonNullable<PiStudioConfigValues["pathAccess"]> {
+  if (!isRecord(value)) throw new Error(`PI STUDIO config pathAccess must be an object: ${path}`);
   const allowedPaths = value["allowedPaths"];
   return {
     ...(allowedPaths !== undefined ? { allowedPaths: parseAllowedPaths(allowedPaths, path) } : {}),
@@ -484,20 +484,20 @@ export function parsePathAccessConfig(value: unknown, path: string): NonNullable
 }
 
 function parseAllowedPaths(value: unknown, path: string): string[] {
-  if (!isNonEmptyStringArray(value)) throw new Error(`PI WEB config pathAccess.allowedPaths must be an array of non-empty strings: ${path}`);
+  if (!isNonEmptyStringArray(value)) throw new Error(`PI STUDIO config pathAccess.allowedPaths must be an array of non-empty strings: ${path}`);
   return value;
 }
 
-export function parseUploadsConfig(value: unknown, path: string): NonNullable<PiWebConfigValues["uploads"]> {
-  if (!isRecord(value)) throw new Error(`PI WEB config uploads must be an object: ${path}`);
+export function parseUploadsConfig(value: unknown, path: string): NonNullable<PiStudioConfigValues["uploads"]> {
+  if (!isRecord(value)) throw new Error(`PI STUDIO config uploads must be an object: ${path}`);
   const defaultFolder = value["defaultFolder"];
   return {
     ...(defaultFolder !== undefined ? { defaultFolder: parseWorkspaceRelativeFolder(defaultFolder, "uploads.defaultFolder", path) } : {}),
   };
 }
 
-export function parseAttachmentsConfig(value: unknown, path: string): NonNullable<PiWebConfigValues["attachments"]> {
-  if (!isRecord(value)) throw new Error(`PI WEB config attachments must be an object: ${path}`);
+export function parseAttachmentsConfig(value: unknown, path: string): NonNullable<PiStudioConfigValues["attachments"]> {
+  if (!isRecord(value)) throw new Error(`PI STUDIO config attachments must be an object: ${path}`);
   const defaultFolder = value["defaultFolder"];
   return {
     ...(defaultFolder !== undefined ? { defaultFolder: parseWorkspaceRelativeFolder(defaultFolder, "attachments.defaultFolder", path) } : {}),
@@ -505,11 +505,11 @@ export function parseAttachmentsConfig(value: unknown, path: string): NonNullabl
 }
 
 function parseWorkspaceRelativeFolder(value: unknown, key: string, path: string): string {
-  if (typeof value !== "string" || value.trim() === "") throw new Error(`PI WEB config ${key} must be a non-empty workspace-relative path: ${path}`);
-  if (isAbsoluteLike(value)) throw new Error(`PI WEB config ${key} must be workspace-relative: ${path}`);
+  if (typeof value !== "string" || value.trim() === "") throw new Error(`PI STUDIO config ${key} must be a non-empty workspace-relative path: ${path}`);
+  if (isAbsoluteLike(value)) throw new Error(`PI STUDIO config ${key} must be workspace-relative: ${path}`);
   const parts = value.split(/[\\/]+/).filter((part) => part !== "" && part !== ".");
-  if (parts.length === 0) throw new Error(`PI WEB config ${key} must be a non-empty workspace-relative path: ${path}`);
-  if (parts.some((part) => part === "..")) throw new Error(`PI WEB config ${key} must not contain path traversal: ${path}`);
+  if (parts.length === 0) throw new Error(`PI STUDIO config ${key} must be a non-empty workspace-relative path: ${path}`);
+  if (parts.some((part) => part === "..")) throw new Error(`PI STUDIO config ${key} must not contain path traversal: ${path}`);
   return parts.join("/");
 }
 
@@ -556,24 +556,24 @@ function isAbsoluteLike(value: string): boolean {
 }
 
 function parseShortcuts(value: unknown, path: string): Record<string, string | null> {
-  if (!isRecord(value)) throw new Error(`PI WEB config shortcuts must be an object: ${path}`);
+  if (!isRecord(value)) throw new Error(`PI STUDIO config shortcuts must be an object: ${path}`);
   return Object.fromEntries(Object.entries(value).map(([actionId, shortcut]) => {
     if (shortcut !== null && (typeof shortcut !== "string" || shortcut === "")) {
-      throw new Error(`PI WEB config shortcut values must be non-empty strings or null: ${path}`);
+      throw new Error(`PI STUDIO config shortcut values must be non-empty strings or null: ${path}`);
     }
     return [actionId, shortcut];
   }));
 }
 
-function parsePlugins(value: unknown, path: string): NonNullable<PiWebConfigValues["plugins"]> {
-  if (!isRecord(value) || Array.isArray(value)) throw new Error(`PI WEB config plugins must be an object: ${path}`);
+function parsePlugins(value: unknown, path: string): NonNullable<PiStudioConfigValues["plugins"]> {
+  if (!isRecord(value) || Array.isArray(value)) throw new Error(`PI STUDIO config plugins must be an object: ${path}`);
   return Object.fromEntries(Object.entries(value).map(([pluginId, config]) => {
-    if (!isPiWebPluginId(pluginId)) throw new Error(`PI WEB config plugin ids must match ${piWebPluginIdPattern.source}: ${path}`);
-    if (!isRecord(config) || Array.isArray(config)) throw new Error(`PI WEB config plugin entries must be objects: ${path}`);
+    if (!isPiStudioPluginId(pluginId)) throw new Error(`PI STUDIO config plugin ids must match ${piStudioPluginIdPattern.source}: ${path}`);
+    if (!isRecord(config) || Array.isArray(config)) throw new Error(`PI STUDIO config plugin entries must be objects: ${path}`);
     const enabled = config["enabled"];
-    if (enabled !== undefined && typeof enabled !== "boolean") throw new Error(`PI WEB config plugin enabled values must be booleans: ${path}`);
+    if (enabled !== undefined && typeof enabled !== "boolean") throw new Error(`PI STUDIO config plugin enabled values must be booleans: ${path}`);
     const settings = config["settings"];
-    if (settings !== undefined && (!isRecord(settings) || Array.isArray(settings))) throw new Error(`PI WEB config plugin settings must be objects: ${path}`);
+    if (settings !== undefined && (!isRecord(settings) || Array.isArray(settings))) throw new Error(`PI STUDIO config plugin settings must be objects: ${path}`);
     return [pluginId, config];
   }));
 }
@@ -586,7 +586,7 @@ function isNonEmptyStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((item) => typeof item === "string" && item !== "");
 }
 
-export function examplePiWebConfig(config: PiWebConfig = {}): string {
+export function examplePiStudioConfig(config: PiStudioConfig = {}): string {
   return `${JSON.stringify({ host: config.host ?? "127.0.0.1", port: config.port ?? 8504, allowedHosts: config.allowedHosts ?? [] }, null, 2)}\n`;
 }
 

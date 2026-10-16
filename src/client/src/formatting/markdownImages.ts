@@ -37,7 +37,7 @@ export function replaceLocalMarkdownImages(root: DocumentFragment, workspace: Ma
   root.querySelectorAll("img[src]").forEach((image, index) => {
     const local = localMarkdownImage(image.getAttribute("src") ?? "", workspace.root);
     if (local === undefined) return;
-    const preview = document.createElement("pi-web-markdown-image");
+    const preview = document.createElement("pi-studio-markdown-image");
     preview.setAttribute("path", local.path);
     preview.setAttribute("description", image.getAttribute("alt") ?? "");
     if (identity !== undefined) preview.setAttribute("intent-key", JSON.stringify([identity, index]));

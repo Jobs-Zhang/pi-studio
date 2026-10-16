@@ -11,8 +11,8 @@ import {
 } from "node:fs";
 import { randomUUID } from "node:crypto";
 import { basename, dirname, join, resolve } from "node:path";
-import { piWebConfigPath } from "./config.js";
-import { isPiWebPluginId } from "./shared/pluginIds.js";
+import { piStudioConfigPath } from "./config.js";
+import { isPiStudioPluginId } from "./shared/pluginIds.js";
 import {
   REQUIRED_TERMINAL_PLUGIN_ID,
   REQUIRED_TERMINAL_RECOVERY_GUIDANCE,
@@ -64,19 +64,19 @@ export function disableServerPlugin(
   pluginId: string,
   options: ServerPluginRecoveryConfigOptions = {},
 ): ServerPluginRecoveryConfig {
-  if (!isPiWebPluginId(pluginId)) throw new Error(`Invalid PI WEB plugin id: ${pluginId}`);
+  if (!isPiStudioPluginId(pluginId)) throw new Error(`Invalid PI STUDIO plugin id: ${pluginId}`);
   if (pluginId === REQUIRED_TERMINAL_PLUGIN_ID) {
     throw new Error(`Terminal is a required bundled plugin and cannot be disabled. ${REQUIRED_TERMINAL_RECOVERY_GUIDANCE}`);
   }
   return mutateRecoveryConfig(options, (root, path) => {
     const configuredPlugins = root["plugins"];
     if (configuredPlugins !== undefined && !isRecord(configuredPlugins)) {
-      throw new Error(`PI WEB config plugins must be an object: ${path}`);
+      throw new Error(`PI STUDIO config plugins must be an object: ${path}`);
     }
     const plugins = configuredPlugins ?? {};
     const configuredPlugin = Object.hasOwn(plugins, pluginId) ? plugins[pluginId] : undefined;
     if (configuredPlugin !== undefined && !isRecord(configuredPlugin)) {
-      throw new Error(`PI WEB config plugin ${pluginId} must be an object: ${path}`);
+      throw new Error(`PI STUDIO config plugin ${pluginId} must be an object: ${path}`);
     }
     root["plugins"] = {
       ...plugins,
@@ -118,7 +118,7 @@ export function setServerPluginSafeStart(
 function recoveryConfigPath(options: ServerPluginRecoveryConfigOptions): string {
   const cwd = options.cwd ?? process.cwd();
   return options.configPath === undefined
-    ? piWebConfigPath(options.env ?? process.env, cwd)
+    ? piStudioConfigPath(options.env ?? process.env, cwd)
     : resolve(cwd, options.configPath);
 }
 
@@ -140,7 +140,7 @@ function mutateRecoveryConfig(
 
 function readConfigObject(path: string): Record<string, unknown> {
   const parsed: unknown = JSON.parse(readFileSync(path, "utf8"));
-  if (!isRecord(parsed)) throw new Error(`PI WEB config must be a JSON object: ${path}`);
+  if (!isRecord(parsed)) throw new Error(`PI STUDIO config must be a JSON object: ${path}`);
   return parsed;
 }
 
@@ -148,12 +148,12 @@ function resolveSafeStart(root: Record<string, unknown>, path: string): Resolved
   const configuredServerPlugins = root[SERVER_PLUGINS_CONFIG_KEY];
   if (configuredServerPlugins === undefined) return {};
   if (!isRecord(configuredServerPlugins)) {
-    return invalidSafeStart(`PI WEB config ${SERVER_PLUGINS_CONFIG_KEY} must be an object: ${path}`);
+    return invalidSafeStart(`PI STUDIO config ${SERVER_PLUGINS_CONFIG_KEY} must be an object: ${path}`);
   }
   const safeStart = configuredServerPlugins[SAFE_START_CONFIG_KEY];
   if (safeStart === undefined) return {};
   if (safeStart !== "bundled-only" && safeStart !== "none") {
-    return invalidSafeStart(`PI WEB config ${SERVER_PLUGINS_CONFIG_KEY}.${SAFE_START_CONFIG_KEY} must be "bundled-only" or "none": ${path}`);
+    return invalidSafeStart(`PI STUDIO config ${SERVER_PLUGINS_CONFIG_KEY}.${SAFE_START_CONFIG_KEY} must be "bundled-only" or "none": ${path}`);
   }
   return { safeStart };
 }

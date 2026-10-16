@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { LitElement, css, html, type PropertyValues, type TemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import type { ContentRendererContribution } from "../../../plugin-api";
@@ -14,7 +15,7 @@ function isTemplateResult(value: unknown): value is TemplateResult {
 }
 
 /** Owns source access independently of the plugin's rendering success. */
-@customElement("pi-web-content-renderer")
+@customElement("pi-studio-content-renderer")
 export class ContentRendererHost extends LitElement {
   @property({ type: Boolean, reflect: true, attribute: "external-controls" }) externalControls = false;
   @property() text = "";
@@ -103,7 +104,7 @@ export class ContentRendererHost extends LitElement {
     const fail = (error: unknown): void => {
       if (controller.signal.aborted || this.controller !== controller) return;
       console.warn(`Content renderer ${this.renderer?.id ?? "unknown"} failed`, error);
-      this.failure = "Preview failed. Raw source is shown below.";
+      this.failure = t("renderer.previewFailed");
       this.cancelPreview();
     };
     try {
@@ -122,7 +123,7 @@ export class ContentRendererHost extends LitElement {
   private async copy(): Promise<void> {
     const text = this.text;
     const copied = await writeClipboardText(text);
-    if (this.isConnected && text === this.text) this.copyStatus = copied ? "Copied source" : "Failed to copy source";
+    if (this.isConnected && text === this.text) this.copyStatus = copied ? t("renderer.copiedSource") : t("renderer.copyFailed");
   }
 
   override render() {
@@ -132,9 +133,9 @@ export class ContentRendererHost extends LitElement {
     const diagnostic = this.failure;
     const showingRaw = preview === undefined || diagnostic !== undefined;
     return html`
-      ${this.externalControls ? null : html`<div class="controls" role="group" aria-label="Diagram controls">
+      ${this.externalControls ? null : html`<div class="controls" role="group" aria-label=${t("renderer.controls")}>
         ${this.choices.length < 2 ? null : html`
-          <select aria-label="Diagram renderer" @change=${(event: Event) => { if (event.target instanceof HTMLSelectElement) this.selectRenderer(event.target.value); }}>
+          <select aria-label=${t("renderer.renderer")} @change=${(event: Event) => { if (event.target instanceof HTMLSelectElement) this.selectRenderer(event.target.value); }}>
             ${this.choices.map(({ id, label }) => html`<option value=${id} .selected=${id === this.selectedId}>${label}</option>`)}
           </select>
         `}
@@ -147,7 +148,7 @@ export class ContentRendererHost extends LitElement {
       </div>`}
       <div id="content">
         ${diagnostic === undefined ? null : html`<p role="status">${diagnostic}</p>`}
-        ${showingRaw ? html`<pre tabindex="0" aria-label="Raw source"><code>${this.text}</code></pre>` : html`<div class="preview" tabindex="0" aria-label="Diagram preview">${preview}</div>`}
+        ${showingRaw ? html`<pre tabindex="0" aria-label=${t("renderer.rawSource")}><code>${this.text}</code></pre>` : html`<div class="preview" tabindex="0" aria-label=${t("renderer.preview")}>${preview}</div>`}
       </div>
     `;
   }

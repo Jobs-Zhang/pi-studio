@@ -1,6 +1,6 @@
 import type { PluginRuntimeState, PluginSelectionSnapshot } from "../../../plugin-api";
 import type { AppState } from "../appState";
-import type { PiWebPlugin } from "./types";
+import type { PiStudioPlugin } from "./types";
 
 /** Copy only documented selection; plugins never receive the selected SessionInfo object. */
 export function publicPluginSelection(state: AppState): PluginSelectionSnapshot {
@@ -31,7 +31,7 @@ export function publicPluginState(state: AppState): PluginRuntimeState {
     ...publicPluginSelection(state),
     ...(state.workspaceTool === undefined ? {} : { workspaceTool: state.workspaceTool }),
     mainView: state.mainView,
-    ...(state.piWebStatus === undefined ? {} : { piWebStatus: state.piWebStatus }),
+    ...(state.piStudioStatus === undefined ? {} : { piStudioStatus: state.piStudioStatus }),
   };
 }
 
@@ -42,7 +42,7 @@ function publicContext<Context extends { state: AppState }>(context: Context): C
 }
 
 /** Adapt external callbacks at the host boundary while core plugins retain internal state. */
-export function adaptPublicPlugin(plugin: PiWebPlugin): PiWebPlugin {
+export function adaptPublicPlugin(plugin: PiStudioPlugin): PiStudioPlugin {
   return {
     ...plugin,
     async activate(context) {

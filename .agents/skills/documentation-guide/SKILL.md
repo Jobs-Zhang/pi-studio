@@ -11,7 +11,7 @@ Use this guide to decide where documentation belongs and how much detail each su
 
 Treat `README.md` as the project landing page and quick start, not the complete manual.
 
-A reader should be able to understand what PI WEB is, decide whether it is relevant, satisfy the basic prerequisites, complete the shortest supported installation, and find the detailed documentation. Once that path is clear, additional explanation belongs under `docs/`.
+A reader should be able to understand what PI STUDIO is, decide whether it is relevant, satisfy the basic prerequisites, complete the shortest supported installation, and find the detailed documentation. Once that path is clear, additional explanation belongs under `docs/`.
 
 Do not add every new feature, caveat, implementation detail, troubleshooting case, or behavioral guarantee to the README. Update the canonical detailed page and link to it when discovery from the README materially helps a new user.
 
@@ -20,7 +20,7 @@ Do not add every new feature, caveat, implementation detail, troubleshooting cas
 The README may contain concise versions of:
 
 - the product identity and value proposition;
-- high-level capabilities that help someone decide whether to use PI WEB;
+- high-level capabilities that help someone decide whether to use PI STUDIO;
 - basic runtime requirements;
 - the shortest supported install and first-run path;
 - essential day-to-day commands;

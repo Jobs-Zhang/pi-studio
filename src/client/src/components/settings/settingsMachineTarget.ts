@@ -1,5 +1,5 @@
 import type { Machine, MachineKind, MachineRuntime } from "../../api";
-import { PI_WEB_CAPABILITIES, supportsPiWebCapability } from "../../../../shared/capabilities";
+import { PI_STUDIO_CAPABILITIES, supportsPiStudioCapability } from "../../../../shared/capabilities";
 
 export interface SettingsMachineTarget {
   id: string;
@@ -28,7 +28,7 @@ export function settingsMachineTargetLabel(target: SettingsMachineTarget): strin
 export function pluginLifecycleSupport(target: SettingsMachineTarget, runtime: Pick<MachineRuntime, "ok" | "capabilities"> | undefined): PluginLifecycleSupport {
   if (target.kind === "local") return { state: "supported" };
   if (runtime?.ok !== true) return { state: "unknown" };
-  if (supportsPiWebCapability(runtime, PI_WEB_CAPABILITIES.pluginLifecycle)) return { state: "supported" };
+  if (supportsPiStudioCapability(runtime, PI_STUDIO_CAPABILITIES.pluginLifecycle)) return { state: "supported" };
   return { state: "unsupported", message: pluginLifecycleUnavailableMessage(target) };
 }
 
@@ -41,7 +41,7 @@ export function isSelectedMachineSettingsUnsupported(support: SelectedMachineSet
 }
 
 export function pluginLifecycleUnavailableMessage(target: SettingsMachineTarget): string {
-  return `Plugin lifecycle diagnostics are not available on ${target.name}. Update and restart PI WEB on that machine before loading server-backed plugins.`;
+  return `Plugin lifecycle diagnostics are not available on ${target.name}. Update and restart PI STUDIO on that machine before loading server-backed plugins.`;
 }
 
 export function friendlySelectedMachineSettingsErrorMessage(message: string, target: SettingsMachineTarget): string {

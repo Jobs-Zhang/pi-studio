@@ -1,8 +1,8 @@
-import type { PiWebPlugin, WorkspacePanelContext } from "@jmfederico/pi-web/plugin-api";
+import type { PiStudioPlugin, WorkspacePanelContext } from "@pi-studio/pi-studio/plugin-api";
 import { isReview, type Review } from "./protocol.js";
 
 interface PanelState { reviews: Review[]; selected?: Review; busy: boolean; status: string }
-const plugin: PiWebPlugin = {
+const plugin: PiStudioPlugin = {
   apiVersion: 4,
   name: "Workspace Reviews",
   activate({ html }) {

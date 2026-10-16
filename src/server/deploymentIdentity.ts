@@ -1,15 +1,15 @@
-import type { PiWebInstallationInfo } from "../shared/apiTypes.js";
+import type { PiStudioInstallationInfo } from "../shared/apiTypes.js";
 
 /**
- * Deployment identity: how a PI WEB instance presents itself in browser chrome
+ * Deployment identity: how a PI STUDIO instance presents itself in browser chrome
  * and installed PWAs. Dev deployments (Docker dev mode, source checkouts) get a
  * purple recolor of the brand assets and a "(dev)" manifest name so users can
  * tell instances apart where no URL bar is visible.
  */
-export type PiWebDeploymentFlavor = "stable" | "dev";
+export type PiStudioDeploymentFlavor = "stable" | "dev";
 
 /** Only dev deployments recolor; every stable install keeps the stock assets. */
-export function deploymentFlavorFromInstallation(installation: PiWebInstallationInfo | undefined): PiWebDeploymentFlavor {
+export function deploymentFlavorFromInstallation(installation: PiStudioInstallationInfo | undefined): PiStudioDeploymentFlavor {
   if (installation === undefined) return "stable";
   if (installation.kind === "docker") return installation.dockerMode === "dev" ? "dev" : "stable";
   return installation.kind === "local" ? "dev" : "stable";
@@ -21,10 +21,10 @@ export function deploymentFlavorFromInstallation(installation: PiWebInstallation
  * least surprising fallback.
  */
 export function createDeploymentFlavorResolver(
-  detectInstallation: () => Promise<PiWebInstallationInfo>,
+  detectInstallation: () => Promise<PiStudioInstallationInfo>,
   onError?: (error: unknown) => void,
-): () => Promise<PiWebDeploymentFlavor> {
-  let memoized: Promise<PiWebDeploymentFlavor> | undefined;
+): () => Promise<PiStudioDeploymentFlavor> {
+  let memoized: Promise<PiStudioDeploymentFlavor> | undefined;
   return () => {
     memoized ??= detectInstallation().then(deploymentFlavorFromInstallation, (error: unknown) => {
       onError?.(error);
@@ -52,7 +52,7 @@ export const DEPLOYMENT_IDENTITY_ASSET_PATHS: readonly string[] = Object.keys(DE
 export const DEPLOYMENT_MANIFEST_PATH = "/manifest.webmanifest";
 export const DEPLOYMENT_MANIFEST_CONTENT_TYPE = "application/manifest+json";
 
-const DEV_MANIFEST_NAME = "PI WEB (dev)";
+const DEV_MANIFEST_NAME = "PI STUDIO (dev)";
 /** A dark purple tint (the dark theme's purple surface) for the PWA title bar. */
 const DEV_MANIFEST_THEME_COLOR = "#21132f";
 
@@ -60,7 +60,7 @@ const DEV_MANIFEST_THEME_COLOR = "#21132f";
  * The dev variant of a brand asset for a request path, or undefined when the
  * default static file should be served (stable flavor or unrelated path).
  */
-export function deploymentIdentityAssetForPath(pathname: string, flavor: PiWebDeploymentFlavor): DeploymentIdentityAssetFile | undefined {
+export function deploymentIdentityAssetForPath(pathname: string, flavor: PiStudioDeploymentFlavor): DeploymentIdentityAssetFile | undefined {
   if (flavor !== "dev") return undefined;
   return DEV_IDENTITY_ASSETS[pathname];
 }
@@ -74,7 +74,7 @@ export function isDeploymentIdentityAssetPath(pathname: string): boolean {
  * and tinted differently from a stable install. Icon URLs stay untouched: the
  * dev artwork is served in place of the stock icon files.
  */
-export function deploymentManifestForFlavor(manifestJson: string, flavor: PiWebDeploymentFlavor): string {
+export function deploymentManifestForFlavor(manifestJson: string, flavor: PiStudioDeploymentFlavor): string {
   if (flavor !== "dev") return manifestJson;
   const manifest: unknown = JSON.parse(manifestJson);
   if (typeof manifest !== "object" || manifest === null || Array.isArray(manifest)) return manifestJson;

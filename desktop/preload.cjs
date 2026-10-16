@@ -1,6 +1,6 @@
 const { contextBridge, ipcRenderer } = require("electron");
 
-contextBridge.exposeInMainWorld("piWebDesktop", {
+contextBridge.exposeInMainWorld("piStudioDesktop", {
   // Raise the app window to the foreground (restore + focus); used when the
   // user clicks a desktop notification.
   focusWindow: () => ipcRenderer.invoke("show-window"),

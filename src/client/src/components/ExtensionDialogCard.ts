@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { LitElement, css, html, type PropertyValues, type TemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { ifDefined } from "lit/directives/if-defined.js";
@@ -22,7 +23,7 @@ export function extensionDialogCloseLabel(reason: ExtensionDialogCloseReason): s
     case "cancelled": return "Cancelled";
     case "timeout": return "Timed out";
     case "aborted": return "Aborted";
-    case "session-ended": return "Session ended";
+    case "session-ended": return t("extDialog.sessionEnded");
   }
 }
 
@@ -33,14 +34,14 @@ export function extensionDialogCloseSummary(closed: ClosedExtensionDialog): stri
       const answer = closed.answer;
       // An answered close without an answer value breaks the wire contract;
       // the card still renders rather than crashing the transcript.
-      if (answer === undefined) return "Closed without an answer.";
+      if (answer === undefined) return t("extDialog.closed");
       if (typeof answer === "boolean") return `Answered: ${answer ? "Yes" : "No"}`;
-      return answer === "" ? "Answered with an empty response." : `Answered: ${answer}`;
+      return answer === "" ? t("extDialog.emptyAnswer") : t("extDialog.answered", { answer });
     }
-    case "cancelled": return "Dismissed without an answer.";
-    case "timeout": return "No answer was given before the dialog timed out.";
-    case "aborted": return "The run ended before this dialog was answered.";
-    case "session-ended": return "The session ended before this dialog was answered.";
+    case "cancelled": return t("extDialog.cancelled");
+    case "timeout": return t("extDialog.timeout");
+    case "aborted": return t("extDialog.aborted");
+    case "session-ended": return t("extDialog.sessionEndedDetail");
   }
 }
 
@@ -151,22 +152,22 @@ export class ExtensionDialogCard extends LitElement {
     return html`
       ${dialog.message === undefined ? null : html`<p class="dialog-message">${dialog.message}</p>`}
       <footer class="dialog-footer">
-        <button class="secondary-action" type="button" ?disabled=${this.closing} @click=${() => { this.cancelDialog(dialog); }}>Cancel</button>
-        <button class="secondary-action" type="button" ?disabled=${this.closing} @click=${() => { this.answerDialog(dialog, false); }}>No</button>
-        <button class="primary-action" type="button" ?disabled=${this.closing} @click=${() => { this.answerDialog(dialog, true); }}>Yes</button>
+        <button class="secondary-action" type="button" ?disabled=${this.closing} @click=${() => { this.cancelDialog(dialog); }}>${t("common.cancel")}</button>
+        <button class="secondary-action" type="button" ?disabled=${this.closing} @click=${() => { this.answerDialog(dialog, false); }}>${t("common.no")}</button>
+        <button class="primary-action" type="button" ?disabled=${this.closing} @click=${() => { this.answerDialog(dialog, true); }}>${t("common.yes")}</button>
       </footer>
     `;
   }
 
   private renderSelectBody(dialog: PendingExtensionDialog): TemplateResult {
     return html`
-      <div class="dialog-options" role="group" aria-label="Choices">
+      <div class="dialog-options" role="group" aria-label=${t("extensionDialog.choices")}>
         ${(dialog.options ?? []).map((option) => html`
           <button class="option-button" type="button" ?disabled=${this.closing} @click=${() => { this.answerDialog(dialog, option); }}>${option}</button>
         `)}
       </div>
       <footer class="dialog-footer">
-        <button class="secondary-action" type="button" ?disabled=${this.closing} @click=${() => { this.cancelDialog(dialog); }}>Cancel</button>
+        <button class="secondary-action" type="button" ?disabled=${this.closing} @click=${() => { this.cancelDialog(dialog); }}>${t("common.cancel")}</button>
       </footer>
     `;
   }
@@ -178,7 +179,7 @@ export class ExtensionDialogCard extends LitElement {
           class="dialog-input"
           type="text"
           name="dialog-answer"
-          aria-label="Your answer"
+          aria-label=${t("extensionDialog.yourAnswer")}
           placeholder=${ifDefined(dialog.placeholder)}
           maxlength=${String(EXTENSION_DIALOG_INPUT_MAX_LENGTH)}
           .value=${this.inputValue}
@@ -186,8 +187,8 @@ export class ExtensionDialogCard extends LitElement {
           @input=${(event: Event) => { this.changeInput(event); }}
         />
         <footer class="dialog-footer">
-          <button class="secondary-action" type="button" ?disabled=${this.closing} @click=${() => { this.cancelDialog(dialog); }}>Cancel</button>
-          <button class="primary-action" type="submit" ?disabled=${this.closing}>${this.closing ? "Sending…" : "Send"}</button>
+          <button class="secondary-action" type="button" ?disabled=${this.closing} @click=${() => { this.cancelDialog(dialog); }}>${t("common.cancel")}</button>
+          <button class="primary-action" type="submit" ?disabled=${this.closing}>${this.closing ? t("extensionDialog.sending") : t("extensionDialog.send")}</button>
         </footer>
       </form>
     `;
@@ -202,7 +203,7 @@ export class ExtensionDialogCard extends LitElement {
         </header>
         <p class="closed-summary">${extensionDialogCloseSummary(closed)}</p>
         <footer class="dialog-footer">
-          <button class="secondary-action" type="button" @click=${() => { this.dismissClosed(closed); }}>Dismiss</button>
+          <button class="secondary-action" type="button" @click=${() => { this.dismissClosed(closed); }}>${t("common.dismiss")}</button>
         </footer>
       </article>
     `;

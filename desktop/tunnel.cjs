@@ -7,7 +7,7 @@
  * smaller: the connect page opens one gateway at a time, so a single handle is
  * enough and no reconnect/backoff bookkeeping is needed. Passwords are handed
  * to ssh through SSH_ASKPASS; the askpass program is this same executable in
- * packaged builds (see the PI_WEB_ASKPASS bootstrap in main.cjs), which works
+ * packaged builds (see the PI_STUDIO_ASKPASS bootstrap in main.cjs), which works
  * on Windows where a shell script cannot be executed.
  */
 
@@ -61,7 +61,7 @@ function formatTargetHost(host) {
 
 /**
  * Env overrides for the ssh child when a password must be supplied. The
- * password travels via PI_WEB_TUNNEL_PASSWORD so the askpass program needs no
+ * password travels via PI_STUDIO_TUNNEL_PASSWORD so the askpass program needs no
  * escaping and never sees it on its command line.
  */
 function buildAskpassEnv({ password, askpassPath, selfAskpass }) {
@@ -69,8 +69,8 @@ function buildAskpassEnv({ password, askpassPath, selfAskpass }) {
     SSH_ASKPASS: askpassPath,
     SSH_ASKPASS_REQUIRE: "force",
     DISPLAY: ":",
-    ...(selfAskpass ? { PI_WEB_ASKPASS: "1" } : {}),
-    PI_WEB_TUNNEL_PASSWORD: password,
+    ...(selfAskpass ? { PI_STUDIO_ASKPASS: "1" } : {}),
+    PI_STUDIO_TUNNEL_PASSWORD: password,
   };
 }
 
@@ -179,10 +179,10 @@ function probeLocalListener(port, timeoutMs) {
 }
 
 async function createAskpassScript() {
-  const dir = join(tmpdir(), "pi-desktop-askpass");
+  const dir = join(tmpdir(), "pi-studio-desktop-askpass");
   await mkdir(dir, { recursive: true });
-  const scriptPath = join(dir, `pi-desktop-askpass-${randomUUID()}.sh`);
-  await writeFile(scriptPath, '#!/bin/sh\nprintf \'%s\\n\' "$PI_WEB_TUNNEL_PASSWORD"\n', { mode: ASKPASS_SCRIPT_MODE });
+  const scriptPath = join(dir, `pi-studio-desktop-askpass-${randomUUID()}.sh`);
+  await writeFile(scriptPath, '#!/bin/sh\nprintf \'%s\\n\' "$PI_STUDIO_TUNNEL_PASSWORD"\n', { mode: ASKPASS_SCRIPT_MODE });
   return { scriptPath, cleanup: async () => { await rm(scriptPath, { force: true }); } };
 }
 
@@ -209,7 +209,7 @@ async function createTunnel(spec, target, deps = {}) {
   if (spec.password !== undefined && spec.password !== "") {
     if (platform === "win32") {
       // Windows cannot execute a shell script as askpass, so the askpass program
-      // is this executable itself (see the PI_WEB_ASKPASS bootstrap in main.cjs).
+      // is this executable itself (see the PI_STUDIO_ASKPASS bootstrap in main.cjs).
       envOverrides = buildAskpassEnv({ password: spec.password, askpassPath: execPath, selfAskpass: true });
     } else {
       const askpass = await createAskpassScript();

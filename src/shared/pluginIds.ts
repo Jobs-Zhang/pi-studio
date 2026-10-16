@@ -1,20 +1,20 @@
-export const piWebPluginIdPattern = /^[a-z][a-z0-9.-]*$/u;
+export const piStudioPluginIdPattern = /^[a-z][a-z0-9.-]*$/u;
 
-const reservedPiWebPluginIds = new Set(["core", "themes"]);
+const reservedPiStudioPluginIds = new Set(["core", "themes"]);
 const machinePluginIdPrefix = "machine.";
-const bundledPiWebPluginId = "pi-web";
-const bundledPiWebPluginIdPrefix = `${bundledPiWebPluginId}.`;
+const bundledPiStudioPluginId = "pi-studio";
+const bundledPiStudioPluginIdPrefix = `${bundledPiStudioPluginId}.`;
 
-export function isPiWebPluginId(value: string): boolean {
-  return piWebPluginIdPattern.test(value);
+export function isPiStudioPluginId(value: string): boolean {
+  return piStudioPluginIdPattern.test(value);
 }
 
-export function isPiWebBundledPluginId(value: string): boolean {
-  return value === bundledPiWebPluginId || value.startsWith(bundledPiWebPluginIdPrefix);
+export function isPiStudioBundledPluginId(value: string): boolean {
+  return value === bundledPiStudioPluginId || value.startsWith(bundledPiStudioPluginIdPrefix);
 }
 
-export function isReservedPiWebPluginId(value: string): boolean {
-  return reservedPiWebPluginIds.has(value)
+export function isReservedPiStudioPluginId(value: string): boolean {
+  return reservedPiStudioPluginIds.has(value)
     || value.startsWith(machinePluginIdPrefix)
-    || isPiWebBundledPluginId(value);
+    || isPiStudioBundledPluginId(value);
 }

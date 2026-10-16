@@ -1,5 +1,6 @@
+import { t } from "../i18n";
 import type { JsonValue } from "../../../shared/apiTypes";
-import { isPiWebPluginId } from "../../../shared/pluginIds";
+import { isPiStudioPluginId } from "../../../shared/pluginIds";
 import {
   cloneBoundedPluginBackendJson,
   parseBoundedPluginBackendJson,
@@ -194,8 +195,8 @@ export function openPairedPluginBackendChannel(
       }
     });
     socket.addEventListener("error", () => {
-      channelError ??= Object.freeze({ code: "transport-error", message: "Plugin backend channel transport failed" });
-      if (!ready) reject(new Error("Plugin backend channel unavailable"));
+      channelError ??= Object.freeze({ code: "transport-error", message: t("pluginBackend.transportFailed") });
+      if (!ready) reject(new Error(t("pluginBackend.channelUnavailable")));
       closeBrowserSocket(socket, "Channel transport error");
     });
     socket.addEventListener("close", (event) => {
@@ -222,7 +223,7 @@ function scopedPluginBackendRequestPath(
   target: PluginBackendPathTarget,
   operation: string,
 ): string {
-  if (!isPiWebPluginId(target.pluginId)) throw new Error(`Invalid PI WEB plugin id: ${target.pluginId}`);
+  if (!isPiStudioPluginId(target.pluginId)) throw new Error(`Invalid PI STUDIO plugin id: ${target.pluginId}`);
   if (target.machineId === "") throw new Error("Machine id is required");
   if (target.projectId === "") throw new Error("Project id is required");
   if (target.workspaceId === "") throw new Error("Workspace id is required");

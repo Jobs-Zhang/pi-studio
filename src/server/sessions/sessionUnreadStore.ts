@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
-import { piWebDataDir } from "../../config.js";
+import { piStudioDataDir } from "../../config.js";
 import {
   SESSION_UNREAD_CATALOG_ID_MAX_LENGTH,
   SESSION_UNREAD_COMPLETED_AT_MAX_LENGTH,
@@ -514,7 +514,7 @@ export class FileSessionUnreadPersistence implements SessionUnreadPersistence {
 }
 
 export function defaultSessionUnreadFilePath(env: NodeJS.ProcessEnv = process.env, cwd = process.cwd()): string {
-  return join(piWebDataDir(env, cwd), "session-unread.json");
+  return join(piStudioDataDir(env, cwd), "session-unread.json");
 }
 
 function parsePersistedState(value: unknown): SessionUnreadPersistedState {

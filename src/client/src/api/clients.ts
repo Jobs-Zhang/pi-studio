@@ -1,6 +1,6 @@
 import { parseSessionDefaults } from "../../../shared/sessionDefaults";
 import type { SessionDefaultsUpdate, MachineConnectionInput } from "../../../shared/apiTypes";
-import type { AskUserSubmission, DeleteWorkspaceFileResponse, ExtensionDialogAnswer, FileSuggestion, MoveWorkspaceFileOptions, PiPackageInstallRequest, PiPackageRemoveRequest, PiPackageScope, PiPackageUpdateRequest, PiWebConfigValues, PromptAttachment, ServerNoticeDismissRequest, SessionBulkMutationRef, SessionCleanupRequest, SessionModelScopeMode, SessionNotificationDismissThrough, SessionRef, SessionTreeForkRequest, SessionTreeForkResult, SessionTreeNavigateRequest, SessionUnreadAcknowledgeRequest, WorkspaceRemovalRequest, WriteWorkspaceFileOptions } from "../../../shared/apiTypes";
+import type { AskUserSubmission, DeleteWorkspaceFileResponse, ExtensionDialogAnswer, FileSuggestion, MoveWorkspaceFileOptions, PiPackageInstallRequest, PiPackageRemoveRequest, PiPackageScope, PiPackageUpdateRequest, PiStudioConfigValues, PromptAttachment, ServerNoticeDismissRequest, SessionBulkMutationRef, SessionCleanupRequest, SessionModelScopeMode, SessionNotificationDismissThrough, SessionRef, SessionTreeForkRequest, SessionTreeForkResult, SessionTreeNavigateRequest, SessionUnreadAcknowledgeRequest, WorkspaceRemovalRequest, WriteWorkspaceFileOptions } from "../../../shared/apiTypes";
 import { resolveAppUrl } from "../appUrl";
 import { request } from "./http";
 import {
@@ -29,10 +29,10 @@ import {
   parseOAuthFlowState,
   parsePiPackageMutationResponse,
   parsePiPackagesResponse,
-  parsePiWebConfigResponse,
-  parsePiWebPluginsResponse,
-  parsePiWebRuntimeResponse,
-  parsePiWebStatusResponse,
+  parsePiStudioConfigResponse,
+  parsePiStudioPluginsResponse,
+  parsePiStudioRuntimeResponse,
+  parsePiStudioStatusResponse,
   parseProject,
   parseReloaded,
   parseRestored,
@@ -91,14 +91,14 @@ function sessionBulkMutationRef(session: SessionRef): SessionBulkMutationRef {
   return { id: session.id, cwd: session.cwd };
 }
 
-function piWebStatusPath(machineId: string): string {
-  return machineId === "local" ? "api/pi-web/status" : `${machinePrefix(machineId)}/pi-web/status`;
+function piStudioStatusPath(machineId: string): string {
+  return machineId === "local" ? "api/pi-studio/status" : `${machinePrefix(machineId)}/pi-studio/status`;
 }
 
-export const piWebApi = {
-  piWebStatus: (machineId = "local") => request(piWebStatusPath(machineId), parsePiWebStatusResponse),
-  checkForUpdates: (machineId = "local") => request(`${piWebStatusPath(machineId)}?refresh=1`, parsePiWebStatusResponse, { cache: "no-store" }),
-  piWebRuntime: () => request("api/pi-web/runtime", parsePiWebRuntimeResponse),
+export const piStudioApi = {
+  piStudioStatus: (machineId = "local") => request(piStudioStatusPath(machineId), parsePiStudioStatusResponse),
+  checkForUpdates: (machineId = "local") => request(`${piStudioStatusPath(machineId)}?refresh=1`, parsePiStudioStatusResponse, { cache: "no-store" }),
+  piStudioRuntime: () => request("api/pi-studio/runtime", parsePiStudioRuntimeResponse),
 };
 
 export const machinesApi = {
@@ -131,12 +131,12 @@ function pluginsPath(machineId?: string): string {
 }
 
 export const configApi = {
-  config: (machineId?: string) => request(configPath(machineId), parsePiWebConfigResponse),
-  saveConfig: (config: PiWebConfigValues, machineId?: string) => request(configPath(machineId), parsePiWebConfigResponse, { method: "PUT", body: JSON.stringify({ config }) }),
+  config: (machineId?: string) => request(configPath(machineId), parsePiStudioConfigResponse),
+  saveConfig: (config: PiStudioConfigValues, machineId?: string) => request(configPath(machineId), parsePiStudioConfigResponse, { method: "PUT", body: JSON.stringify({ config }) }),
 };
 
 export const pluginsApi = {
-  plugins: (machineId?: string) => request(pluginsPath(machineId), parsePiWebPluginsResponse),
+  plugins: (machineId?: string) => request(pluginsPath(machineId), parsePiStudioPluginsResponse),
 };
 
 function piPackagePath(endpoint = "", machineId?: string): string {
@@ -402,7 +402,7 @@ export const trustApi = {
 };
 
 export const api = {
-  ...piWebApi,
+  ...piStudioApi,
   ...machinesApi,
   ...noticesApi,
   ...configApi,

@@ -11,7 +11,7 @@ import type {
   WorkspaceProviderResolutionStatus,
   WorkspaceProviderTier,
 } from "../../shared/apiTypes.js";
-import { isPiWebPluginId } from "../../shared/pluginIds.js";
+import { isPiStudioPluginId } from "../../shared/pluginIds.js";
 import type { TerminalPluginMode } from "../../shared/requiredTerminalPlugin.js";
 import type { SessionDaemonRequestClient } from "../../sessiond/sessionDaemonClient.js";
 import type {
@@ -20,7 +20,7 @@ import type {
   ServerPluginRuntimeRecord,
   ServerPluginRuntimeState,
 } from "../plugins/serverPluginRuntime.js";
-import type { PiWebPluginCatalogDiagnostic, PiWebPluginCatalogDiagnosticCode } from "../piWebPluginCatalog.js";
+import type { PiStudioPluginCatalogDiagnostic, PiStudioPluginCatalogDiagnosticCode } from "../piStudioPluginCatalog.js";
 import {
   WorkspaceCatalogProtocolError,
   WorkspaceCatalogRequestError,
@@ -157,7 +157,7 @@ function parseWorkspaceProviderTier(value: unknown, label: string): WorkspacePro
 function parsePluginIds(value: unknown, label: string): string[] {
   if (!Array.isArray(value)) throw protocolError(`${label} must be an array`);
   return value.map((pluginId, index) => {
-    if (typeof pluginId !== "string" || !isPiWebPluginId(pluginId)) {
+    if (typeof pluginId !== "string" || !isPiStudioPluginId(pluginId)) {
       throw protocolError(`${label} item ${String(index + 1)} is invalid`);
     }
     return pluginId;
@@ -286,7 +286,7 @@ function parsePairedCapabilityVersion(value: unknown, label: string, capability:
   return value;
 }
 
-function parseCatalogDiagnostic(value: unknown, index: number): PiWebPluginCatalogDiagnostic {
+function parseCatalogDiagnostic(value: unknown, index: number): PiStudioPluginCatalogDiagnostic {
   const label = `provider runtime diagnostic ${String(index + 1)}`;
   if (!isRecord(value)) throw protocolError(`${label} must be an object`);
   const code = value["code"];
@@ -382,13 +382,13 @@ function optionalString(record: Record<string, unknown>, field: string, label: s
 
 function requirePluginId(record: Record<string, unknown>, field: string, label: string): string {
   const value = requireString(record, field, label);
-  if (!isPiWebPluginId(value)) throw protocolError(`${label} ${field} is invalid`);
+  if (!isPiStudioPluginId(value)) throw protocolError(`${label} ${field} is invalid`);
   return value;
 }
 
 function optionalPluginId(record: Record<string, unknown>, field: string, label: string): string | undefined {
   const value = optionalString(record, field, label);
-  if (value !== undefined && !isPiWebPluginId(value)) throw protocolError(`${label} ${field} is invalid`);
+  if (value !== undefined && !isPiStudioPluginId(value)) throw protocolError(`${label} ${field} is invalid`);
   return value;
 }
 
@@ -406,7 +406,7 @@ function isLifecyclePhase(value: unknown): value is ServerPluginLifecyclePhase {
   return value === "import" || value === "activate" || value === "validate" || value === "start" || value === "health" || value === "dispose";
 }
 
-function isCatalogDiagnosticCode(value: unknown): value is PiWebPluginCatalogDiagnosticCode {
+function isCatalogDiagnosticCode(value: unknown): value is PiStudioPluginCatalogDiagnosticCode {
   return value === "invalid-package" || value === "reserved-id" || value === "duplicate-id" || value === "required-plugin-config";
 }
 

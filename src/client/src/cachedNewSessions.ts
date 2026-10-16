@@ -1,6 +1,6 @@
 import type { SessionInfo } from "./api";
 
-const storageKey = "pi-web:cached-new-sessions:v1";
+const storageKey = "pi-studio:cached-new-sessions:v1";
 const markerProperty = "browserCachedNew";
 const defaultMachineId = "local";
 

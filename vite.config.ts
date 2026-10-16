@@ -5,11 +5,11 @@ import { extname, join, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { Plugin } from "vite";
 import { defineConfig, normalizePath } from "vite";
-import { effectivePiWebConfig } from "./src/config";
+import { effectivePiStudioConfig } from "./src/config";
 import { DEPLOYMENT_MANIFEST_CONTENT_TYPE, DEPLOYMENT_MANIFEST_PATH, createDeploymentFlavorResolver, deploymentIdentityAssetForPath, deploymentManifestForFlavor, isDeploymentIdentityAssetPath } from "./src/server/deploymentIdentity";
-import { detectPiWebInstallation } from "./src/server/piWebStatus";
+import { detectPiStudioInstallation } from "./src/server/piStudioStatus";
 
-const { config } = effectivePiWebConfig();
+const { config } = effectivePiStudioConfig();
 const apiPort = config.port ?? 8504;
 const docsRoot = resolve("docs");
 const docsPrefix = "/site";
@@ -17,7 +17,7 @@ const clientPublicRoot = resolve("src/client/public");
 
 // The dev deployment gets the dev brand identity even when the UI is served
 // by the Vite dev server (production serving does the same swap in Fastify).
-const deploymentFlavor = createDeploymentFlavorResolver(() => detectPiWebInstallation());
+const deploymentFlavor = createDeploymentFlavorResolver(() => detectPiStudioInstallation());
 
 const contentTypes: Record<string, string> = {
   ".css": "text/css; charset=utf-8",
@@ -88,7 +88,7 @@ async function serveDevDocs(request: IncomingMessage, response: ServerResponse, 
 
 function devDocsPlugin(): Plugin {
   return {
-    name: "pi-web-dev-docs",
+    name: "pi-studio-dev-docs",
     apply: "serve",
     configureServer(server) {
       server.middlewares.use((request, response, next) => {
@@ -161,7 +161,7 @@ async function serveDevDeploymentIdentity(request: IncomingMessage, response: Se
 
 function devDeploymentIdentityPlugin(): Plugin {
   return {
-    name: "pi-web-dev-deployment-identity",
+    name: "pi-studio-dev-deployment-identity",
     apply: "serve",
     configureServer(server) {
       server.middlewares.use((request, response, next) => {
@@ -175,7 +175,7 @@ function manualRefreshPlugin(): Plugin {
   const clientEntry = normalizePath(fileURLToPath(new URL("../client/client.mjs", import.meta.resolve("vite"))));
   const connect = "transport.connect(createHMRHandler(handleMessage));";
   return {
-    name: "pi-web-manual-refresh",
+    name: "pi-studio-manual-refresh",
     apply: "serve",
     transform(code, id) {
       if (id.split("?")[0] !== clientEntry) return;
@@ -185,9 +185,9 @@ function manualRefreshPlugin(): Plugin {
       // start its reload transport. Removing the HTML script alone is not enough.
       // Fail loudly on a Vite upgrade rather than silently reintroducing the hang.
       if (code.split(connect).length !== 2) {
-        throw new Error("Vite client startup changed; update PI WEB's manual-refresh transform");
+        throw new Error("Vite client startup changed; update PI STUDIO's manual-refresh transform");
       }
-      return { code: code.replace(connect, "/* PI WEB uses manual browser refresh. */"), map: null };
+      return { code: code.replace(connect, "/* PI STUDIO uses manual browser refresh. */"), map: null };
     },
   };
 }
@@ -225,7 +225,7 @@ export default defineConfig({
     ...(config.allowedHosts === undefined ? {} : { allowedHosts: config.allowedHosts }),
     proxy: {
       "/api": { target: `http://localhost:${String(apiPort)}`, ws: true },
-      "/pi-web-plugins": { target: `http://localhost:${String(apiPort)}` },
+      "/pi-studio-plugins": { target: `http://localhost:${String(apiPort)}` },
     },
   },
 });

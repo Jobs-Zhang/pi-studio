@@ -1,7 +1,7 @@
 /**
  * Session daemon state ownership.
  *
- * The session daemon is the authority over a pi-web instance's durable state:
+ * The session daemon is the authority over a pi-studio instance's durable state:
  * projects, machines, session archives, and unread state all live in the data
  * directory, and the daemon is the only process allowed to own it while
  * running (the web/API process of the same instance shares the directory but
@@ -24,15 +24,15 @@
  * release (orderly shutdown removes the marker) before failing. When the
  * owner persists past the grace window, startup fails with a
  * {@link SessiondStateOwnershipConflictError} naming the owner and the
- * configuration a second instance needs: a distinct `PI_WEB_DATA_DIR`,
- * `PI_WEB_SESSIOND_SOCKET` (or `PI_WEB_SESSIOND_PORT` / `PI_WEB_SESSIOND_HOST`),
+ * configuration a second instance needs: a distinct `PI_STUDIO_DATA_DIR`,
+ * `PI_STUDIO_SESSIOND_SOCKET` (or `PI_STUDIO_SESSIOND_PORT` / `PI_STUDIO_SESSIOND_HOST`),
  * and web port.
  */
 
 import { readFileSync } from "node:fs";
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { piWebDataDir } from "../../config.js";
+import { piStudioDataDir } from "../../config.js";
 import { sessiondEndpointDescription } from "../../sessiond/config.js";
 
 /** Marker file recording the owning daemon, inside the instance data directory. */
@@ -63,15 +63,15 @@ export class SessiondStateOwnershipConflictError extends Error {
   constructor(options: { dataDir: string; markerPath: string; owner: SessiondStateOwnershipRecord }) {
     const { dataDir, markerPath, owner } = options;
     super(
-      `another pi-web session daemon already owns this state\n\n` +
+      `another pi-studio session daemon already owns this state\n\n` +
         `The data directory "${dataDir}" is owned by a live session daemon ` +
         `(pid ${String(owner.pid)}, started ${owner.startedAt}, listening on ${owner.endpoint}; ` +
         `ownership marker ${markerPath}). Two daemons sharing one data directory corrupt each other's state.\n\n` +
-        `To run a second pi-web instance, give it its own state and endpoints:\n` +
-        `- PI_WEB_DATA_DIR: a different data directory\n` +
-        `- PI_WEB_SESSIOND_SOCKET (or PI_WEB_SESSIOND_PORT / PI_WEB_SESSIOND_HOST): a different session daemon endpoint\n` +
-        `- PI_WEB_PORT: a different web/API port\n\n` +
-        `If pid ${String(owner.pid)} is not a running pi-web session daemon, remove the stale marker file and start again.`,
+        `To run a second pi-studio instance, give it its own state and endpoints:\n` +
+        `- PI_STUDIO_DATA_DIR: a different data directory\n` +
+        `- PI_STUDIO_SESSIOND_SOCKET (or PI_STUDIO_SESSIOND_PORT / PI_STUDIO_SESSIOND_HOST): a different session daemon endpoint\n` +
+        `- PI_STUDIO_PORT: a different web/API port\n\n` +
+        `If pid ${String(owner.pid)} is not a running pi-studio session daemon, remove the stale marker file and start again.`,
     );
     this.name = "SessiondStateOwnershipConflictError";
     this.dataDir = dataDir;
@@ -128,7 +128,7 @@ export async function claimSessiondStateOwnership(options: ClaimSessiondStateOwn
   const pollIntervalMs = options.pollIntervalMs ?? DEFAULT_POLL_INTERVAL_MS;
   const sleep = options.sleep ?? defaultSleep;
   const logger = options.logger;
-  const dataDir = options.dataDir ?? piWebDataDir(options.env);
+  const dataDir = options.dataDir ?? piStudioDataDir(options.env);
   const markerPath = join(dataDir, SESSIOND_OWNER_MARKER_FILENAME);
   const processStartTime = readProcessStartTime(ownPid);
   const record: SessiondStateOwnershipRecord = {

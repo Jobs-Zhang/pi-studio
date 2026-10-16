@@ -3,9 +3,9 @@ set -euo pipefail
 
 nodejs_major=${NODEJS_MAJOR:-22}
 nodejs_repo=${NODEJS_REPO:-auto}
-extra_zypper_packages=${PI_WEB_EXTRA_ZYPPER_PACKAGES:-}
-runtime_uid=${PI_WEB_UID:-1000}
-runtime_gid=${PI_WEB_GID:-1000}
+extra_zypper_packages=${PI_STUDIO_EXTRA_ZYPPER_PACKAGES:-}
+runtime_uid=${PI_STUDIO_UID:-1000}
+runtime_gid=${PI_STUDIO_GID:-1000}
 
 nodejs_repo_flavor() {
   local rpm_arch
@@ -45,8 +45,8 @@ add_nodejs_repo() {
       ;;
   esac
 
-  zypper --non-interactive removerepo pi-web-nodejs >/dev/null 2>&1 || true
-  zypper --non-interactive addrepo --refresh "$repo_url" pi-web-nodejs
+  zypper --non-interactive removerepo pi-studio-nodejs >/dev/null 2>&1 || true
+  zypper --non-interactive addrepo --refresh "$repo_url" pi-studio-nodejs
 }
 
 # The codec repository is not needed for this image and can make noninteractive
@@ -117,7 +117,7 @@ packages=(
 extra_packages=()
 if [ -n "$extra_zypper_packages" ]; then
   # Intentionally split a whitespace-delimited package list supplied as a Docker
-  # build arg, e.g. PI_WEB_EXTRA_ZYPPER_PACKAGES="go rustup kubernetes-client".
+  # build arg, e.g. PI_STUDIO_EXTRA_ZYPPER_PACKAGES="go rustup kubernetes-client".
   # shellcheck disable=SC2206
   extra_packages=($extra_zypper_packages)
 fi
@@ -132,22 +132,22 @@ git --version
 
 case "$runtime_uid" in
   ""|*[!0-9]*)
-    echo "PI_WEB_UID must be a numeric user ID, got: $runtime_uid" >&2
+    echo "PI_STUDIO_UID must be a numeric user ID, got: $runtime_uid" >&2
     exit 1
     ;;
 esac
 
 case "$runtime_gid" in
   ""|*[!0-9]*)
-    echo "PI_WEB_GID must be a numeric group ID, got: $runtime_gid" >&2
+    echo "PI_STUDIO_GID must be a numeric group ID, got: $runtime_gid" >&2
     exit 1
     ;;
 esac
 
-runtime_user=pi-web
-runtime_group=pi-web
+runtime_user=pi-studio
+runtime_group=pi-studio
 runtime_home=/data/home
-mkdir -p "$runtime_home" /data/config /data/npm-cache /data/pi-web /data/pi-agent /workspace
+mkdir -p "$runtime_home" /data/config /data/npm-cache /data/pi-studio /data/pi-agent /workspace
 
 if getent group "$runtime_gid" >/dev/null 2>&1; then
   runtime_group=$(getent group "$runtime_gid" | cut -d: -f1)
@@ -174,12 +174,12 @@ chown -R "$runtime_uid:$runtime_gid" /data /workspace
 # /workspace/node_modules/.bin). /etc/profile saves the pre-reset PATH as
 # ORIG_PATH; the hook re-adds any inherited entries the reset dropped, so
 # login shells settle on the same PATH the spawning process had.
-cat > /etc/profile.d/pi-web-path-parity.sh <<'PI_WEB_PROFILE_HOOK'
+cat > /etc/profile.d/pi-studio-path-parity.sh <<'PI_STUDIO_PROFILE_HOOK'
 # shellcheck shell=sh
-# Login-shell PATH parity for PI WEB containers.
+# Login-shell PATH parity for PI STUDIO containers.
 #
 # Login shells source openSUSE's /etc/profile, which resets PATH to a minimal
-# value before sourcing this directory. PI WEB agent tools instead inherit the
+# value before sourcing this directory. PI STUDIO agent tools instead inherit the
 # session daemon's environment unchanged, so without this hook web terminals
 # resolve fewer commands than agent tools do (for example
 # /workspace/node_modules/.bin in the dev image).
@@ -189,30 +189,30 @@ cat > /etc/profile.d/pi-web-path-parity.sh <<'PI_WEB_PROFILE_HOOK'
 # login shells settle on the same PATH the spawning process had.
 
 if [ -n "${ORIG_PATH:-}" ]; then
-    _pi_web_prefix=
-    _pi_web_old_ifs=$IFS
+    _pi_studio_prefix=
+    _pi_studio_old_ifs=$IFS
     IFS=:
     # Word-split the inherited colon-separated entries; PATH entries never
     # contain spaces or glob characters.
     # shellcheck disable=SC2086
-    for _pi_web_dir in $ORIG_PATH; do
-        if [ -z "$_pi_web_dir" ]; then
+    for _pi_studio_dir in $ORIG_PATH; do
+        if [ -z "$_pi_studio_dir" ]; then
             continue
         fi
-        case ":$PATH:$_pi_web_prefix:" in
-            *:"$_pi_web_dir":*) ;;
-            *) _pi_web_prefix=${_pi_web_prefix:+$_pi_web_prefix:}$_pi_web_dir ;;
+        case ":$PATH:$_pi_studio_prefix:" in
+            *:"$_pi_studio_dir":*) ;;
+            *) _pi_studio_prefix=${_pi_studio_prefix:+$_pi_studio_prefix:}$_pi_studio_dir ;;
         esac
     done
-    IFS=$_pi_web_old_ifs
-    if [ -n "$_pi_web_prefix" ]; then
-        PATH=$_pi_web_prefix:$PATH
+    IFS=$_pi_studio_old_ifs
+    if [ -n "$_pi_studio_prefix" ]; then
+        PATH=$_pi_studio_prefix:$PATH
         export PATH
     fi
-    unset _pi_web_prefix _pi_web_dir _pi_web_old_ifs
+    unset _pi_studio_prefix _pi_studio_dir _pi_studio_old_ifs
 fi
-PI_WEB_PROFILE_HOOK
-chmod 0644 /etc/profile.d/pi-web-path-parity.sh
+PI_STUDIO_PROFILE_HOOK
+chmod 0644 /etc/profile.d/pi-studio-path-parity.sh
 
 zypper clean --all
 rm -rf /var/cache/zypp/*

@@ -2,4 +2,4 @@ User-agent: *
 Content-Signal: search=yes,ai-input=yes,ai-train=yes
 Allow: /
 
-Sitemap: https://pi-web.dev/sitemap.xml
+Sitemap: https://pi-studio.dev/sitemap.xml

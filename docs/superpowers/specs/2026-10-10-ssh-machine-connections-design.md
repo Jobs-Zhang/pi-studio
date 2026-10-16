@@ -5,9 +5,9 @@
 
 ## 背景与目标
 
-PI WEB 的机器（machines）体系目前只支持直连：远端机器上运行 PI WEB，本机通过 `baseUrl`（+ `token`/`headers`）经 HTTP/WebSocket 访问。当远端 PI WEB 不在可达网络上（如家里/机房的内网开发机）时，无法添加为机器。
+PI STUDIO 的机器（machines）体系目前只支持直连：远端机器上运行 PI STUDIO，本机通过 `baseUrl`（+ `token`/`headers`）经 HTTP/WebSocket 访问。当远端 PI STUDIO 不在可达网络上（如家里/机房的内网开发机）时，无法添加为机器。
 
-本设计为机器增加第二种连接方式 **SSH 隧道**：远端仍运行 PI WEB（连接模型不变），本机通过系统 `ssh` 建立本地端口转发访问它。
+本设计为机器增加第二种连接方式 **SSH 隧道**：远端仍运行 PI STUDIO（连接模型不变），本机通过系统 `ssh` 建立本地端口转发访问它。
 
 目标：
 
@@ -20,7 +20,7 @@ PI WEB 的机器（machines）体系目前只支持直连：远端机器上运�
 
 非目标（YAGNI）：
 
-- 远端不安装 PI WEB、通过 SSH 直接执行 pi 会话（全新执行通道，另立项目）。
+- 远端不安装 PI STUDIO、通过 SSH 直接执行 pi 会话（全新执行通道，另立项目）。
 - SSH agent 转发、动态跳板编排等高级场景（`~/.ssh/config` 已覆盖绝大多数）。
 - 双向/远程端口转发（`-R`）、SOCKS 代理。
 
@@ -35,7 +35,7 @@ export interface StoredMachine {
   id: string;
   name: string;
   kind: "remote";
-  baseUrl: string;              // 远端 PI WEB 地址；ssh 模式下相对 SSH 主机解析
+  baseUrl: string;              // 远端 PI STUDIO 地址；ssh 模式下相对 SSH 主机解析
   connection: MachineConnection;
   token?: string;
   headers?: Record<string, string>;
@@ -142,7 +142,7 @@ ssh -N
 `MachineDialog.ts`：
 
 - 新增「连接方式」单选：直连 / SSH（默认直连）。
-- SSH 模式追加字段：主机（`datalist` 挂载 `ssh-config/hosts` 结果）、端口（占位 22）、用户名、私钥路径、密码（私钥与密码二选一，同时填写给出校验提示）。`baseUrl` 语义提示改为「远端 PI WEB 地址（在 SSH 主机上可达）」，默认预填 `http://127.0.0.1:8505`。
+- SSH 模式追加字段：主机（`datalist` 挂载 `ssh-config/hosts` 结果）、端口（占位 22）、用户名、私钥路径、密码（私钥与密码二选一，同时填写给出校验提示）。`baseUrl` 语义提示改为「远端 PI STUDIO 地址（在 SSH 主机上可达）」，默认预填 `http://127.0.0.1:8505`。
 - 提交时组装 `connection` 字段。
 
 `MachineList.ts` / `MachineSwitcher.ts`：

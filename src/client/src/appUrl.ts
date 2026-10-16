@@ -4,7 +4,7 @@ export interface AppUrlContext {
 }
 
 /**
- * Resolve a PI WEB-owned reference at a browser boundary.
+ * Resolve a PI STUDIO-owned reference at a browser boundary.
  *
  * Core callers keep paths application-relative (no leading slash), encode every dynamic path segment,
  * and resolve exactly once. Leading slashes are accepted only for existing plugin-manifest compatibility

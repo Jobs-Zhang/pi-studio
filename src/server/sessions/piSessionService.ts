@@ -47,13 +47,13 @@ import { messageHistoryTargetId } from "./messageHistoryTarget.js";
 import { SessionArchiveStore, type ArchivedSessionRecord, type ArchiveSessionInput } from "./sessionArchiveStore.js";
 import { findArchiveCandidateByIdOrPrefix, planSessionArchiveTree, type SessionArchiveTreeCandidate } from "./sessionArchiveTree.js";
 import type { ActiveSession } from "./sessionRuntimeStore.js";
-import type { PiWebHostPiSessionConnection } from "../../server-plugin-api.js";
+import type { PiStudioHostPiSessionConnection } from "../../server-plugin-api.js";
 import { PiSessionEventConnections } from "./piSessionEventConnections.js";
 import { deterministicSessionName, fallbackSessionName, generateShortSessionName } from "./sessionNameGenerator.js";
 import { computeEditPreview, type EditPreviewResult } from "./editPreview.js";
 import { attachmentsToInlineImages, saveAttachmentsToWorkspace } from "./attachmentService.js";
-import { loadEffectiveProjectAttachmentsConfig } from "../workspaces/projectPiWebConfig.js";
-import type { PiWebConfigService } from "../configRoutes.js";
+import { loadEffectiveProjectAttachmentsConfig } from "../workspaces/projectPiStudioConfig.js";
+import type { PiStudioConfigService } from "../configRoutes.js";
 import { parsePromptAttachments } from "../../shared/promptAttachments.js";
 import { ASK_USER_ANSWERS_CUSTOM_TYPE, SESSION_TREE_CUSTOM_INSTRUCTIONS_MAX_LENGTH, SESSION_UNREAD_LIMIT } from "../../shared/apiTypes.js";
 import type {
@@ -64,7 +64,7 @@ import type {
   ExtensionDialogCloseResponse,
   ExtensionDialogKind,
   ExtensionDialogOutcome,
-  PiWebAttachmentsConfig,
+  PiStudioAttachmentsConfig,
   SavedPromptAttachment,
   SessionBulkArchiveResponse,
   SessionBulkDeleteArchivedResponse,
@@ -122,7 +122,7 @@ export interface PiSessionLogger {
 const noopLogger: PiSessionLogger = { info() { /* no-op */ } };
 const DEFAULT_UNREAD_PUBLICATION_RETRY_MS = 1_000;
 /**
- * User-facing names for the two phases of session startup PI WEB can prove it
+ * User-facing names for the two phases of session startup PI STUDIO can prove it
  * is inside: it awaits exactly one call for each, so the phase is a fact rather
  * than a guess. Deliberately free of internal symbol names and file paths.
  */
@@ -131,7 +131,7 @@ const STARTUP_PHASE_EXTENSIONS = "Loading session extensions";
 /**
  * Appended to whichever phase is running when a background provider catalog
  * refresh happens to be in flight. It is stated as a concurrent fact, never as
- * the cause: PI WEB can verify that a refresh is running, but not that this
+ * the cause: PI STUDIO can verify that a refresh is running, but not that this
  * particular startup is waiting on it.
  */
 const STARTUP_CONCURRENT_CATALOG_REFRESH = "provider model lists are refreshing";
@@ -376,7 +376,7 @@ type ModelScopeSource = "global" | "workspace";
 interface ModelScopeContext {
   key: string;
   source: ModelScopeSource;
-  /** Global scope controls are writable through the PI WEB picker. */
+  /** Global scope controls are writable through the PI STUDIO picker. */
   editable: boolean;
 }
 
@@ -735,19 +735,19 @@ interface CreateAgentRuntimeOptions {
   initialThinkingLevel?: ClientThinkingLevel;
 }
 
-type PiWebRuntimeFactoryOptions = Parameters<CreateAgentSessionRuntimeFactory>[0] & {
+type PiStudioRuntimeFactoryOptions = Parameters<CreateAgentSessionRuntimeFactory>[0] & {
   delegationToolsEnabled?: boolean;
   initialModel?: AgentModel;
   initialThinkingLevel?: ClientThinkingLevel;
 };
 
-type PiWebCreateAgentSessionRuntimeFactory = (
-  options: PiWebRuntimeFactoryOptions
+type PiStudioCreateAgentSessionRuntimeFactory = (
+  options: PiStudioRuntimeFactoryOptions
 ) => ReturnType<CreateAgentSessionRuntimeFactory>;
 
-type CreateAgentRuntime = (createRuntime: PiWebCreateAgentSessionRuntimeFactory, options: CreateAgentRuntimeOptions) => Promise<PiSessionRuntime>;
+type CreateAgentRuntime = (createRuntime: PiStudioCreateAgentSessionRuntimeFactory, options: CreateAgentRuntimeOptions) => Promise<PiSessionRuntime>;
 
-function defaultCreateAgentRuntime(createRuntime: PiWebCreateAgentSessionRuntimeFactory, options: CreateAgentRuntimeOptions): Promise<PiSessionRuntime> {
+function defaultCreateAgentRuntime(createRuntime: PiStudioCreateAgentSessionRuntimeFactory, options: CreateAgentRuntimeOptions): Promise<PiSessionRuntime> {
   if (!(options.sessionManager instanceof SessionManager)) throw new Error("Default runtime creation requires an SDK SessionManager");
   const runtimeFactory = createRuntimeWithOneShotSessionOptions(createRuntime, options.initialModel, options.initialThinkingLevel, options.delegationToolsEnabled);
   return createAgentSessionRuntime(runtimeFactory, {
@@ -758,7 +758,7 @@ function defaultCreateAgentRuntime(createRuntime: PiWebCreateAgentSessionRuntime
 }
 
 function createRuntimeWithOneShotSessionOptions(
-  createRuntime: PiWebCreateAgentSessionRuntimeFactory,
+  createRuntime: PiStudioCreateAgentSessionRuntimeFactory,
   initialModel: AgentModel | undefined,
   initialThinkingLevel: ClientThinkingLevel | undefined,
   delegationToolsEnabled: boolean,
@@ -787,7 +787,7 @@ function createRuntimeWithOneShotSessionOptions(
 
 type SpawnSessionFn = (input: SpawnSessionInvocation) => Promise<SpawnSessionResult>;
 
-export function createPiWebCustomToolDefinitions(
+export function createPiStudioCustomToolDefinitions(
   cwd: string,
   delegationEnabled: boolean,
   spawn?: SpawnSessionFn,
@@ -795,7 +795,7 @@ export function createPiWebCustomToolDefinitions(
   askUser?: AskUserToolDeps,
 ) {
   return [
-    createPiWebEditToolDefinition(cwd),
+    createPiStudioEditToolDefinition(cwd),
     ...(delegationEnabled && spawn !== undefined ? [createSpawnSessionToolDefinition(cwd, { spawn })] : []),
     ...(delegationEnabled && subsessions !== undefined ? createSubsessionToolDefinitions(cwd, subsessions) : []),
     // Asking the user is not delegation: the questions land in the session the
@@ -858,7 +858,7 @@ export interface WebProjectTrustResolution {
  * helper is not part of the package's public exports (the main index exports
  * only the `ProjectTrust*` types and `ProjectTrustStore`, and the package's
  * `exports` map blocks subpath imports, so `resolveProjectTrusted`/
- * `emitProjectTrustEvent` are not callable from here), so PI WEB reimplements
+ * `emitProjectTrustEvent` are not callable from here), so PI STUDIO reimplements
  * its documented decision loop over the SDK-provided extension objects: per
  * extension, the registered `project_trust` handlers run in order; the first
  * handler returning `yes`/`no` decides and `undecided` falls through to the
@@ -882,7 +882,7 @@ export async function emitWebProjectTrustEvent(
       try {
         const handlerResult: unknown = await handler(event, ctx);
         // The SDK reads `trusted` straight off the handler result, so a
-        // non-object would throw there; PI WEB reports it as a handler error
+        // non-object would throw there; PI STUDIO reports it as a handler error
         // and lets the next handler/extension try.
         if (typeof handlerResult !== "object" || handlerResult === null) {
           errors.push({ extensionPath: extension.path, error: "project_trust handler returned a non-object result" });
@@ -914,11 +914,11 @@ export async function emitWebProjectTrustEvent(
 }
 
 /**
- * PI WEB's headless project-trust context. `hasUI` is false because there is
+ * PI STUDIO's headless project-trust context. `hasUI` is false because there is
  * no browser trust prompt (chartered behavior: `ask` never loads untrusted
  * resources), so the UI methods are inert — the same no-UI shape the SDK
  * passes when pi runs without a trust UI. The host mode is `rpc`, mirroring
- * how PI WEB binds its session extension contexts.
+ * how PI STUDIO binds its session extension contexts.
  */
 function webProjectTrustContext(cwd: string): ProjectTrustContext {
   return {
@@ -937,7 +937,7 @@ function webProjectTrustContext(cwd: string): ProjectTrustContext {
 /**
  * Resolve whether a workspace's project-local `.pi/` resources may load, the
  * way `pi` resolves it — a faithful mirror of the SDK's `resolveProjectTrusted`
- * (`dist/core/project-trust.js`, also not a public export). PI WEB has no
+ * (`dist/core/project-trust.js`, also not a public export). PI STUDIO has no
  * browser trust prompt, so the precedence is, in order:
  *
  * 1. Nothing trust-requiring under `cwd` → trusted.
@@ -977,14 +977,14 @@ export async function resolveWebProjectTrusted(resolution: WebProjectTrustResolu
 }
 
 /**
- * Resource-loader options that append PI WEB's own system-prompt sections.
+ * Resource-loader options that append PI STUDIO's own system-prompt sections.
  *
  * `appendSystemPromptOverride` composes with what the loader already resolved,
  * so the operator's `SYSTEM.md` / `APPEND_SYSTEM.md` files keep their content
- * and PI WEB's sections land after them. Returns `undefined` when there is
+ * and PI STUDIO's sections land after them. Returns `undefined` when there is
  * nothing to append, leaving the loader exactly as pi configures it.
  */
-export function piWebResourceLoaderOptions(
+export function piStudioResourceLoaderOptions(
   appendSystemPromptSections: readonly string[],
 ): CreateAgentSessionServicesOptions["resourceLoaderOptions"] | undefined {
   if (appendSystemPromptSections.length === 0) return undefined;
@@ -999,10 +999,10 @@ function createDefaultRuntimeFactory(
   subsessions?: SubsessionToolDeps,
   askUser?: AskUserToolDeps,
   appendSystemPromptSections: readonly string[] = [],
-): PiWebCreateAgentSessionRuntimeFactory {
-  const resourceLoaderOptions = piWebResourceLoaderOptions(appendSystemPromptSections);
+): PiStudioCreateAgentSessionRuntimeFactory {
+  const resourceLoaderOptions = piStudioResourceLoaderOptions(appendSystemPromptSections);
   return async ({ cwd, agentDir, sessionManager, sessionStartEvent, initialModel, initialThinkingLevel, delegationToolsEnabled }) => {
-    // PI WEB always honors pi's project-trust model. When the workspace ships
+    // PI STUDIO always honors pi's project-trust model. When the workspace ships
     // trust-requiring resources, trust is resolved exactly once, mirroring the
     // SDK's flow: the resource loader first loads the pre-trust extension set
     // (user/global; project-local ones stay out) and calls back with it, so
@@ -1050,7 +1050,7 @@ function createDefaultRuntimeFactory(
     services.diagnostics.push(...modelOptions.diagnostics);
     const resolvedDelegationToolsEnabled = delegationToolsEnabled
       ?? await sessionAllowsDelegationTools(sessionManager, sessionManagers);
-    const customTools = createPiWebCustomToolDefinitions(cwd, resolvedDelegationToolsEnabled, spawn, subsessions, askUser);
+    const customTools = createPiStudioCustomToolDefinitions(cwd, resolvedDelegationToolsEnabled, spawn, subsessions, askUser);
     const result = await createAgentSessionFromServices({
       services,
       sessionManager,
@@ -1065,11 +1065,11 @@ function createDefaultRuntimeFactory(
   };
 }
 
-type PiWebEditToolDetails = EditToolDetails | { preview: EditPreviewResult } | undefined;
+type PiStudioEditToolDetails = EditToolDetails | { preview: EditPreviewResult } | undefined;
 
-function createPiWebEditToolDefinition(cwd: string) {
+function createPiStudioEditToolDefinition(cwd: string) {
   const editTool = createEditToolDefinition(cwd);
-  return defineTool<typeof editTool.parameters, PiWebEditToolDetails>({
+  return defineTool<typeof editTool.parameters, PiStudioEditToolDetails>({
     name: editTool.name,
     label: editTool.label,
     description: editTool.description,
@@ -1094,7 +1094,7 @@ export interface PiSessionServiceDependencies {
   agentDir: string;
   sessionManager: PiSessionManagerGateway;
   archiveStore?: SessionArchiveRepository;
-  createRuntime?: PiWebCreateAgentSessionRuntimeFactory;
+  createRuntime?: PiStudioCreateAgentSessionRuntimeFactory;
   createAgentRuntime?: CreateAgentRuntime;
   modelRuntime: ModelRuntime;
   heartbeatIntervalMs?: number;
@@ -1159,7 +1159,7 @@ export interface PiSessionServiceDependencies {
    * Settings edits apply without a daemon restart. When omitted, only the
    * project-local layer applies on top of the built-in defaults.
    */
-  config?: Pick<PiWebConfigService, "read">;
+  config?: Pick<PiStudioConfigService, "read">;
 }
 
 export class PiSessionService implements SessionRouteService {
@@ -1228,7 +1228,7 @@ export class PiSessionService implements SessionRouteService {
   private readonly archiveStore: SessionArchiveRepository;
   private readonly agentDir: string;
   private readonly sessionManager: PiSessionManagerGateway;
-  private readonly createRuntime: PiWebCreateAgentSessionRuntimeFactory;
+  private readonly createRuntime: PiStudioCreateAgentSessionRuntimeFactory;
   private readonly createAgentRuntime: CreateAgentRuntime;
   private readonly modelRuntime: ModelRuntime;
   private readonly workspaceActivity: Pick<WorkspaceActivityService, "applySessionStatus" | "applySessionActivity" | "removeSession" | "reconcileSessionActivity"> | undefined;
@@ -1247,7 +1247,7 @@ export class PiSessionService implements SessionRouteService {
   /** The parked extension Promise resolvers behind the store's open dialogs. */
   private readonly dialogWaiters = new ExtensionDialogWaiters();
   private readonly catalogRefreshStatus: CatalogRefreshStatus | undefined;
-  private readonly config: Pick<PiWebConfigService, "read"> | undefined;
+  private readonly config: Pick<PiStudioConfigService, "read"> | undefined;
   private readonly unreadPublicationRetryInitialMs: number;
   private readonly onUnreadChanged: ((hasNewCompletion: boolean) => void) | undefined;
   private readonly pendingUnreadMutations: SessionUnreadMutation[] = [];
@@ -2847,7 +2847,7 @@ export class PiSessionService implements SessionRouteService {
    * workspace-effective folder it displayed explicitly; this cwd-based
    * resolution only governs folder-less API calls.
    */
-  private async workspaceAttachmentsConfig(cwd: string): Promise<PiWebAttachmentsConfig> {
+  private async workspaceAttachmentsConfig(cwd: string): Promise<PiStudioAttachmentsConfig> {
     const globalConfig = this.config === undefined ? {} : (await this.config.read()).effectiveConfig;
     return loadEffectiveProjectAttachmentsConfig(cwd, globalConfig);
   }
@@ -3678,7 +3678,7 @@ export class PiSessionService implements SessionRouteService {
   }
 
   /**
-   * An idle runtime is only Pi Web's cached control view. Another Pi process may
+   * An idle runtime is only Pi Studio's cached control view. Another Pi process may
    * keep appending to the same JSONL file, so transcript reads must open a fresh
    * read-only snapshot rather than serving that cached branch forever. Active
    * runtimes remain authoritative and are never replaced, reloaded, or aborted.
@@ -4096,9 +4096,9 @@ export class PiSessionService implements SessionRouteService {
       },
       reload: () => this.runExtensionSessionControl(session, () => this.reloadSessionRuntime(session)),
       // These need host-owned creation/selection policies, not SDK runtime-only
-      // replacement. Fail visibly until PI WEB supplies that integration.
-      newSession: () => Promise.reject(new Error("ctx.newSession() is not supported in PI WEB. Start a new session from the web UI.")),
-      switchSession: () => Promise.reject(new Error("ctx.switchSession() is not supported in PI WEB. Select a session from the web UI.")),
+      // replacement. Fail visibly until PI STUDIO supplies that integration.
+      newSession: () => Promise.reject(new Error("ctx.newSession() is not supported in PI STUDIO. Start a new session from the web UI.")),
+      switchSession: () => Promise.reject(new Error("ctx.switchSession() is not supported in PI STUDIO. Select a session from the web UI.")),
     };
   }
 
@@ -4144,7 +4144,7 @@ export class PiSessionService implements SessionRouteService {
       const added = this.notificationStore.addNotification(generation, message, type);
       this.publishNotificationMutations(added.mutations);
     };
-    // PI WEB owns the browser-facing dialog, notification, and text-formatting
+    // PI STUDIO owns the browser-facing dialog, notification, and text-formatting
     // boundaries: the three dialog primitives park daemon-held Promises that
     // the browser answers, while every other UI method delegates to Pi's
     // headless defaults so unsupported surfaces cancel safely instead of
@@ -4309,7 +4309,7 @@ export class PiSessionService implements SessionRouteService {
     this.unreadPublicationRetryDelayMs = this.unreadPublicationRetryInitialMs;
   }
 
-  connectSessionEvents(ref: PiSessionRef, lifetime: AbortSignal): PiWebHostPiSessionConnection {
+  connectSessionEvents(ref: PiSessionRef, lifetime: AbortSignal): PiStudioHostPiSessionConnection {
     const active = this.active.get(ref.id);
     if (active?.runtime.session.sessionId !== ref.id
       || !cwdPathsEqual(active.runtime.session.sessionManager.getCwd(), ref.cwd)) {
@@ -5399,10 +5399,10 @@ function transcriptBranchIncludesEntry(entries: readonly unknown[], entryId: str
 }
 
 /** custom entry type used to persist parent -> child subsession links outside LLM context. */
-const SUBSESSION_LINK_CUSTOM_TYPE = "pi-web.subsession.link";
+const SUBSESSION_LINK_CUSTOM_TYPE = "pi-studio.subsession.link";
 
 /** custom entry type used to mark a child as created by spawn_subsession. */
-const SUBSESSION_CHILD_LINK_CUSTOM_TYPE = "pi-web.subsession.spawned";
+const SUBSESSION_CHILD_LINK_CUSTOM_TYPE = "pi-studio.subsession.spawned";
 
 /** customType marking a parent-facing subsession-completion notice. */
 const SUBSESSION_NOTIFICATION_CUSTOM_TYPE = "subsession.completion";

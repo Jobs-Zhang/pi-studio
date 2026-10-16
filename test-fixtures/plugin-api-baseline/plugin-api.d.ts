@@ -1,18 +1,39 @@
 import type { TemplateResult } from "lit";
-import type { DeleteWorkspaceFileResponse, FileContentResponse, FileTreeResponse, JsonValue, MachineKind, MoveWorkspaceFileOptions, MoveWorkspaceFileResponse, PiWebStatusResponse, PluginCapability, PluginCapabilityProvision, TerminalCommandRunHandle, WorkspaceProviderMetadata, WorkspaceRemovalPresentation, WriteWorkspaceFileOptions, WriteWorkspaceFileResponse } from "./shared/pluginApiTypes.js";
-export type { FileContentMediaType, FileContentResponse, FileTreeEntry, FileTreeResponse, JsonObject, JsonPrimitive, JsonValue, MachineKind, PiWebComponentStatus, PiWebDockerMode, PiWebInstallationInfo, PiWebInstallationKind, PiWebReleaseStatus, PiWebServiceComponent, PiWebStatusMessage, PiWebStatusResponse, PiWebStatusSeverity, PiWebVersionResponse, PluginCapability, PluginCapabilityProvision, TerminalCommandRun, TerminalCommandRunHandle, TerminalCommandRunStatus, WorkspaceProviderCapabilities, WorkspaceProviderMetadata, WorkspaceRemovalPresentation, WriteWorkspaceFileOptions, WriteWorkspaceFileResponse, DeleteWorkspaceFileResponse, MoveWorkspaceFileOptions, MoveWorkspaceFileResponse, } from "./shared/pluginApiTypes.js";
+import type { DeleteWorkspaceFileResponse, FileContentResponse, FileTreeResponse, JsonValue, MachineKind, MoveWorkspaceFileOptions, MoveWorkspaceFileResponse, PiStudioStatusResponse, PluginCapability, PluginCapabilityProvision, TerminalCommandRunHandle, WorkspaceProviderMetadata, WorkspaceRemovalPresentation, WriteWorkspaceFileOptions, WriteWorkspaceFileResponse } from "./shared/pluginApiTypes.js";
+export type { FileContentMediaType, FileContentResponse, FileTreeEntry, FileTreeResponse, JsonObject, JsonPrimitive, JsonValue, MachineKind, PiStudioComponentStatus, PiStudioDockerMode, PiStudioInstallationInfo, PiStudioInstallationKind, PiStudioReleaseStatus, PiStudioServiceComponent, PiStudioStatusMessage, PiStudioStatusResponse, PiStudioStatusSeverity, PiStudioVersionResponse, PluginCapability, PluginCapabilityProvision, TerminalCommandRun, TerminalCommandRunHandle, TerminalCommandRunStatus, WorkspaceProviderCapabilities, WorkspaceProviderMetadata, WorkspaceRemovalPresentation, WriteWorkspaceFileOptions, WriteWorkspaceFileResponse, DeleteWorkspaceFileResponse, MoveWorkspaceFileOptions, MoveWorkspaceFileResponse, } from "./shared/pluginApiTypes.js";
 export type PluginId = string;
 export type LocalContributionId = string;
 export type QualifiedContributionId = string;
 export type HtmlTemplateTag = (strings: TemplateStringsArray, ...values: unknown[]) => TemplateResult;
 export type SvgTemplateTag = (strings: TemplateStringsArray, ...values: unknown[]) => TemplateResult;
 type MaybePromise<T> = T | Promise<T>;
-export interface PiWebPlugin {
+export interface PiStudioPlugin {
     apiVersion: 4;
     name: string;
     /** Exact capability versions that must be active before this plugin starts. */
     requires?: readonly PluginCapability[];
     activate: (context: PluginActivationContext) => MaybePromise<PluginActivationResult>;
+}
+/** Locale tags the browser host ships catalogs for. */
+export type PluginLocale = "en" | "zh-CN";
+/**
+ * A plugin-owned catalog: plugin-local message key to template. Templates may
+ * use `{name}` placeholders, and a `<key>_one` / `<key>_other` pair is selected
+ * from a numeric `count` parameter.
+ */
+export type PluginMessageCatalog = Readonly<Record<string, string>>;
+/**
+ * Localization service for a browser plugin. Keys stay plugin-local: the host
+ * namespaces them per plugin, so a plugin cannot shadow host messages, and a
+ * missing translation falls back to the host catalog and finally to English.
+ */
+export interface PluginI18nService {
+    /** Locale the host is rendering this activation with. */
+    readonly locale: PluginLocale;
+    /** Translate a plugin-local key with `{name}` placeholder substitution. */
+    readonly t: (key: string, params?: Readonly<Record<string, string | number>>) => string;
+    /** Register or replace this plugin's catalog. The most recent call wins. */
+    readonly registerCatalog: (catalog: PluginMessageCatalog) => void;
 }
 /** Host-owned frozen values supplied once during browser plugin activation. */
 export interface PluginActivationContext {
@@ -23,6 +44,8 @@ export interface PluginActivationContext {
     readonly runtimePluginId: PluginId;
     readonly html: HtmlTemplateTag;
     readonly svg: SvgTemplateTag;
+    /** Localization for this plugin's own user-visible strings. */
+    readonly i18n: PluginI18nService;
     /** Signal for this bounded activation invocation, not the plugin lifetime. */
     readonly signal: AbortSignal;
     /** Aborted before failed-start rollback or browser-host shutdown disposal. */
@@ -96,7 +119,7 @@ export interface ContentMarkdownRenderRequest {
     /** Authorize manual fence previews; false/omitted retains automatic defaults. Never overrides user Raw. */
     allowManualPreview?: boolean;
 }
-/** Host capability token: { pluginId: "pi-web", id: "content-rendering", version: 1, parse }. */
+/** Host capability token: { pluginId: "pi-studio", id: "content-rendering", version: 1, parse }. */
 export interface ContentRenderingCapability {
     /** Eligible choices in source plugin ID order, then local contribution ID order. */
     listRenderers(request: ContentRenderRequest): readonly ContentRendererOption[];
@@ -184,7 +207,7 @@ export interface PluginRuntimeState {
     selectedSession?: PluginSelectedSession;
     workspaceTool?: string;
     mainView?: "navigation" | "chat" | "workspace";
-    piWebStatus?: PiWebStatusResponse;
+    piStudioStatus?: PiStudioStatusResponse;
 }
 export interface PluginPromptChip {
     /** Plugin-local identity; setting the same id replaces its data and callback. */
@@ -251,8 +274,8 @@ export interface PluginRuntimeContext {
     /** Invalidate plugin workspace-panel data for the selected workspace, optionally targeting one qualified panel id. */
     refreshWorkspacePanels: (panelId?: QualifiedContributionId) => void | Promise<void>;
     refreshAppData: () => void | Promise<void>;
-    /** Force a fresh PI WEB release check on the selected machine. Optional for compatibility with older hosts. */
-    checkForPiWebUpdates?: () => void | Promise<void>;
+    /** Force a fresh PI STUDIO release check on the selected machine. Optional for compatibility with older hosts. */
+    checkForPiStudioUpdates?: () => void | Promise<void>;
     reloadPage: () => void;
     startSession: () => void | Promise<void>;
     archiveSession: () => void | Promise<void>;

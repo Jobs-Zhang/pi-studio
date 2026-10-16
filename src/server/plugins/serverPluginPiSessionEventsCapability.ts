@@ -1,8 +1,8 @@
 import {
-  PI_WEB_HOST_PI_SESSION_EVENTS_CAPABILITY,
-  type PiWebHostPiSessionConnection,
-  type PiWebHostPiSessionEventsV1,
-  type PiWebHostPiSessionSelection,
+  PI_STUDIO_HOST_PI_SESSION_EVENTS_CAPABILITY,
+  type PiStudioHostPiSessionConnection,
+  type PiStudioHostPiSessionEventsV1,
+  type PiStudioHostPiSessionSelection,
 } from "../../server-plugin-api.js";
 import type { ProjectService } from "../projects/projectService.js";
 import type { WorkspaceProviderRegistry } from "../workspaces/workspaceProviderRegistry.js";
@@ -13,12 +13,12 @@ export function createServerPluginPiSessionEventsCapabilityFactory(options: {
   readonly projects: Pick<ProjectService, "requireProject">;
   readonly workspaces: Pick<WorkspaceProviderRegistry, "resolve">;
   readonly sessions: {
-    connectSessionEvents(ref: { id: string; cwd: string }, lifetime: AbortSignal): PiWebHostPiSessionConnection;
+    connectSessionEvents(ref: { id: string; cwd: string }, lifetime: AbortSignal): PiStudioHostPiSessionConnection;
   };
-}): ServerPluginHostCapabilityFactory<PiWebHostPiSessionEventsV1> {
+}): ServerPluginHostCapabilityFactory<PiStudioHostPiSessionEventsV1> {
   const workspaceFactory = createServerPluginWorkspacesCapabilityFactory(options);
   return Object.freeze({
-    capability: PI_WEB_HOST_PI_SESSION_EVENTS_CAPABILITY,
+    capability: PI_STUDIO_HOST_PI_SESSION_EVENTS_CAPABILITY,
     create(context: ServerPluginHostCapabilityContext) {
       const authority = workspaceFactory.create(context).value;
       const lifetime = new AbortController();
@@ -28,7 +28,7 @@ export function createServerPluginPiSessionEventsCapabilityFactory(options: {
       return Object.freeze({
         value: Object.freeze({
           version: 1,
-          connect: async (selection: PiWebHostPiSessionSelection): Promise<PiWebHostPiSessionConnection> => {
+          connect: async (selection: PiStudioHostPiSessionSelection): Promise<PiStudioHostPiSessionConnection> => {
             lifetime.signal.throwIfAborted();
             const resolved = await authority.resolve({ projectId: selection.projectId, workspaceId: selection.workspaceId });
             lifetime.signal.throwIfAborted();

@@ -9,7 +9,7 @@ export type NavigationSectionWeights = Partial<Record<NavigationSection, number>
 
 export type SectionSplitStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
-export const NAVIGATION_SECTION_SPLIT_STORAGE_KEY = "pi-web:section-splits:v1";
+export const NAVIGATION_SECTION_SPLIT_STORAGE_KEY = "pi-studio:section-splits:v1";
 export const NAVIGATION_SECTION_SPLIT_MIN_PX = 120;
 export const NAVIGATION_SECTION_SPLIT_STEP_PX = 24;
 export const NAVIGATION_SECTION_SPLIT_LARGE_STEP_PX = 72;

@@ -1,86 +1,86 @@
-name: pi-web
+name: pi-studio
 
-x-pi-web-build: &pi-web-build
+x-pi-studio-build: &pi-studio-build
   context: .
   dockerfile: Dockerfile
   args:
-    OPENSUSE_IMAGE: ${PI_WEB_OPENSUSE_IMAGE:-opensuse/tumbleweed}
-    NODEJS_MAJOR: ${PI_WEB_NODEJS_MAJOR:-22}
-    NODEJS_REPO: ${PI_WEB_NODEJS_REPO:-auto}
-    PI_WEB_EXTRA_ZYPPER_PACKAGES: ${PI_WEB_EXTRA_ZYPPER_PACKAGES:-}
-    PI_WEB_UID: ${PI_WEB_UID:-1000}
-    PI_WEB_GID: ${PI_WEB_GID:-1000}
-    PI_WEB_VERSION: ${PI_WEB_VERSION:-latest}
+    OPENSUSE_IMAGE: ${PI_STUDIO_OPENSUSE_IMAGE:-opensuse/tumbleweed}
+    NODEJS_MAJOR: ${PI_STUDIO_NODEJS_MAJOR:-22}
+    NODEJS_REPO: ${PI_STUDIO_NODEJS_REPO:-auto}
+    PI_STUDIO_EXTRA_ZYPPER_PACKAGES: ${PI_STUDIO_EXTRA_ZYPPER_PACKAGES:-}
+    PI_STUDIO_UID: ${PI_STUDIO_UID:-1000}
+    PI_STUDIO_GID: ${PI_STUDIO_GID:-1000}
+    PI_STUDIO_VERSION: ${PI_STUDIO_VERSION:-latest}
     CACHE_BUST: ${CACHE_BUST:-local}
 
-x-pi-web-environment: &pi-web-environment
+x-pi-studio-environment: &pi-studio-environment
   HOME: /data/home
   XDG_CONFIG_HOME: /data/config
-  PI_WEB_DATA_DIR: /data/pi-web
-  PI_WEB_SESSIOND_SOCKET: /data/pi-web/sessiond.sock
+  PI_STUDIO_DATA_DIR: /data/pi-studio
+  PI_STUDIO_SESSIOND_SOCKET: /data/pi-studio/sessiond.sock
   PI_CODING_AGENT_DIR: /data/pi-agent
   HOSTEXEC_IMAGE: ${HOSTEXEC_IMAGE:-alpine:3.22}
   HOSTEXEC_MODE: ${HOSTEXEC_MODE:-disabled}
-  PI_WEB_MAX_UPLOAD_BYTES: ${PI_WEB_MAX_UPLOAD_BYTES:-67108864}
-  PI_WEB_DOCKER_RUNTIME: "1"
-  PI_WEB_DOCKER_MODE: runtime
-  PI_WEB_DOCKER_INSTALL_DIR: ${PI_WEB_DOCKER_INSTALL_DIR:?set by docker/install.sh}
-  PI_WEB_DOCKER_HELPER_IMAGE: ${PI_WEB_IMAGE:-pi-web:local}
+  PI_STUDIO_MAX_UPLOAD_BYTES: ${PI_STUDIO_MAX_UPLOAD_BYTES:-67108864}
+  PI_STUDIO_DOCKER_RUNTIME: "1"
+  PI_STUDIO_DOCKER_MODE: runtime
+  PI_STUDIO_DOCKER_INSTALL_DIR: ${PI_STUDIO_DOCKER_INSTALL_DIR:?set by docker/install.sh}
+  PI_STUDIO_DOCKER_HELPER_IMAGE: ${PI_STUDIO_IMAGE:-pi-studio:local}
 
 # User-owned extra container environment, shared with development mode through
-# the persistent data directory. Created by docker/install.sh and pi-web-docker.
-x-pi-web-env-file: &pi-web-env-file
-  - ${PI_WEB_DOCKER_DATA_DIR:-./data}/container.env
+# the persistent data directory. Created by docker/install.sh and pi-studio-docker.
+x-pi-studio-env-file: &pi-studio-env-file
+  - ${PI_STUDIO_DOCKER_DATA_DIR:-./data}/container.env
 
-x-pi-web-volumes: &pi-web-volumes
+x-pi-studio-volumes: &pi-studio-volumes
   - type: bind
-    source: ${PI_WEB_DOCKER_DATA_DIR:-./data}
+    source: ${PI_STUDIO_DOCKER_DATA_DIR:-./data}
     target: /data
 
 services:
   sessiond:
-    build: *pi-web-build
-    image: ${PI_WEB_IMAGE:-pi-web:local}
-    command: ["pi-web-sessiond"]
+    build: *pi-studio-build
+    image: ${PI_STUDIO_IMAGE:-pi-studio:local}
+    command: ["pi-studio-sessiond"]
     restart: unless-stopped
-    user: "${PI_WEB_UID:-1000}:${PI_WEB_GID:-1000}"
+    user: "${PI_STUDIO_UID:-1000}:${PI_STUDIO_GID:-1000}"
     group_add:
       - "${DOCKER_GID:-0}"
     security_opt:
       - label=disable
-    env_file: *pi-web-env-file
-    environment: *pi-web-environment
-    volumes: *pi-web-volumes
+    env_file: *pi-studio-env-file
+    environment: *pi-studio-environment
+    volumes: *pi-studio-volumes
     healthcheck:
-      test: ["CMD-SHELL", "test -S /data/pi-web/sessiond.sock"]
+      test: ["CMD-SHELL", "test -S /data/pi-studio/sessiond.sock"]
       interval: 10s
       timeout: 3s
       retries: 12
       start_period: 10s
 
   web:
-    build: *pi-web-build
-    image: ${PI_WEB_IMAGE:-pi-web:local}
-    command: ["pi-web-server"]
+    build: *pi-studio-build
+    image: ${PI_STUDIO_IMAGE:-pi-studio:local}
+    command: ["pi-studio-server"]
     restart: unless-stopped
     depends_on:
       sessiond:
         condition: service_healthy
-    user: "${PI_WEB_UID:-1000}:${PI_WEB_GID:-1000}"
+    user: "${PI_STUDIO_UID:-1000}:${PI_STUDIO_GID:-1000}"
     group_add:
       - "${DOCKER_GID:-0}"
     security_opt:
       - label=disable
-    env_file: *pi-web-env-file
+    env_file: *pi-studio-env-file
     environment:
-      <<: *pi-web-environment
-      PI_WEB_HOST: 0.0.0.0
-      PI_WEB_PORT: "8504"
+      <<: *pi-studio-environment
+      PI_STUDIO_HOST: 0.0.0.0
+      PI_STUDIO_PORT: "8504"
     ports:
-      - "${PI_WEB_BIND_ADDR:-127.0.0.1}:${PI_WEB_PORT:-8504}:8504"
-    volumes: *pi-web-volumes
+      - "${PI_STUDIO_BIND_ADDR:-127.0.0.1}:${PI_STUDIO_PORT:-8504}:8504"
+    volumes: *pi-studio-volumes
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8504/api/pi-web/runtime >/dev/null"]
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8504/api/pi-studio/runtime >/dev/null"]
       interval: 10s
       timeout: 5s
       retries: 12

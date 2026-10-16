@@ -1,9 +1,9 @@
 import type { QualifiedContributionId, QualifiedThemeContribution, QualifiedThemePairContribution, ThemeToken } from "./plugins/types";
 
-import type { PiWebThemePreference } from "../../shared/apiTypes";
+import type { PiStudioThemePreference } from "../../shared/apiTypes";
 import { parseThemePreference } from "../../shared/themePreference";
 
-export type ThemePreference = PiWebThemePreference;
+export type ThemePreference = PiStudioThemePreference;
 
 export interface ResolveThemePreferenceOptions {
   themes: readonly QualifiedThemeContribution[];
@@ -21,9 +21,9 @@ export interface ThemePreferenceResolution {
 }
 
 export const CLASSIC_THEME_ID: QualifiedContributionId = "themes:classic";
-export const DEFAULT_THEME_ID: QualifiedContributionId = "themes:pi-web-dark";
+export const DEFAULT_THEME_ID: QualifiedContributionId = "themes:pi-studio-dark";
 export const DEFAULT_THEME_PREFERENCE: ThemePreference = { themeId: DEFAULT_THEME_ID, auto: true };
-export const THEME_STORAGE_KEY = "pi-web-app-theme";
+export const THEME_STORAGE_KEY = "pi-studio-app-theme";
 
 export const THEME_TOKENS: ThemeToken[] = [
   "--pi-bg",
@@ -92,9 +92,9 @@ export function effectiveThemePreference(local: ThemePreference | undefined, con
   return local ?? configuredDefault ?? DEFAULT_THEME_PREFERENCE;
 }
 
-export function applyPiWebTheme(theme: QualifiedThemeContribution): void {
+export function applyPiStudioTheme(theme: QualifiedThemeContribution): void {
   const root = document.documentElement;
-  root.dataset["piWebTheme"] = theme.id;
+  root.dataset["piStudioTheme"] = theme.id;
   root.style.colorScheme = theme.colorScheme;
   for (const token of THEME_TOKENS) {
     const value = theme.tokens[token];

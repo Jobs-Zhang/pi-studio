@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "pi-web-docs-dev",
+  "name": "pi-studio-docs-dev",
   "compatibility_date": "2026-05-20",
   "observability": {
     "enabled": true
@@ -8,8 +8,8 @@
   "workers_dev": false,
   "routes": [
     {
-      "pattern": "pi-web.dev/dev/*",
-      "zone_name": "pi-web.dev"
+      "pattern": "pi-studio.dev/dev/*",
+      "zone_name": "pi-studio.dev"
     }
   ],
   "assets": {

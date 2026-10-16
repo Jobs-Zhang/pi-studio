@@ -1,4 +1,4 @@
-import { isPiWebBundledPluginId, isPiWebPluginId, isReservedPiWebPluginId } from "./pluginIds.js";
+import { isPiStudioBundledPluginId, isPiStudioPluginId, isReservedPiStudioPluginId } from "./pluginIds.js";
 
 const MACHINE_PLUGIN_ID_PREFIX = "machine.";
 
@@ -9,20 +9,20 @@ export interface MachineScopedPluginIdParts {
 
 export function machineScopedPluginId(machineId: string, pluginId: string): string {
   requireMachinePluginId(machineId, pluginId);
-  if (isReservedPiWebPluginId(pluginId)) throw new Error(`Reserved PI WEB plugin id: ${pluginId}`);
+  if (isReservedPiStudioPluginId(pluginId)) throw new Error(`Reserved PI STUDIO plugin id: ${pluginId}`);
   return scopedPluginId(machineId, pluginId);
 }
 
-/** Machine-scope a host-validated plugin from PI WEB's bundled-only namespace. */
+/** Machine-scope a host-validated plugin from PI STUDIO's bundled-only namespace. */
 export function machineScopedBundledPluginId(machineId: string, pluginId: string): string {
   requireMachinePluginId(machineId, pluginId);
-  if (!isPiWebBundledPluginId(pluginId)) throw new Error(`PI WEB bundled plugin id is required: ${pluginId}`);
+  if (!isPiStudioBundledPluginId(pluginId)) throw new Error(`PI STUDIO bundled plugin id is required: ${pluginId}`);
   return scopedPluginId(machineId, pluginId);
 }
 
 /** Machine-scope an id only after its host-authored manifest has been validated. */
 export function machineScopedManifestPluginId(machineId: string, pluginId: string): string {
-  return isPiWebBundledPluginId(pluginId)
+  return isPiStudioBundledPluginId(pluginId)
     ? machineScopedBundledPluginId(machineId, pluginId)
     : machineScopedPluginId(machineId, pluginId);
 }
@@ -36,8 +36,8 @@ export function parseMachineScopedPluginId(pluginId: string): MachineScopedPlugi
   const encodedMachineId = rest.slice(0, separator);
   const sourcePluginId = rest.slice(separator + 1);
   if (!isHexString(encodedMachineId)
-    || !isPiWebPluginId(sourcePluginId)
-    || (isReservedPiWebPluginId(sourcePluginId) && !isPiWebBundledPluginId(sourcePluginId))) return undefined;
+    || !isPiStudioPluginId(sourcePluginId)
+    || (isReservedPiStudioPluginId(sourcePluginId) && !isPiStudioBundledPluginId(sourcePluginId))) return undefined;
 
   const machineId = hexToString(encodedMachineId);
   if (machineId === "") return undefined;
@@ -46,7 +46,7 @@ export function parseMachineScopedPluginId(pluginId: string): MachineScopedPlugi
 
 function requireMachinePluginId(machineId: string, pluginId: string): void {
   if (machineId === "") throw new Error("Machine id is required");
-  if (!isPiWebPluginId(pluginId)) throw new Error(`Invalid PI WEB plugin id: ${pluginId}`);
+  if (!isPiStudioPluginId(pluginId)) throw new Error(`Invalid PI STUDIO plugin id: ${pluginId}`);
 }
 
 function scopedPluginId(machineId: string, pluginId: string): string {

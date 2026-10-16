@@ -49,7 +49,7 @@ const systemdInspectionProperties = [
 const systemdBusDestination = "org.freedesktop.systemd1";
 const systemdUnitObjectPathPrefix = "/org/freedesktop/systemd1/unit/";
 const legacySystemdUnprintableValue = "[unprintable]";
-const managedSystemdEnvironmentKeys = ["PI_WEB_CONFIG"] as const;
+const managedSystemdEnvironmentKeys = ["PI_STUDIO_CONFIG"] as const;
 
 type SystemdInspectionProperty = typeof systemdInspectionProperties[number];
 
@@ -57,12 +57,12 @@ type SystemdInspectionProperty = typeof systemdInspectionProperties[number];
  * Read installed definitions through a strict UTF-8 boundary, parse the
  * manager-relevant environment, and then bind that byte snapshot to the
  * service manager's loaded context. Systemd must report the canonical
- * fragment and matching Environment values for PI WEB-managed keys.
+ * fragment and matching Environment values for PI STUDIO-managed keys.
  * EnvironmentFile inputs are accepted with a warning, not verified;
  * unrelated environment values are outside this assertion. Legacy
  * systemctl output is recovered losslessly from the manager's D-Bus property.
  * A loaded LaunchAgent must report the canonical
- * plist and the same PI_WEB_CONFIG. Launchd restart is the exception: its existing
+ * plist and the same PI_STUDIO_CONFIG. Launchd restart is the exception: its existing
  * bootout/bootstrap path deliberately replaces loaded state before probing.
  */
 export function inspectInstalledNativeServiceDefinitions(
@@ -195,7 +195,7 @@ function inspectEffectiveSystemdDefinition(
   if (actualFragmentPath !== expectedFragmentPath) {
     return {
       ok: false,
-      message: `Systemd loaded ${source.systemdName} from ${fragmentPath} instead of the installed PI WEB definition ${source.path}.`,
+      message: `Systemd loaded ${source.systemdName} from ${fragmentPath} instead of the installed PI STUDIO definition ${source.path}.`,
     };
   }
 
@@ -218,7 +218,7 @@ function inspectEffectiveSystemdDefinition(
   const environmentFiles = parsed.value.properties.get("EnvironmentFiles") ?? [];
   if (environmentFiles.some((value) => value !== "")) {
     dependencies.warn(
-      `Systemd unit ${source.systemdName} uses EnvironmentFile. PI WEB cannot verify whether it overrides PI_WEB_CONFIG; checks use the config path from the installed service definition unless explicitly overridden for this command.`,
+      `Systemd unit ${source.systemdName} uses EnvironmentFile. PI STUDIO cannot verify whether it overrides PI_STUDIO_CONFIG; checks use the config path from the installed service definition unless explicitly overridden for this command.`,
     );
   }
   return { ok: true, value: null };
@@ -268,16 +268,16 @@ function inspectLoadedLaunchdDefinition(
   if (actualPlistPath !== expectedPlistPath) {
     return {
       ok: false,
-      message: `Launchd loaded ${source.launchdTarget} from ${loaded.path} instead of the installed PI WEB definition ${source.path}; run \`pi-web restart\` to reload the managed LaunchAgents.`,
+      message: `Launchd loaded ${source.launchdTarget} from ${loaded.path} instead of the installed PI STUDIO definition ${source.path}; run \`pi-studio restart\` to reload the managed LaunchAgents.`,
     };
   }
 
-  const expectedConfigPath = ownEnvironmentValue(expectedEnvironment, "PI_WEB_CONFIG");
-  const loadedConfigPath = ownEnvironmentValue(loaded.environment, "PI_WEB_CONFIG");
+  const expectedConfigPath = ownEnvironmentValue(expectedEnvironment, "PI_STUDIO_CONFIG");
+  const loadedConfigPath = ownEnvironmentValue(loaded.environment, "PI_STUDIO_CONFIG");
   if (loadedConfigPath !== expectedConfigPath) {
     return {
       ok: false,
-      message: `Loaded LaunchAgent ${source.launchdTarget} has PI_WEB_CONFIG ${JSON.stringify(loadedConfigPath)} instead of installed value ${JSON.stringify(expectedConfigPath)}; run \`pi-web restart\` to reload the managed LaunchAgents.`,
+      message: `Loaded LaunchAgent ${source.launchdTarget} has PI_STUDIO_CONFIG ${JSON.stringify(loadedConfigPath)} instead of installed value ${JSON.stringify(expectedConfigPath)}; run \`pi-studio restart\` to reload the managed LaunchAgents.`,
     };
   }
   return { ok: true, value: null };

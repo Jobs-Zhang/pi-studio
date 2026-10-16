@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { LitElement, css, html, type PropertyValues, type TemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { ifDefined } from "lit/directives/if-defined.js";
@@ -70,7 +71,7 @@ export class AskUserCard extends LitElement {
     return html`
       <article class="card open-card" aria-labelledby="ask-user-heading">
         <header class="card-header">
-          <h2 id="ask-user-heading">Questions</h2>
+          <h2 id="ask-user-heading">${t("askUser.heading")}</h2>
           <span class="header-status" role="status" aria-live="polite" aria-atomic="true">
             ${count} of ${ask.questions.length} answered
           </span>
@@ -84,7 +85,7 @@ export class AskUserCard extends LitElement {
               ? this.renderPartialSubmitConfirmation(ask, unanswered)
               : html`
                   <button class="primary-action" type="submit" ?disabled=${this.submitting}>
-                    ${this.submitting ? "Sending…" : "Send answers"}
+                    ${this.submitting ? t("askUser.sending") : t("askUser.sendAnswers")}
                   </button>
                 `}
           </footer>
@@ -133,16 +134,16 @@ export class AskUserCard extends LitElement {
               <input
                 type=${inputType}
                 name=${this.questionGroupName(ask, question)}
-                value="__pi_web_other__"
+                value="__pi_studio_other__"
                 .checked=${customSelected}
                 @change=${(event: Event) => { this.changeOther(question, index, event); }}
               />
-              <span class="option-copy"><span class="option-label">Custom</span></span>
+              <span class="option-copy"><span class="option-label">${t("askUser.custom")}</span></span>
             </label>
           `}
           ${customSelected ? html`
             <label class="other-answer" for=${this.otherInputId(index)}>
-              <span>Custom answer</span>
+              <span>${t("askUser.customAnswer")}</span>
               <textarea
                 id=${this.otherInputId(index)}
                 rows="3"
@@ -159,9 +160,9 @@ export class AskUserCard extends LitElement {
 
   private renderPartialSubmitConfirmation(ask: PendingAskUser, unanswered: AskUserQuestion[]): TemplateResult {
     return html`
-      <div class="partial-confirmation" role="group" aria-label="Confirm partial answers">
+      <div class="partial-confirmation" role="group" aria-label=${t("askUser.confirmPartial")}>
         <p>
-          <strong>Send without answering:</strong>
+          <strong>${t("askUser.sendWithoutAnswering")}:</strong>
           ${unanswered.map((question, index) => html`${index === 0 ? " " : ", "}<button
             class="question-jump"
             type="button"
@@ -169,9 +170,9 @@ export class AskUserCard extends LitElement {
           >${question.question}</button>`)}?
         </p>
         <div class="confirmation-actions">
-          <button class="secondary-action" type="button" @click=${() => { this.keepEditing(ask, unanswered); }}>Keep editing</button>
+          <button class="secondary-action" type="button" @click=${() => { this.keepEditing(ask, unanswered); }}>${t("askUser.keepEditing")}</button>
           <button class="primary-action send-anyway" type="button" ?disabled=${this.submitting} @click=${() => { this.submitAnswers(ask); }}>
-            ${this.submitting ? "Sending…" : "Send anyway"}
+            ${this.submitting ? t("askUser.sending") : t("askUser.sendAnyway")}
           </button>
         </div>
       </div>
@@ -180,14 +181,14 @@ export class AskUserCard extends LitElement {
 
   private renderRecord(outcome: AskUserOutcome): TemplateResult {
     const recordLabel = outcome.reason === "submitted"
-      ? "Answers sent"
+      ? t("askUser.answersSent")
       : outcome.reason === "superseded"
-        ? "Superseded"
+        ? t("askUser.superseded")
         : "Cancelled";
     return html`
       <article class="card record-card" aria-labelledby="ask-user-record-heading">
         <header class="card-header">
-          <h2 id="ask-user-record-heading">Questions</h2>
+          <h2 id="ask-user-record-heading">${t("askUser.heading")}</h2>
           <span class=${`header-status ${outcome.reason}`}>${recordLabel}</span>
         </header>
         <p class="record-summary">
@@ -212,13 +213,13 @@ export class AskUserCard extends LitElement {
         </h3>
         ${record.question.detail === undefined ? null : html`<p class="question-detail">${record.question.detail}</p>`}
         ${answer === undefined
-          ? html`<p class="unanswered-record">Unanswered</p>`
+          ? html`<p class="unanswered-record">${t("askUser.unanswered")}</p>`
           : html`
               <ul class="record-answers">
                 ${answer.values.map((value) => html`<li>${this.optionLabel(record.question, value)}</li>`)}
-                ${answer.otherText === undefined ? null : html`<li><strong>Custom:</strong> <span class="other-record-text">${answer.otherText}</span></li>`}
+                ${answer.otherText === undefined ? null : html`<li><strong>${t("askUser.custom")}:</strong> <span class="other-record-text">${answer.otherText}</span></li>`}
               </ul>
-              ${answer.fromDraft ? html`<p class="draft-note">Draft answer · not sent</p>` : null}
+              ${answer.fromDraft ? html`<p class="draft-note">${t("askUser.draftNotSent")}</p>` : null}
             `}
       </section>
     `;

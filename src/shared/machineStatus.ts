@@ -12,7 +12,7 @@
  * Status of a single node (machine, project, workspace, or the unattributed
  * bucket), as an open map keyed by qualified flag id.
  *
- * The map is open because PI WEB federates across machines running different
+ * The map is open because PI STUDIO federates across machines running different
  * versions, so a browser regularly reads snapshots produced by a daemon that
  * knows flags it does not. Because parents are rolled up on the server, an
  * unrecognised flag id still produces correct parent state; the client only
@@ -52,7 +52,7 @@ export interface MachineStatusUiEvent {
   status: MachineStatusSnapshot;
 }
 
-/** The complete set of flags PI WEB itself publishes today. */
+/** The complete set of flags PI STUDIO itself publishes today. */
 export const CORE_STATUS_FLAGS = {
   /** A session in the subtree has work in progress (`isSessionActive`). */
   working: "core:working",

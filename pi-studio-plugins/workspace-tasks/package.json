@@ -1,0 +1,9 @@
+{
+  "name": "@pi-studio/workspace-tasks-plugin",
+  "private": true,
+  "piStudio": {
+    "plugins": [
+      { "id": "workspace-tasks", "browserRoot": ".", "module": "pi-studio-plugin.js" }
+    ]
+  }
+}

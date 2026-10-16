@@ -1,12 +1,12 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { FastifyInstance } from "fastify";
-import { DEPLOYMENT_IDENTITY_ASSET_PATHS, DEPLOYMENT_MANIFEST_CONTENT_TYPE, DEPLOYMENT_MANIFEST_PATH, deploymentIdentityAssetForPath, deploymentManifestForFlavor, type PiWebDeploymentFlavor } from "./deploymentIdentity.js";
+import { DEPLOYMENT_IDENTITY_ASSET_PATHS, DEPLOYMENT_MANIFEST_CONTENT_TYPE, DEPLOYMENT_MANIFEST_PATH, deploymentIdentityAssetForPath, deploymentManifestForFlavor, type PiStudioDeploymentFlavor } from "./deploymentIdentity.js";
 
 export interface DeploymentIdentityRouteOptions {
   /** Root of the built client assets; must be the fastify-static root so `sendFile` resolves. */
   clientDist: string;
-  flavor: () => Promise<PiWebDeploymentFlavor>;
+  flavor: () => Promise<PiStudioDeploymentFlavor>;
 }
 
 /**

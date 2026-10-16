@@ -1,10 +1,12 @@
 import { css, html, LitElement, type PropertyValues, type TemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import type { AppAction } from "../actions";
-import { configApi, piPackagesApi, pluginsApi, type Machine, type MachineRuntime, type PiPackageMutationResponse, type PiPackageScope, type PiPackagesResponse, type PiWebConfigResponse, type PiWebConfigValues, type PiWebPluginsResponse } from "../api";
+import { configApi, piPackagesApi, pluginsApi, type Machine, type MachineRuntime, type PiPackageMutationResponse, type PiPackageScope, type PiPackagesResponse, type PiStudioConfigResponse, type PiStudioConfigValues, type PiStudioPluginsResponse } from "../api";
 import type { SettingsSection } from "../settingsRoute";
+import { activePiStudioLocale, t } from "../i18n";
 import "./ModalSurface";
 import "./settings/SettingsGeneralPanel";
+import "./settings/SettingsLanguagePanel";
 import "./settings/SettingsThemePanel";
 import type { QualifiedThemeContribution } from "../plugins/types";
 import { DEFAULT_THEME_PREFERENCE, type ThemePreference } from "../theme";
@@ -33,14 +35,14 @@ export class SettingsDialog extends LitElement {
   @property({ attribute: false }) machineRuntime: MachineRuntime | undefined;
   @property({ attribute: false }) onNavigate?: (section: SettingsSection) => void;
   @property({ attribute: false }) onClose?: () => void;
-  @property({ attribute: false }) onConfigSaved?: (config: PiWebConfigValues) => void;
+  @property({ attribute: false }) onConfigSaved?: (config: PiStudioConfigValues) => void;
   @property({ attribute: false }) onRefreshMachineRuntime?: (machineId: string) => void | Promise<void>;
-  @state() private configResponse: PiWebConfigResponse | undefined;
-  @state() private accessConfigResponse: PiWebConfigResponse | undefined;
-  @state() private sessiondConfigResponse: PiWebConfigResponse | undefined;
-  @state() private pluginsResponse: PiWebPluginsResponse | undefined;
-  @state() private selectedPluginConfigResponse: PiWebConfigResponse | undefined;
-  @state() private selectedPluginsResponse: PiWebPluginsResponse | undefined;
+  @state() private configResponse: PiStudioConfigResponse | undefined;
+  @state() private accessConfigResponse: PiStudioConfigResponse | undefined;
+  @state() private sessiondConfigResponse: PiStudioConfigResponse | undefined;
+  @state() private pluginsResponse: PiStudioPluginsResponse | undefined;
+  @state() private selectedPluginConfigResponse: PiStudioConfigResponse | undefined;
+  @state() private selectedPluginsResponse: PiStudioPluginsResponse | undefined;
   @state() private packagesResponse: PiPackagesResponse | undefined;
   @state() private loading = true;
   @state() private accessLoading = true;
@@ -104,21 +106,21 @@ export class SettingsDialog extends LitElement {
 
   override render(): TemplateResult {
     return html`
-      <modal-surface .onClose=${() => this.onClose?.()} .label=${"PI WEB settings"}>
+      <modal-surface .onClose=${() => this.onClose?.()} .label=${t("settings.title")}>
         <header class="settings-header">
           <div>
-            <span class="eyebrow">Settings</span>
-            <h1>PI WEB</h1>
+            <span class="eyebrow">${t("settings.eyebrow")}</span>
+            <h1>PI STUDIO</h1>
           </div>
-          <button class="close-button" title="Close settings" aria-label="Close settings" @click=${() => this.onClose?.()}>×</button>
+          <button class="close-button" title=${t("settings.close")} aria-label=${t("settings.close")} @click=${() => this.onClose?.()}>×</button>
         </header>
         <div class="settings-body">
-          <nav class="settings-nav" aria-label="Settings sections">
-            ${this.renderNavButton("general", "General", "Gateway + selected machine")}
-            ${this.renderNavButton("sessiond", "Session daemon", "Selected machine")}
-            ${this.renderNavButton("packages", "Pi packages", "Selected machine")}
-            ${this.renderNavButton("plugins", "PI WEB plugins", "Selected machine")}
-            ${this.renderNavButton("shortcuts", "Keyboard", "Gateway shortcuts")}
+          <nav class="settings-nav" aria-label=${t("settings.sections")}>
+            ${this.renderNavButton("general", t("settings.navGeneral"), t("settings.navGeneralDetail"))}
+            ${this.renderNavButton("sessiond", t("settings.navSessiond"), t("settings.navMachineDetail"))}
+            ${this.renderNavButton("packages", t("settings.navPackages"), t("settings.navMachineDetail"))}
+            ${this.renderNavButton("plugins", t("settings.navPlugins"), t("settings.navMachineDetail"))}
+            ${this.renderNavButton("shortcuts", t("settings.navShortcuts"), t("settings.navShortcutsDetail"))}
           </nav>
           <main class="settings-content">
             ${this.renderActiveSection()}
@@ -140,7 +142,7 @@ export class SettingsDialog extends LitElement {
           .savedMessage=${this.savedMessage}
           .targetLabel=${settingsMachineTargetLabel(this.settingsTarget())}
           .onReload=${() => this.reloadSessiondState()}
-          .onSave=${(config: PiWebConfigValues) => this.saveSessiondConfig(config)}
+          .onSave=${(config: PiStudioConfigValues) => this.saveSessiondConfig(config)}
         ></settings-sessiond-panel>
       `;
     }
@@ -154,7 +156,7 @@ export class SettingsDialog extends LitElement {
           .error=${this.error}
           .savedMessage=${this.savedMessage}
           .onReload=${() => this.loadConfig()}
-          .onSave=${(config: PiWebConfigValues) => this.saveConfig(config)}
+          .onSave=${(config: PiStudioConfigValues) => this.saveConfig(config)}
         ></settings-shortcuts-panel>
       `;
     }
@@ -203,9 +205,13 @@ export class SettingsDialog extends LitElement {
         .targetLabel=${settingsMachineTargetLabel(this.settingsTarget())}
         .onReload=${() => this.loadConfig()}
         .onReloadMachine=${() => this.loadAccessConfigForTarget()}
-        .onSave=${(config: PiWebConfigValues) => this.saveConfig(config)}
-        .onSaveMachineConfig=${(config: PiWebConfigValues) => this.saveMachineAccessConfig(config)}
+        .onSave=${(config: PiStudioConfigValues) => this.saveConfig(config)}
+        .onSaveMachineConfig=${(config: PiStudioConfigValues) => this.saveMachineAccessConfig(config)}
       >
+        <settings-language-panel
+          slot="appearance"
+          .activeLocale=${activePiStudioLocale()}
+        ></settings-language-panel>
         <settings-theme-panel
           slot="appearance"
           .themes=${this.themes}
@@ -315,7 +321,7 @@ export class SettingsDialog extends LitElement {
           this.pluginError = lifecycleSupport.message ?? `Plugin lifecycle diagnostics are not available on ${settingsMachineTargetLabel(target)}.`;
         } catch (error) {
           if (!this.isCurrentPluginLoad(requestSeq, target)) return;
-          this.pluginError = `Failed to load PI WEB plugin config from ${settingsMachineTargetLabel(target)}: ${friendlySelectedMachineSettingsErrorMessage(errorMessage(error), target)}; ${lifecycleSupport.message ?? "plugin lifecycle diagnostics are unsupported"}`;
+          this.pluginError = `Failed to load PI STUDIO plugin config from ${settingsMachineTargetLabel(target)}: ${friendlySelectedMachineSettingsErrorMessage(errorMessage(error), target)}; ${lifecycleSupport.message ?? "plugin lifecycle diagnostics are unsupported"}`;
         }
         return;
       }
@@ -328,9 +334,9 @@ export class SettingsDialog extends LitElement {
       else errors.push(`config: ${friendlySelectedMachineSettingsErrorMessage(errorMessage(config.reason), target)}`);
 
       if (plugins.status === "fulfilled") this.selectedPluginsResponse = plugins.value;
-      else errors.push(`PI WEB plugins: ${friendlySelectedMachineSettingsErrorMessage(errorMessage(plugins.reason), target)}`);
+      else errors.push(`PI STUDIO plugins: ${friendlySelectedMachineSettingsErrorMessage(errorMessage(plugins.reason), target)}`);
 
-      this.pluginError = errors.length === 0 ? "" : `Failed to load PI WEB plugin settings from ${settingsMachineTargetLabel(target)}: ${errors.join("; ")}`;
+      this.pluginError = errors.length === 0 ? "" : `Failed to load PI STUDIO plugin settings from ${settingsMachineTargetLabel(target)}: ${errors.join("; ")}`;
     } finally {
       if (this.isCurrentPluginLoad(requestSeq, target)) this.pluginLoading = false;
     }
@@ -384,14 +390,14 @@ export class SettingsDialog extends LitElement {
       this.showSavedMessage();
     } catch (error) {
       if (this.isCurrentSettingsTarget(target)) {
-        this.pluginError = `Failed to save PI WEB plugin config on ${settingsMachineTargetLabel(target)}: ${friendlySelectedMachineSettingsErrorMessage(errorMessage(error), target)}`;
+        this.pluginError = `Failed to save PI STUDIO plugin config on ${settingsMachineTargetLabel(target)}: ${friendlySelectedMachineSettingsErrorMessage(errorMessage(error), target)}`;
       }
     } finally {
       this.saving = false;
     }
   }
 
-  private async saveConfig(config: PiWebConfigValues): Promise<void> {
+  private async saveConfig(config: PiStudioConfigValues): Promise<void> {
     if (this.saving) return;
     this.saving = true;
     this.error = "";
@@ -430,7 +436,7 @@ export class SettingsDialog extends LitElement {
     }
   }
 
-  private async saveMachineAccessConfig(config: PiWebConfigValues): Promise<void> {
+  private async saveMachineAccessConfig(config: PiStudioConfigValues): Promise<void> {
     if (this.saving) return;
     const target = this.settingsTarget();
     this.saving = true;
@@ -454,7 +460,7 @@ export class SettingsDialog extends LitElement {
     }
   }
 
-  private async saveSessiondConfig(config: PiWebConfigValues): Promise<void> {
+  private async saveSessiondConfig(config: PiStudioConfigValues): Promise<void> {
     if (this.saving) return;
     const target = this.settingsTarget();
     this.saving = true;
@@ -523,7 +529,7 @@ export class SettingsDialog extends LitElement {
       this.pluginsResponse = await pluginsApi.plugins();
       return undefined;
     } catch (error) {
-      return `Failed to refresh gateway PI WEB plugins: ${errorMessage(error)}`;
+      return `Failed to refresh gateway PI STUDIO plugins: ${errorMessage(error)}`;
     }
   }
 
@@ -534,7 +540,7 @@ export class SettingsDialog extends LitElement {
       return undefined;
     } catch (error) {
       if (this.isCurrentSettingsTarget(target)) this.selectedPluginsResponse = undefined;
-      return `Config saved, but failed to refresh PI WEB plugins from ${settingsMachineTargetLabel(target)}: ${friendlySelectedMachineSettingsErrorMessage(errorMessage(error), target)}`;
+      return `Config saved, but failed to refresh PI STUDIO plugins from ${settingsMachineTargetLabel(target)}: ${friendlySelectedMachineSettingsErrorMessage(errorMessage(error), target)}`;
     }
   }
 
@@ -626,10 +632,10 @@ export class SettingsDialog extends LitElement {
   }
 
   private showSavedMessage(): void {
-    this.savedMessage = "Config saved.";
+    this.savedMessage = t("settings.configSaved");
     if (this.savedMessageTimer !== undefined) window.clearTimeout(this.savedMessageTimer);
     this.savedMessageTimer = window.setTimeout(() => {
-      if (this.savedMessage === "Config saved.") this.savedMessage = "";
+      if (this.savedMessage === t("settings.configSaved")) this.savedMessage = "";
       this.savedMessageTimer = undefined;
     }, 3000);
   }

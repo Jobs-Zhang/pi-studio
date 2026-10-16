@@ -1,13 +1,14 @@
+import { activePiStudioLocale, pluginT, registerPluginMessageCatalog } from "../i18n";
 import { html, svg } from "lit";
 import type { ContentRenderRequest, DisplayedMessageActionAvailabilityContext, DisplayedMessageActionContext, MessageActionAvailabilityContext, MessageActionContext, MessageActionResult, PluginSelectionSnapshot } from "../../../plugin-api";
 import { availableDisplayedMessageActions, availableMessageActions, type RegisteredMessageAction } from "./messageActions";
 import { PluginSelectionHost } from "./selection";
 import { PromptChipStore, type PromptChipTarget } from "../promptChips";
-import type { PluginPromptEditor } from "../../../plugin-api";
+import type { PluginMessageCatalog, PluginPromptEditor } from "../../../plugin-api";
 import { compareContentRenderers, contentRendererMatches, snapshotContentRenderer, type ContentRendererChoice, type RegisteredContentRenderer } from "./contentRenderers";
 import { createContentRenderingService, contentRenderingCapabilityToken } from "../formatting/contentRendering";
 import { requirePluginBackendRevision } from "../../../shared/pluginBackendProtocol";
-import type { ApplicationPanelContext, ApplicationPanelContribution, QualifiedApplicationPanelContribution, PiWebPluginRegistration, PiWebPluginRegistrationDeclaration, PluginAction, PluginActivationContext, PluginActivationResult, PluginCapability, PluginCapabilityProvision, PluginContributions, PluginRuntimeContext, PluginStartContext, QualifiedContributionId, QualifiedPluginAction, QualifiedThemeContribution, QualifiedThemePairContribution, QualifiedWorkspaceLabelContribution, QualifiedWorkspacePanelContribution, ThemeContribution, ThemePairContribution, WorkspaceInvalidation, WorkspaceLabelContext, WorkspaceLabelContribution, WorkspaceLabelItem, WorkspacePanelContext, WorkspacePanelContribution, WorkspacePluginBinding, WorkspaceResource } from "./types";
+import type { ApplicationPanelContext, ApplicationPanelContribution, QualifiedApplicationPanelContribution, PiStudioPluginRegistration, PiStudioPluginRegistrationDeclaration, PluginAction, PluginActivationContext, PluginActivationResult, PluginCapability, PluginCapabilityProvision, PluginContributions, PluginRuntimeContext, PluginStartContext, QualifiedContributionId, QualifiedPluginAction, QualifiedThemeContribution, QualifiedThemePairContribution, QualifiedWorkspaceLabelContribution, QualifiedWorkspacePanelContribution, ThemeContribution, ThemePairContribution, WorkspaceInvalidation, WorkspaceLabelContext, WorkspaceLabelContribution, WorkspaceLabelItem, WorkspacePanelContext, WorkspacePanelContribution, WorkspacePluginBinding, WorkspaceResource } from "./types";
 
 const idPattern = /^[a-z][a-z0-9.-]*$/u;
 const localIdPattern = /^[a-z][a-z0-9.-]*$/u;
@@ -39,7 +40,7 @@ export interface PluginRegistryOptions {
 export type BrowserPluginLifecyclePhase = "import" | "validate" | "activate" | "start" | "dispose";
 
 export interface PluginRegistrationFailure {
-  readonly declaration: PiWebPluginRegistrationDeclaration;
+  readonly declaration: PiStudioPluginRegistrationDeclaration;
   readonly phase: BrowserPluginLifecyclePhase;
   readonly error: unknown;
 }
@@ -51,7 +52,7 @@ export interface HostPluginCapabilityRequirement {
 
 export interface PluginRegistrationBatchOptions {
   /** Validated manifest intent, including entries whose module import failed. */
-  declarations?: readonly PiWebPluginRegistrationDeclaration[];
+  declarations?: readonly PiStudioPluginRegistrationDeclaration[];
   /** Import failures whose declarations still participate in composition precedence. */
   failures?: readonly PluginRegistrationFailure[];
   /** Host-required values parsed before their owning plugin is published. */
@@ -110,7 +111,7 @@ interface LoadedBrowserPlugin {
 }
 
 interface StagedBrowserPlugin {
-  readonly registration: PiWebPluginRegistration;
+  readonly registration: PiStudioPluginRegistration;
   readonly declaration: NormalizedPluginDeclaration;
   readonly plugin: LoadedBrowserPlugin;
   readonly activation: PluginActivationResult;
@@ -228,7 +229,7 @@ export class PluginRegistry {
   }
 
   /** Registers one plugin as a serialized single-entry batch and throws its attributed failure. */
-  async register(registration: PiWebPluginRegistration): Promise<void> {
+  async register(registration: PiStudioPluginRegistration): Promise<void> {
     const result = await this.registerBatch([registration]);
     const failure = result.failures.find(({ declaration }) => declaration.id === registration.id);
     if (failure !== undefined) throw failure.error;
@@ -236,7 +237,7 @@ export class PluginRegistry {
 
   /** Stages a complete attempted scope, then starts and publishes independent dependency graphs transactionally. */
   registerBatch(
-    registrations: readonly PiWebPluginRegistration[],
+    registrations: readonly PiStudioPluginRegistration[],
     options: PluginRegistrationBatchOptions = {},
   ): Promise<PluginRegistrationBatchResult> {
     const registrationsSnapshot = [...registrations];
@@ -293,7 +294,7 @@ export class PluginRegistry {
       try {
         await runBounded(plugin.registration.id, "dispose", this.lifecycleTimeoutMs, undefined, (signal) => dispose(signal));
       } catch (error) {
-        console.warn(`Failed to dispose PI WEB plugin ${plugin.registration.id}`, error);
+        console.warn(`Failed to dispose PI STUDIO plugin ${plugin.registration.id}`, error);
       }
     }
   }
@@ -312,8 +313,8 @@ export class PluginRegistry {
   }
 
   private async performRegistrationBatch(
-    registrations: readonly PiWebPluginRegistration[],
-    declarations: readonly PiWebPluginRegistrationDeclaration[],
+    registrations: readonly PiStudioPluginRegistration[],
+    declarations: readonly PiStudioPluginRegistrationDeclaration[],
     initialFailures: readonly PluginRegistrationFailure[],
     requiredCapabilities: readonly HostPluginCapabilityRequirement[],
   ): Promise<PluginRegistrationBatchResult> {
@@ -405,7 +406,7 @@ export class PluginRegistry {
   }
 
   private async stageRegistration(
-    registration: PiWebPluginRegistration,
+    registration: PiStudioPluginRegistration,
     declaration: NormalizedPluginDeclaration,
   ): Promise<StagedBrowserPlugin> {
     const backendRevision = this.parseBackendRevision(registration.id, registration.backendRevision);
@@ -428,6 +429,11 @@ export class PluginRegistry {
           runtimePluginId: registration.id,
           html,
           svg,
+          i18n: Object.freeze({
+            locale: activePiStudioLocale(),
+            t: (key: string, params?: Readonly<Record<string, string | number>>) => pluginT(registration.id, key, params),
+            registerCatalog: (catalog: PluginMessageCatalog) => { registerPluginMessageCatalog(registration.id, catalog); },
+          }),
           signal,
           lifetimeSignal: lifetimeController.signal,
           selection: this.selection.forPlugin(registration.id, lifetimeController.signal),
@@ -457,7 +463,7 @@ export class PluginRegistry {
   }
 
   private prepareContributions(
-    registration: PiWebPluginRegistration,
+    registration: PiStudioPluginRegistration,
     contributions: PluginContributions,
     backendRevision: string | undefined,
     pairedRequestVersion: 1 | undefined,
@@ -692,7 +698,7 @@ export class PluginRegistry {
     return [];
   }
 
-  private normalizeDeclaration(value: PiWebPluginRegistrationDeclaration): NormalizedPluginDeclaration {
+  private normalizeDeclaration(value: PiStudioPluginRegistrationDeclaration): NormalizedPluginDeclaration {
     this.validatePluginId(value.id);
     const sourcePluginId = value.sourcePluginId ?? value.id;
     this.validatePluginId(sourcePluginId);
@@ -716,7 +722,7 @@ export class PluginRegistry {
     )) return false;
     const existing = this.declarationsById.get(declaration.id);
     if (existing !== undefined && !sameDeclaration(existing, declaration)) {
-      throw new Error(`Plugin registration scope changed for ${declaration.id}; reload PI WEB before activating a replacement`);
+      throw new Error(`Plugin registration scope changed for ${declaration.id}; reload PI STUDIO before activating a replacement`);
     }
     this.declarationsById.set(declaration.id, declaration);
     // A declared machine-specific remote shadows portable composition even
@@ -785,7 +791,7 @@ export class PluginRegistry {
     if (exact !== undefined) return exact.id;
     const aliases = activePanels.filter((panel) => panel.routeAliases?.includes(value) === true);
     if (aliases.length === 1) return aliases[0]?.id;
-    if (aliases.length > 1) console.warn(`Ambiguous PI WEB workspace panel route: ${value}`);
+    if (aliases.length > 1) console.warn(`Ambiguous PI STUDIO workspace panel route: ${value}`);
     return undefined;
   }
 
@@ -816,7 +822,7 @@ export class PluginRegistry {
         if (invalidation === undefined) await panel.onInvalidate(context);
         else await panel.onInvalidate(context, invalidation);
       } catch (error) {
-        console.warn(`Failed to invalidate PI WEB plugin panel ${panel.id}`, error);
+        console.warn(`Failed to invalidate PI STUDIO plugin panel ${panel.id}`, error);
       }
     }));
   }
@@ -1181,7 +1187,7 @@ function runtimeContextMachineId(context: PluginRuntimeContext): string {
   return context.state.selectedMachine?.id ?? "local";
 }
 
-function registrationDeclaration(registration: PiWebPluginRegistration): PiWebPluginRegistrationDeclaration {
+function registrationDeclaration(registration: PiStudioPluginRegistration): PiStudioPluginRegistrationDeclaration {
   return Object.freeze({
     id: registration.id,
     ...(registration.machineId === undefined ? {} : { machineId: registration.machineId }),
@@ -1193,14 +1199,14 @@ function registrationDeclaration(registration: PiWebPluginRegistration): PiWebPl
 }
 
 function failureFor(
-  declaration: PiWebPluginRegistrationDeclaration,
+  declaration: PiStudioPluginRegistrationDeclaration,
   phase: BrowserPluginLifecyclePhase,
   error: unknown,
 ): PluginRegistrationFailure {
   return Object.freeze({ declaration: registrationDeclarationFromValue(declaration), phase, error });
 }
 
-function registrationDeclarationFromValue(value: PiWebPluginRegistrationDeclaration): PiWebPluginRegistrationDeclaration {
+function registrationDeclarationFromValue(value: PiStudioPluginRegistrationDeclaration): PiStudioPluginRegistrationDeclaration {
   return Object.freeze({
     id: value.id,
     ...(value.machineId === undefined ? {} : { machineId: value.machineId }),
@@ -1248,7 +1254,7 @@ function parseBrowserActivation(value: unknown, runtimePluginId: string, sourceP
   const contributions = value["contributions"];
   if (!isPluginContributions(contributions)) throw new BrowserPluginIncompatibleError(`Browser plugin ${runtimePluginId} contributions must contain contribution arrays`);
   for (const key of Object.keys(contributions)) {
-    if (!contributionNames.includes(key)) console.warn(`PI WEB plugin ${runtimePluginId} has unknown contribution: ${key}`);
+    if (!contributionNames.includes(key)) console.warn(`PI STUDIO plugin ${runtimePluginId} has unknown contribution: ${key}`);
   }
   const provides = snapshotCapabilityProvisions(value["provides"], sourcePluginId, `Browser plugin ${runtimePluginId} provisions`);
   const startValue = value["start"];

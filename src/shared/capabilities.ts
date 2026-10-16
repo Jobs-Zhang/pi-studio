@@ -1,45 +1,45 @@
-import { PI_WEB_CAPABILITIES, type PiWebCapability, type PiWebRuntimeComponent, type PiWebServiceComponent } from "./apiTypes.js";
+import { PI_STUDIO_CAPABILITIES, type PiStudioCapability, type PiStudioRuntimeComponent, type PiStudioServiceComponent } from "./apiTypes.js";
 
-export { PI_WEB_CAPABILITIES };
-export type { PiWebCapability };
+export { PI_STUDIO_CAPABILITIES };
+export type { PiStudioCapability };
 
 // Annotated (not inferred) so the empty and populated registry shapes are
 // identical for consumers: `Object.values` on the empty registry alone would
-// not infer `PiWebCapability[]`.
-export const KNOWN_PI_WEB_CAPABILITIES: PiWebCapability[] = Object.values(PI_WEB_CAPABILITIES);
-const knownPiWebCapabilities: ReadonlySet<string> = new Set(KNOWN_PI_WEB_CAPABILITIES);
+// not infer `PiStudioCapability[]`.
+export const KNOWN_PI_STUDIO_CAPABILITIES: PiStudioCapability[] = Object.values(PI_STUDIO_CAPABILITIES);
+const knownPiStudioCapabilities: ReadonlySet<string> = new Set(KNOWN_PI_STUDIO_CAPABILITIES);
 
 export const WEB_RUNTIME_CAPABILITIES = [
-  PI_WEB_CAPABILITIES.pluginLifecycle,
-] as const satisfies readonly PiWebCapability[];
+  PI_STUDIO_CAPABILITIES.pluginLifecycle,
+] as const satisfies readonly PiStudioCapability[];
 
-export const SESSIOND_RUNTIME_CAPABILITIES = [] as const satisfies readonly PiWebCapability[];
+export const SESSIOND_RUNTIME_CAPABILITIES = [] as const satisfies readonly PiStudioCapability[];
 
 // Populated entries map each capability to the components that must both
 // advertise it.
 const EFFECTIVE_CAPABILITY_REQUIREMENTS = {
-  [PI_WEB_CAPABILITIES.pluginLifecycle]: ["web"],
-} as const satisfies Record<PiWebCapability, readonly PiWebServiceComponent[]>;
+  [PI_STUDIO_CAPABILITIES.pluginLifecycle]: ["web"],
+} as const satisfies Record<PiStudioCapability, readonly PiStudioServiceComponent[]>;
 
-export function isPiWebCapability(value: unknown): value is PiWebCapability {
-  return typeof value === "string" && knownPiWebCapabilities.has(value);
+export function isPiStudioCapability(value: unknown): value is PiStudioCapability {
+  return typeof value === "string" && knownPiStudioCapabilities.has(value);
 }
 
-export function supportsPiWebCapability(source: { capabilities?: readonly PiWebCapability[] } | undefined, capability: PiWebCapability): boolean {
+export function supportsPiStudioCapability(source: { capabilities?: readonly PiStudioCapability[] } | undefined, capability: PiStudioCapability): boolean {
   return source?.capabilities?.includes(capability) === true;
 }
 
-export function parseKnownPiWebCapabilities(value: unknown): PiWebCapability[] | undefined {
+export function parseKnownPiStudioCapabilities(value: unknown): PiStudioCapability[] | undefined {
   if (!Array.isArray(value) || !value.every((capability) => typeof capability === "string")) return undefined;
-  return value.filter(isPiWebCapability);
+  return value.filter(isPiStudioCapability);
 }
 
-export function effectivePiWebCapabilities(components: Partial<Record<PiWebServiceComponent, Pick<PiWebRuntimeComponent, "available" | "capabilities">>>): PiWebCapability[] {
-  return KNOWN_PI_WEB_CAPABILITIES.filter((capability) => {
-    const requiredComponents: readonly PiWebServiceComponent[] = EFFECTIVE_CAPABILITY_REQUIREMENTS[capability];
+export function effectivePiStudioCapabilities(components: Partial<Record<PiStudioServiceComponent, Pick<PiStudioRuntimeComponent, "available" | "capabilities">>>): PiStudioCapability[] {
+  return KNOWN_PI_STUDIO_CAPABILITIES.filter((capability) => {
+    const requiredComponents: readonly PiStudioServiceComponent[] = EFFECTIVE_CAPABILITY_REQUIREMENTS[capability];
     return requiredComponents.every((component) => {
       const runtime = components[component];
-      return runtime?.available === true && supportsPiWebCapability(runtime, capability);
+      return runtime?.available === true && supportsPiStudioCapability(runtime, capability);
     });
   });
 }

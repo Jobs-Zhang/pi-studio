@@ -7,7 +7,7 @@ import "./ImagePresentation";
 const shownImageMemory = new TransientChoiceMemory<true>();
 
 /** An outside-workspace URL stays inert until the user chooses to load it. */
-@customElement("pi-web-markdown-image")
+@customElement("pi-studio-markdown-image")
 export class MarkdownImage extends LitElement {
   @property({ attribute: "preview-url" }) previewUrl = "";
   @property() path = "";
@@ -33,11 +33,11 @@ export class MarkdownImage extends LitElement {
   }
 
   override render() {
-    return html`<pi-web-image-presentation
+    return html`<pi-studio-image-presentation
       .source=${this.viewport.ready ? this.previewUrl : undefined}
       .description=${this.description} .label=${this.path}
       @image-request=${() => { this.showImage(); }}
-    ></pi-web-image-presentation>`;
+    ></pi-studio-image-presentation>`;
   }
 
   static override styles = css`

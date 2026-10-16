@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { html, type TemplateResult } from "lit";
 import type { ServerNoticeSeverity } from "../../../shared/apiTypes";
 
@@ -17,7 +18,7 @@ export function errorBanner(
   const dismissLabel = `Dismiss ${severityLabel.toLowerCase()}`;
   return html`<div class=${`error ${severity}`} role="alert">
     <span class="error-text">${error}</span>
-    ${onRetry === undefined ? null : html`<button type="button" class="error-retry" @click=${() => { onRetry(); }}>Retry</button>`}
+    ${onRetry === undefined ? null : html`<button type="button" class="error-retry" @click=${() => { onRetry(); }}>${t("common.retry")}</button>`}
     <button type="button" class="error-dismiss" aria-label=${dismissLabel} title=${dismissLabel} @click=${() => { onDismiss(); }}>✕</button>
   </div>`;
 }

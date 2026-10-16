@@ -62,8 +62,8 @@ export class SystemdNativeServiceProbe implements NativeServiceAuthoritativeProb
     }
 
     const uniqueId = safeUniqueId(this.dependencies.createUniqueId());
-    const unitName = `pi-web-authoritative-probe-${uniqueId}.service`;
-    const outputPrefix = `PI_WEB_PROBE_${uniqueId}`;
+    const unitName = `pi-studio-authoritative-probe-${uniqueId}.service`;
+    const outputPrefix = `PI_STUDIO_PROBE_${uniqueId}`;
     const command = prerequisiteProbeCommand(request.shell.name, request.prerequisites, outputPrefix);
     const args = systemdRunArguments(request, unitName, command);
     const result = await this.dependencies.commandRunner.run("systemd-run", args, this.dependencies.commandTimeoutMs);
@@ -118,17 +118,17 @@ export class LaunchdNativeServiceProbe implements NativeServiceAuthoritativeProb
     }
 
     const uniqueId = safeUniqueId(this.dependencies.createUniqueId());
-    const label = `com.pi-web.authoritative-probe.${String(this.dependencies.uid)}.${uniqueId}`;
+    const label = `com.pi-studio.authoritative-probe.${String(this.dependencies.uid)}.${uniqueId}`;
     const domain = `gui/${String(this.dependencies.uid)}`;
     const target = `${domain}/${label}`;
-    const outputPrefix = `PI_WEB_PROBE_${uniqueId}`;
+    const outputPrefix = `PI_STUDIO_PROBE_${uniqueId}`;
     let directory: string | null = null;
     let bootstrapState: "not-loaded" | "loaded" | "uncertain" = "not-loaded";
     let result: NativeServiceProbeResult;
 
     try {
       directory = await this.dependencies.fileSystem.createTemporaryDirectory(
-        posixPath.join(tmpdir(), "pi-web-launchd-probe-"),
+        posixPath.join(tmpdir(), "pi-studio-launchd-probe-"),
       );
       const plistPath = posixPath.join(directory, "probe.plist");
       const stdoutPath = posixPath.join(directory, "stdout.log");
@@ -460,11 +460,11 @@ function externalExecutableShellCheck(
   const quotedCommand = shellQuote(shell, command);
   const quotedArguments = arguments_.map((argument) => shellQuote(shell, argument)).join(" ");
   if (shell === "fish") {
-    const invocation = quotedArguments === "" ? "" : `; and $pi_web_probe_executable[1] ${quotedArguments}`;
-    return `set -l pi_web_probe_executable (command -v ${quotedCommand}); and test (count $pi_web_probe_executable) -eq 1; and string match -q '*/*' -- $pi_web_probe_executable[1]; and test -f $pi_web_probe_executable[1]; and test -x $pi_web_probe_executable[1]${invocation}`;
+    const invocation = quotedArguments === "" ? "" : `; and $pi_studio_probe_executable[1] ${quotedArguments}`;
+    return `set -l pi_studio_probe_executable (command -v ${quotedCommand}); and test (count $pi_studio_probe_executable) -eq 1; and string match -q '*/*' -- $pi_studio_probe_executable[1]; and test -f $pi_studio_probe_executable[1]; and test -x $pi_studio_probe_executable[1]${invocation}`;
   }
-  const invocation = quotedArguments === "" ? "" : ` && "$pi_web_probe_executable" ${quotedArguments}`;
-  return `pi_web_probe_executable=$(command -v ${quotedCommand}) && case "$pi_web_probe_executable" in */*) test -f "$pi_web_probe_executable" && test -x "$pi_web_probe_executable"${invocation};; *) false;; esac`;
+  const invocation = quotedArguments === "" ? "" : ` && "$pi_studio_probe_executable" ${quotedArguments}`;
+  return `pi_studio_probe_executable=$(command -v ${quotedCommand}) && case "$pi_studio_probe_executable" in */*) test -f "$pi_studio_probe_executable" && test -x "$pi_studio_probe_executable"${invocation};; *) false;; esac`;
 }
 
 function markerCommand(

@@ -1,14 +1,14 @@
 import {
-  PI_WEB_HOST_PI_SESSIONS_CAPABILITY,
-  PI_WEB_HOST_WORKSPACES_CAPABILITY,
-} from "@jmfederico/pi-web/server-plugin-api";
+  PI_STUDIO_HOST_PI_SESSIONS_CAPABILITY,
+  PI_STUDIO_HOST_WORKSPACES_CAPABILITY,
+} from "@pi-studio/pi-studio/server-plugin-api";
 import type {
-  PiWebHostPiSessionsV1,
-  PiWebHostWorkspacesV1,
+  PiStudioHostPiSessionsV1,
+  PiStudioHostWorkspacesV1,
   PluginCapability,
   ServerPluginPeer,
-  PiWebServerPlugin,
-} from "@jmfederico/pi-web/server-plugin-api";
+  PiStudioServerPlugin,
+} from "@pi-studio/pi-studio/server-plugin-api";
 
 interface FixtureDependencyV1 {
   readonly status: () => string;
@@ -32,13 +32,13 @@ const channelOnlyPeer: ServerPluginPeer = {
   openChannel: () => ({ receive: () => undefined }),
 };
 
-const plugin: PiWebServerPlugin = {
+const plugin: PiStudioServerPlugin = {
   apiVersion: 3,
   name: "Server declaration fixture",
   requires: [
     fixtureDependency,
-    PI_WEB_HOST_WORKSPACES_CAPABILITY,
-    PI_WEB_HOST_PI_SESSIONS_CAPABILITY,
+    PI_STUDIO_HOST_WORKSPACES_CAPABILITY,
+    PI_STUDIO_HOST_PI_SESSIONS_CAPABILITY,
   ],
   activate: (context) => {
     context.notices?.record({
@@ -52,13 +52,13 @@ const plugin: PiWebServerPlugin = {
         signal.throwIfAborted();
         context.logger.info(capabilities.resolve(fixtureDependency).status());
         context.logger.info(context.dataDirectory);
-        const workspaces: PiWebHostWorkspacesV1 = capabilities.resolve(PI_WEB_HOST_WORKSPACES_CAPABILITY);
+        const workspaces: PiStudioHostWorkspacesV1 = capabilities.resolve(PI_STUDIO_HOST_WORKSPACES_CAPABILITY);
         const authority = await workspaces.resolve({
           projectId: "fixture-project",
           workspaceId: "fixture-workspace",
         });
         context.logger.info(authority.workspace.label, { projectId: authority.project.id });
-        const piSessions: PiWebHostPiSessionsV1 = capabilities.resolve(PI_WEB_HOST_PI_SESSIONS_CAPABILITY);
+        const piSessions: PiStudioHostPiSessionsV1 = capabilities.resolve(PI_STUDIO_HOST_PI_SESSIONS_CAPABILITY);
         const run = await piSessions.run({
           projectId: authority.project.id,
           workspaceId: authority.workspace.id,

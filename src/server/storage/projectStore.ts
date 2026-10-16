@@ -1,6 +1,6 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
-import { piWebDataDir } from "../../config.js";
+import { piStudioDataDir } from "../../config.js";
 import { randomUUID } from "node:crypto";
 import type { Project } from "../types.js";
 
@@ -32,11 +32,11 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 export function defaultProjectStorePath(env: NodeJS.ProcessEnv = process.env, cwd = process.cwd()): string {
-  return join(piWebDataDir(env, cwd), "projects.json");
+  return join(piStudioDataDir(env, cwd), "projects.json");
 }
 
 export function projectStorePath(env: NodeJS.ProcessEnv = process.env, cwd = process.cwd()): string {
-  const configured = env["PI_WEB_PROJECTS_FILE"];
+  const configured = env["PI_STUDIO_PROJECTS_FILE"];
   if (configured === undefined || configured === "") return defaultProjectStorePath(env, cwd);
   return resolve(cwd, configured);
 }

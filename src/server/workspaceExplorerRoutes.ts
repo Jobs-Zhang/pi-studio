@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import type { WriteWorkspaceFileOptions } from "../shared/apiTypes.js";
-import type { PiWebConfigService } from "./configRoutes.js";
+import type { PiStudioConfigService } from "./configRoutes.js";
 import type { ProjectService } from "./projects/projectService.js";
 import { deleteWorkspaceFile, moveWorkspaceFile, readWorkspaceFile, writeWorkspaceFile } from "./workspaces/fileContentService.js";
 import { isAbsoluteishFileSuggestionQuery, listFileSuggestions, listPathSuggestions } from "./workspaces/fileSuggestions.js";
@@ -14,7 +14,7 @@ import type { WorkspaceCatalog } from "./workspaces/workspaceCatalog.js";
 import { sendWorkspaceRequestError } from "./workspaces/workspaceRouteErrors.js";
 
 export interface WorkspaceExplorerRouteOptions {
-  config?: Pick<PiWebConfigService, "read">;
+  config?: Pick<PiStudioConfigService, "read">;
 }
 
 export function registerWorkspaceExplorerRoutes(app: FastifyInstance, projects: ProjectService, workspaces: WorkspaceCatalog, prefix = "/api", options: WorkspaceExplorerRouteOptions = {}): void {

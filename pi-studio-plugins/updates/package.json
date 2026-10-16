@@ -1,0 +1,9 @@
+{
+  "name": "@pi-studio/updates-plugin",
+  "private": true,
+  "piStudio": {
+    "plugins": [
+      { "id": "updates", "browserRoot": ".", "module": "pi-studio-plugin.js", "machineSpecific": true }
+    ]
+  }
+}

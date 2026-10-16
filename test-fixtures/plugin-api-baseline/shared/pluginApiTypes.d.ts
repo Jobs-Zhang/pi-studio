@@ -110,20 +110,20 @@ export interface TerminalCommandRunHandle {
     run: TerminalCommandRun;
     completed: Promise<TerminalCommandRun>;
 }
-export type PiWebServiceComponent = "web" | "sessiond";
-export type PiWebStatusSeverity = "info" | "warning" | "error";
-export type PiWebInstallationKind = "pi-package" | "npm-global" | "local" | "docker" | "unknown";
-export type PiWebDockerMode = "runtime" | "dev";
-export interface PiWebInstallationInfo {
-    kind: PiWebInstallationKind;
+export type PiStudioServiceComponent = "web" | "sessiond";
+export type PiStudioStatusSeverity = "info" | "warning" | "error";
+export type PiStudioInstallationKind = "pi-package" | "npm-global" | "local" | "docker" | "unknown";
+export type PiStudioDockerMode = "runtime" | "dev";
+export interface PiStudioInstallationInfo {
+    kind: PiStudioInstallationKind;
     path?: string;
     source?: string;
     scope?: "user" | "project";
     npmRoot?: string;
-    dockerMode?: PiWebDockerMode;
+    dockerMode?: PiStudioDockerMode;
 }
-export interface PiWebComponentStatus {
-    component: PiWebServiceComponent;
+export interface PiStudioComponentStatus {
+    component: PiStudioServiceComponent;
     label: string;
     runtimeVersion?: string;
     installedVersion?: string;
@@ -131,10 +131,10 @@ export interface PiWebComponentStatus {
     piVersion?: string;
     stale: boolean;
     available: boolean;
-    installation?: PiWebInstallationInfo;
+    installation?: PiStudioInstallationInfo;
     error?: string;
 }
-export interface PiWebReleaseStatus {
+export interface PiStudioReleaseStatus {
     packageName: string;
     latestVersion?: string;
     updateAvailable: boolean;
@@ -142,23 +142,23 @@ export interface PiWebReleaseStatus {
     skipped?: boolean;
     error?: string;
 }
-export interface PiWebStatusMessage {
+export interface PiStudioStatusMessage {
     id: string;
-    severity: PiWebStatusSeverity;
+    severity: PiStudioStatusSeverity;
     title: string;
     body: string;
     command?: string;
 }
-export interface PiWebVersionResponse {
+export interface PiStudioVersionResponse {
     packageName: string;
     generatedAt: string;
     components: {
-        web: PiWebComponentStatus;
-        sessiond: PiWebComponentStatus;
+        web: PiStudioComponentStatus;
+        sessiond: PiStudioComponentStatus;
     };
 }
-export interface PiWebStatusResponse extends PiWebVersionResponse {
-    release: PiWebReleaseStatus;
+export interface PiStudioStatusResponse extends PiStudioVersionResponse {
+    release: PiStudioReleaseStatus;
     commands: {
         update?: string;
         restart?: string;
@@ -166,5 +166,5 @@ export interface PiWebStatusResponse extends PiWebVersionResponse {
         restartSessiond?: string;
         status?: string;
     };
-    messages: PiWebStatusMessage[];
+    messages: PiStudioStatusMessage[];
 }

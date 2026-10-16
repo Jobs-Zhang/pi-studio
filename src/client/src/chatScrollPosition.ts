@@ -38,7 +38,7 @@ export type ChatScrollRestoreResult =
   | { status: "bottom" | "restored" | "skipped" }
   | { status: "missing"; position: ChatAnchorScrollPosition };
 
-const SCROLL_STORAGE_PREFIX = "pi-web:chat-scroll:";
+const SCROLL_STORAGE_PREFIX = "pi-studio:chat-scroll:";
 const DEFAULT_SAVE_DELAY_MS = 180;
 const DEFAULT_NEAR_BOTTOM_THRESHOLD = 48;
 const DEFAULT_BOTTOM_SAVE_THRESHOLD = 2;

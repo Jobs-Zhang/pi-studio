@@ -3,49 +3,49 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>PI WEB — web UI for Pi Coding Agent</title>
+    <title>PI STUDIO — web UI for Pi Coding Agent</title>
     <meta
       name="description"
-      content="PI WEB is a web UI for Pi Coding Agent that keeps agent sessions running in real workspaces on your machine or server."
+      content="PI STUDIO is a web UI for Pi Coding Agent that keeps agent sessions running in real workspaces on your machine or server."
     />
-    <link rel="canonical" href="https://pi-web.dev/" />
+    <link rel="canonical" href="https://pi-studio.dev/" />
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="PI WEB" />
-    <meta property="og:title" content="PI WEB — web UI for Pi Coding Agent" />
+    <meta property="og:site_name" content="PI STUDIO" />
+    <meta property="og:title" content="PI STUDIO — web UI for Pi Coding Agent" />
     <meta
       property="og:description"
       content="Run persistent Pi Coding Agent sessions in real workspaces and supervise them from any browser."
     />
-    <meta property="og:url" content="https://pi-web.dev/" />
-    <meta property="og:image" content="https://pi-web.dev/assets/pi-web-banner.png" />
-    <meta property="og:image:alt" content="PI WEB browser UI for persistent Pi Coding Agent sessions" />
+    <meta property="og:url" content="https://pi-studio.dev/" />
+    <meta property="og:image" content="https://pi-studio.dev/assets/pi-studio-banner.png" />
+    <meta property="og:image:alt" content="PI STUDIO browser UI for persistent Pi Coding Agent sessions" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="PI WEB — web UI for Pi Coding Agent" />
+    <meta name="twitter:title" content="PI STUDIO — web UI for Pi Coding Agent" />
     <meta
       name="twitter:description"
       content="Run persistent Pi Coding Agent sessions in real workspaces and supervise them from any browser."
     />
-    <meta name="twitter:image" content="https://pi-web.dev/assets/pi-web-banner.png" />
+    <meta name="twitter:image" content="https://pi-studio.dev/assets/pi-studio-banner.png" />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
         "@type": "SoftwareApplication",
-        "name": "PI WEB",
+        "name": "PI STUDIO",
         "alternateName": ["Pi web UI", "Pi Coding Agent web UI"],
         "applicationCategory": "DeveloperApplication",
         "operatingSystem": "Linux, macOS, Windows WSL",
-        "url": "https://pi-web.dev/",
-        "downloadUrl": "https://www.npmjs.com/package/@jmfederico/pi-web",
-        "codeRepository": "https://github.com/jmfederico/pi-web",
-        "description": "PI WEB is a web UI for Pi Coding Agent that keeps persistent agent sessions running in real workspaces on your machine or server.",
+        "url": "https://pi-studio.dev/",
+        "downloadUrl": "https://www.npmjs.com/package/@pi-studio/pi-studio",
+        "codeRepository": "https://github.com/pi-studio/pi-studio",
+        "description": "PI STUDIO is a web UI for Pi Coding Agent that keeps persistent agent sessions running in real workspaces on your machine or server.",
         "softwareRequirements": "Node.js 22.19.0 or newer and Pi Coding Agent 1.x",
-        "license": "https://github.com/jmfederico/pi-web/blob/main/LICENSE"
+        "license": "https://github.com/pi-studio/pi-studio/blob/main/LICENSE"
       }
     </script>
     <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
     <script>
       (() => {
-        const theme = window.localStorage.getItem("pi-web-theme");
+        const theme = window.localStorage.getItem("pi-studio-theme");
         if (theme === "light" || theme === "dark") document.documentElement.dataset.theme = theme;
       })();
     </script>
@@ -60,7 +60,7 @@
   <body class="home-page">
     <header class="site-header">
       <nav class="container nav" aria-label="Main navigation">
-        <a class="brand" href="./" aria-label="PI WEB home">PI WEB</a>
+        <a class="brand" href="./" aria-label="PI STUDIO home">PI STUDIO</a>
         <div class="nav-links">
           <div class="nav-pages">
             <a href="remote-first">Remote-first</a>
@@ -71,7 +71,7 @@
             <a href="faq">FAQ</a>
           </div>
           <div class="nav-actions">
-            <a class="github-link" href="https://github.com/jmfederico/pi-web" aria-label="PI WEB on GitHub">
+            <a class="github-link" href="https://github.com/pi-studio/pi-studio" aria-label="PI STUDIO on GitHub">
               <svg class="github-icon" viewBox="0 0 16 16" aria-hidden="true">
                 <path
                   fill="currentColor"
@@ -107,7 +107,7 @@
               </span>
             </h1>
             <p class="hero-lede">
-              PI WEB keeps Pi Coding Agent sessions running in real server-side workspaces, even after your browser
+              PI STUDIO keeps Pi Coding Agent sessions running in real server-side workspaces, even after your browser
               leaves, and gives you a fast web UI to supervise, redirect, and review work from any device.
             </p>
             <p class="hero-manifesto">
@@ -125,19 +125,19 @@
             </div>
           </div>
 
-          <aside class="terminal" aria-label="PI WEB install preview">
+          <aside class="terminal" aria-label="PI STUDIO install preview">
             <div class="terminal-top">
               <div class="dots"><span></span><span></span><span></span></div>
               <span>agent-hub.local</span>
             </div>
-            <pre><code><span class="prompt">$</span> pi-web status
+            <pre><code><span class="prompt">$</span> pi-studio status
 ✓ session daemon running
 ✓ web server listening on 127.0.0.1:8504
 
 <span class="prompt">$</span> open http://127.0.0.1:8504
 # laptop, phone, tablet — same live sessions
 
-<span class="prompt">$</span> pi-web doctor
+<span class="prompt">$</span> pi-studio doctor
 ✓ caller login shell can find node >= 22.19.0
 ✓ native-service plan requirements pass in manager context
 ✓ ready for persistent agent work</code></pre>
@@ -163,13 +163,13 @@
                 <button class="demo-control" type="button" data-demo-next aria-label="Next screenshot">›</button>
               </div>
             </div>
-            <div class="demo-gallery" data-demo-gallery tabindex="0" aria-label="PI WEB screenshots">
+            <div class="demo-gallery" data-demo-gallery tabindex="0" aria-label="PI STUDIO screenshots">
               <figure class="demo-shot demo-shot-desktop" data-demo-slide>
                 <div class="demo-shot-media">
                   <button class="demo-lightbox-trigger" type="button" data-demo-lightbox-trigger aria-label="Open desktop screenshot preview">
                     <img
-                      src="assets/pi-web-desktop.png"
-                      alt="PI WEB desktop screenshot showing an agent-created pi-web.dev screenshot selected in the file preview"
+                      src="assets/pi-studio-desktop.png"
+                      alt="PI STUDIO desktop screenshot showing an agent-created pi-studio.dev screenshot selected in the file preview"
                     />
                   </button>
                 </div>
@@ -178,7 +178,7 @@
               <figure class="demo-shot" data-demo-slide>
                 <div class="demo-shot-media">
                   <button class="demo-lightbox-trigger" type="button" data-demo-lightbox-trigger aria-label="Open tablet screenshot preview">
-                    <img src="assets/pi-web-tablet.png" alt="PI WEB tablet screenshot" />
+                    <img src="assets/pi-studio-tablet.png" alt="PI STUDIO tablet screenshot" />
                   </button>
                 </div>
                 <figcaption><strong>Tablet</strong><span>The same live session on a wider touch screen.</span></figcaption>
@@ -186,7 +186,7 @@
               <figure class="demo-shot demo-shot-mobile" data-demo-slide>
                 <div class="demo-shot-media">
                   <button class="demo-lightbox-trigger" type="button" data-demo-lightbox-trigger aria-label="Open mobile screenshot preview">
-                    <img src="assets/pi-web-mobile.png" alt="PI WEB mobile chat screenshot" />
+                    <img src="assets/pi-studio-mobile.png" alt="PI STUDIO mobile chat screenshot" />
                   </button>
                 </div>
                 <figcaption><strong>Mobile</strong><span>Readable chat controls when you are away from the desk.</span></figcaption>
@@ -213,11 +213,11 @@
               that assumption: their work should persist, continue, and evolve independently of your laptop.
             </p>
             <p>
-              PI WEB makes persistence first-class. Sessions live outside the browser, agents keep working, and every
+              PI STUDIO makes persistence first-class. Sessions live outside the browser, agents keep working, and every
               device becomes a control surface for supervising, redirecting, and reviewing progress.
             </p>
           </div>
-          <div class="manifesto-lines" aria-label="PI WEB principles">
+          <div class="manifesto-lines" aria-label="PI STUDIO principles">
             <p>Persistence should not be something you bolt on after the fact.</p>
             <p>The work should not disappear the moment your session ends.</p>
             <p>You do not carry the work. You guide it.</p>
@@ -232,7 +232,7 @@
             <h2>Your laptop is a window, not the workstation.</h2>
             <p>
               Local-only development can become the blocker: one device owns the tools, terminals, build cache, editor,
-              and agent runtime. PI WEB moves the working environment to a machine that stays on, so agents can keep
+              and agent runtime. PI STUDIO moves the working environment to a machine that stays on, so agents can keep
               making progress while every browser becomes a control surface.
             </p>
           </div>
@@ -320,7 +320,7 @@
         <div class="container install-panel">
           <div class="install-card">
             <p class="eyebrow"><span class="pulse"></span> Quick install</p>
-            <h2>Run PI WEB as user services.</h2>
+            <h2>Run PI STUDIO as user services.</h2>
             <ol>
               <li>Install the package globally with npm.</li>
               <li>Run the installer to create native per-user services.</li>
@@ -337,10 +337,10 @@
               <strong>User service install</strong>
               <button class="copy-button" data-copy="#home-install">Copy</button>
             </div>
-            <pre id="home-install"><code><span class="prompt">$</span> npm install -g @jmfederico/pi-web --allow-scripts=node-pty
-<span class="prompt">$</span> pi-web install
-<span class="prompt">$</span> pi-web doctor
-<span class="prompt">$</span> pi-web version
+            <pre id="home-install"><code><span class="prompt">$</span> npm install -g @pi-studio/pi-studio --allow-scripts=node-pty
+<span class="prompt">$</span> pi-studio install
+<span class="prompt">$</span> pi-studio doctor
+<span class="prompt">$</span> pi-studio version
 <span class="comment"># Open http://127.0.0.1:8504</span></code></pre>
           </div>
         </div>
@@ -351,7 +351,7 @@
           <article class="doc-card">
             <h3>WSL and containers?</h3>
             <p>
-              Use <code>pi-web install</code> where a supported per-user service manager is available. WSL works with the
+              Use <code>pi-studio install</code> where a supported per-user service manager is available. WSL works with the
               installer when systemd is enabled; otherwise use the manual run path.
             </p>
             <a href="faq#is-this-linux-only">Read compatibility notes →</a>
@@ -359,7 +359,7 @@
           <article class="doc-card">
             <h3>Make it your own</h3>
             <p>
-              Add trusted plugins for custom panels, tools, and workspace workflows without rebuilding PI WEB.
+              Add trusted plugins for custom panels, tools, and workspace workflows without rebuilding PI STUDIO.
               Manage plugins on each machine, or ask your agent to build one for your workflow.
             </p>
             <a href="plugins#possibilities">Explore plugins →</a>
@@ -367,7 +367,7 @@
           <article class="doc-card">
             <h3>Node or tools not found?</h3>
             <p>
-              Services run login shells. If tools work in your interactive terminal but not in PI WEB, fix PATH in your
+              Services run login shells. If tools work in your interactive terminal but not in PI STUDIO, fix PATH in your
               login shell startup files and run the doctor command.
             </p>
             <a href="faq#tools-are-not-found">Fix PATH issues →</a>
@@ -378,7 +378,7 @@
 
     <footer class="site-footer">
       <div class="container footer-inner">
-        <span>PI WEB · web UI for persistent Pi Coding Agent sessions.</span>
+        <span>PI STUDIO · web UI for persistent Pi Coding Agent sessions.</span>
         <div class="footer-links">
           <a href="remote-first">Remote-first</a>
           <a href="machines">Fleet</a>
@@ -386,10 +386,10 @@
           <a href="config">Config</a>
           <a href="plugins">Plugins</a>
           <a href="faq">FAQ</a>
-          <a href="https://www.npmjs.com/package/@jmfederico/pi-web">npm</a>
+          <a href="https://www.npmjs.com/package/@pi-studio/pi-studio">npm</a>
           <span class="version-switcher" role="group" aria-label="Documentation version">
-            <a class="version-switcher-option" data-version-option="stable" href="https://pi-web.dev/" aria-current="true">Stable</a>
-            <a class="version-switcher-option" data-version-option="dev" href="https://pi-web.dev/dev/">Dev</a>
+            <a class="version-switcher-option" data-version-option="stable" href="https://pi-studio.dev/" aria-current="true">Stable</a>
+            <a class="version-switcher-option" data-version-option="dev" href="https://pi-studio.dev/dev/">Dev</a>
           </span>
         </div>
       </div>

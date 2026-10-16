@@ -3,7 +3,7 @@ export interface NavigationPreferences {
   mobileCollapsed: boolean;
 }
 
-const storageKey = "pi-web:navigation-preferences";
+const storageKey = "pi-studio:navigation-preferences";
 
 function browserStorage(): Storage | undefined {
   try {

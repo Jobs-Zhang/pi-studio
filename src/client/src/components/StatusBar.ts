@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { LitElement, html } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import type { SessionStatus } from "../api";
@@ -31,7 +32,7 @@ export class StatusBar extends LitElement {
 
   override render() {
     const status = this.status;
-    if (status === undefined) return html`<div class="bar muted">No session status yet</div>`;
+    if (status === undefined) return html`<div class="bar muted">${t("statusBar.noStatus")}</div>`;
     const context = status.contextUsage;
     const contextText = context
       ? context.percent == null

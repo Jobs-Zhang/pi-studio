@@ -10,7 +10,7 @@ import "../components/ContentRenderingBoundary";
 import { renderIntentMemory } from "./renderIntentMemory";
 
 export const contentRenderingCapabilityToken: PluginCapability<ContentRenderingCapability> = {
-  pluginId: "pi-web", id: "content-rendering", version: 1,
+  pluginId: "pi-studio", id: "content-rendering", version: 1,
   parse: (value) => {
     if (!isContentRenderingCapability(value)) throw new Error("Content rendering capability v1 is unavailable");
     return value;
@@ -55,9 +55,9 @@ export function createContentRenderingService(select: SelectRenderer): ChatConte
     if (request.truncated === true || request.text.length > MAX_CONTENT_RENDERER_LENGTH) return [];
     return select(request);
   };
-  const host = (text: string, choices: readonly ContentRendererChoice[], externalControls = false, rendererId?: string, allowManualPreview = false, intentKey?: string): TemplateResult => html`<pi-web-content-renderer
+  const host = (text: string, choices: readonly ContentRendererChoice[], externalControls = false, rendererId?: string, allowManualPreview = false, intentKey?: string): TemplateResult => html`<pi-studio-content-renderer
     .intentKey=${intentKey} .externalControls=${externalControls} .text=${text} .choices=${choices} .rendererId=${rendererId} .allowManualPreview=${allowManualPreview}
-  ></pi-web-content-renderer>`;
+  ></pi-studio-content-renderer>`;
 
   const renderMarkdown = (request: ContentMarkdownRenderRequest, identity?: string): TemplateResult => {
       const template = document.createElement("template");
@@ -112,9 +112,9 @@ export function createContentRenderingService(select: SelectRenderer): ChatConte
     },
     // Plain templates cross Lit copies, but directive instances do not (notably
     // the dev host's unsafeHTML/ref inside the production-bundled Files plugin).
-    renderMarkdown: (request: ContentMarkdownRenderRequest) => html`<pi-web-content-rendering-boundary
+    renderMarkdown: (request: ContentMarkdownRenderRequest) => html`<pi-studio-content-rendering-boundary
       style="display: contents" .content=${renderMarkdown(request)}
-    ></pi-web-content-rendering-boundary>`,
+    ></pi-studio-content-rendering-boundary>`,
   });
   return { capability, renderMarkdown };
 }

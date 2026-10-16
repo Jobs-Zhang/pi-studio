@@ -4,7 +4,7 @@ import type { Readable } from "node:stream";
 import { WebSocket } from "ws";
 import { isHostAbsoluteAgentDir } from "../config.js";
 import type { ActiveAgentProfileDescriptor } from "../shared/apiTypes.js";
-import { parsePiWebRuntimeComponent } from "../shared/piWebStatusParsing.js";
+import { parsePiStudioRuntimeComponent } from "../shared/piStudioStatusParsing.js";
 import { sessiondHttpUrl, sessiondSocketPath } from "./config.js";
 
 export type SessionDaemonAgentProfileResult =
@@ -151,7 +151,7 @@ export async function getSessionDaemonActiveAgentProfile(client: SessionDaemonRe
     return { status: "invalid", error: "session daemon runtime response was not valid JSON" };
   }
 
-  const runtime = parsePiWebRuntimeComponent(value);
+  const runtime = parsePiStudioRuntimeComponent(value);
   if (runtime?.component !== "sessiond") {
     return { status: "invalid", error: "session daemon runtime response was invalid" };
   }

@@ -3,6 +3,7 @@ import { customElement, property, query, state } from "lit/decorators.js";
 import { repeat } from "lit/directives/repeat.js";
 import { keyed } from "lit/directives/keyed.js";
 import { ChatDisclosureController } from "../chatDisclosure";
+import { formatLocaleDateTime, t } from "../i18n";
 import type { DisplayedMessageActionAvailabilityContext, MessageActionAvailabilityContext, MessageActionFeedback, MessageActionResult } from "../../../plugin-api";
 import { displayedMessageActionMessage, messageActionMessage, MessageActionAvailabilityCache, type RegisteredMessageAction } from "../plugins/messageActions";
 import { machineSessionKey } from "../machineKeys";
@@ -42,8 +43,8 @@ import "./TranscriptImage";
 import type { ImageOpenDetail } from "./ImagePresentation";
 import { ImageLayoutScrollController } from "./ImageLayoutScrollController";
 
-const messageTimestampFormatter = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "medium" });
-const notificationTimestampFormatter = new Intl.DateTimeFormat(undefined, { timeStyle: "short" });
+const MESSAGE_TIMESTAMP_FORMAT: Intl.DateTimeFormatOptions = { dateStyle: "medium", timeStyle: "medium" };
+const NOTIFICATION_TIMESTAMP_FORMAT: Intl.DateTimeFormatOptions = { timeStyle: "short" };
 
 function renderNotificationDisclosureIcon(collapsed: boolean) {
   return html`
@@ -93,8 +94,8 @@ export interface QueuedMessageSection {
 
 export function chatQueuedMessageSections(clientQueued: QueuedSessionMessage[], serverQueued: QueuedSessionMessage[]): QueuedMessageSection[] {
   return [
-    clientQueued.length === 0 ? undefined : { source: "client", heading: "Queued until session starts", detail: "Will send once the backend session is ready", messages: clientQueued },
-    serverQueued.length === 0 ? undefined : { source: "server", heading: "Queued messages", detail: `${String(serverQueued.length)} pending`, messages: serverQueued },
+    clientQueued.length === 0 ? undefined : { source: "client", heading: t("chat.queuedUntilStart"), detail: t("chat.queuedUntilStartDetail"), messages: clientQueued },
+    serverQueued.length === 0 ? undefined : { source: "server", heading: t("chat.queuedMessages"), detail: t("chat.queuedPending", { count: serverQueued.length }), messages: serverQueued },
   ].filter((section): section is QueuedMessageSection => section !== undefined);
 }
 
@@ -171,7 +172,7 @@ export function chatMessageMetadataLabel(message: ChatLine): string {
 function formatMessageTimestamp(timestamp: string): string | undefined {
   const date = new Date(timestamp);
   if (!Number.isFinite(date.getTime())) return undefined;
-  return messageTimestampFormatter.format(date);
+  return formatLocaleDateTime(date, MESSAGE_TIMESTAMP_FORMAT);
 }
 
 function chatMessageModelLabel(message: ChatLine): string | undefined {
@@ -501,7 +502,7 @@ export class ChatView extends LitElement {
     const totalCount = notificationInboxTotalCount(inbox);
     if (totalCount === 0 && !hasPendingOverlay && !retainsFocusTarget) return null;
     const collapsed = notificationTrayIsCollapsed(this.collapsedNotificationTargetKeys, inbox);
-    const toggleLabel = collapsed ? "Expand notifications" : "Collapse notifications";
+    const toggleLabel = collapsed ? t("chat.expandNotifications") : t("chat.collapseNotifications");
     return html`
       <section class=${`notification-tray${collapsed ? " collapsed" : ""}`} role="region" aria-labelledby="session-notifications-heading" @focusout=${(event: FocusEvent) => { this.releaseEmptyNotificationTray(event); }}>
         <header class="notification-header" data-notification-focus="header" tabindex="-1">
@@ -510,11 +511,11 @@ export class ChatView extends LitElement {
             <button
               type="button"
               class="notification-control notification-clear"
-              aria-label="Clear all notifications"
-              title="Clear all notifications"
+              aria-label=${t("chat.clearAllNotifications")}
+              title=${t("chat.clearAllNotifications")}
               ?disabled=${inbox.dismissAllPending || totalCount === 0 || this.onDismissAllNotifications === undefined}
               @click=${() => { this.dismissAllNotifications(); }}
-            >Clear</button>
+            >${t("chat.clear")}</button>
             <button
               type="button"
               class="notification-control notification-toggle"
@@ -538,7 +539,7 @@ export class ChatView extends LitElement {
                 <div class="notification-metadata">
                   <strong class="notification-severity">${label}</strong>
                   <span aria-hidden="true">·</span>
-                  <time datetime=${notification.receivedAt}>${notificationTimestampFormatter.format(new Date(notification.receivedAt))}</time>
+                  <time datetime=${notification.receivedAt}>${formatLocaleDateTime(new Date(notification.receivedAt), NOTIFICATION_TIMESTAMP_FORMAT)}</time>
                 </div>
                 <p class="notification-message" dir="auto">${notification.message}</p>
                 ${truncationLabel === undefined ? null : html`<p class="notification-truncated">${truncationLabel}</p>`}
@@ -546,7 +547,7 @@ export class ChatView extends LitElement {
                   type="button"
                   class="notification-row-dismiss"
                   aria-label=${notificationDismissLabel(notification)}
-                  title="Dismiss notification"
+                  title=${t("chat.dismissNotification")}
                   ?disabled=${inbox.pendingDismissedIds.has(notification.id) || inbox.dismissAllPending || this.onDismissNotification === undefined}
                   @click=${() => { this.dismissNotification(notification.id); }}
                 >${renderNotificationCloseIcon()}</button>
@@ -633,14 +634,14 @@ export class ChatView extends LitElement {
             <button
               type="button"
               class="session-warnings-collapse"
-              title="Minimise warnings"
-              aria-label="Minimise warnings"
+              title=${t("chat.minimiseWarnings")}
+              aria-label=${t("chat.minimiseWarnings")}
               @click=${this.handleToggleWarnings}
             >
               <svg class="session-warnings-collapse-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                 <path d="m18 15-6-6-6 6"></path>
               </svg>
-              <span>Minimise</span>
+              <span>${t("chat.minimise")}</span>
             </button>
           </div>
         `}
@@ -660,8 +661,8 @@ export class ChatView extends LitElement {
               <button
                 type="button"
                 class="session-warning-dismiss"
-                title="Don't show this warning again"
-                aria-label="Dismiss warning"
+                title=${t("chat.dontShowAgain")}
+                aria-label=${t("chat.dismissWarning")}
                 @click=${() => { this.onDismissWarning?.(dismissId); }}
               >×</button>
             `}
@@ -676,7 +677,7 @@ export class ChatView extends LitElement {
     return html`
       <dialog class="image-zoom" @click=${this.onImageZoomDialogClick} @close=${this.closeImageZoom} @cancel=${this.closeImageZoom}>
         ${this.zoomedImage === undefined ? null : html`
-          <button type="button" class="image-zoom-close" aria-label="Close image" @click=${this.closeImageZoom}>×</button>
+          <button type="button" class="image-zoom-close" aria-label=${t("chat.closeImage")} @click=${this.closeImageZoom}>×</button>
           <img class="image-zoom-full" src=${this.zoomedImage.src} alt=${this.zoomedImage.alt} />
         `}
       </dialog>
@@ -708,7 +709,7 @@ export class ChatView extends LitElement {
       return html`
         <div class="activity-dock active" aria-live="polite">
           <span class="dot"></span>
-          <span class="activity-text">Sending your message…</span>
+          <span class="activity-text">${t("chat.sending")}</span>
         </div>
       `;
     }
@@ -738,7 +739,7 @@ export class ChatView extends LitElement {
             <small>${section.detail}</small>
           </div>
           ${canClear ? html`
-            <button type="button" class="queued-clear-button" title="Clear queued messages without stopping active work" @click=${this.handleClearServerQueue}>Clear queue</button>
+            <button type="button" class="queued-clear-button" title=${t("chat.clearQueueHint")} @click=${this.handleClearServerQueue}>${t("chat.clearQueue")}</button>
           ` : null}
         </div>
         ${section.messages.map((message, index) => html`
@@ -756,10 +757,10 @@ export class ChatView extends LitElement {
     if (text === undefined || this.onUseSuggestedInput === undefined) return null;
     return html`
       <aside class="suggested-input">
-        <strong>Suggested input</strong>
+        <strong>${t("chat.suggestedInput")}</strong>
         <p class="suggested-input-text" dir="auto">${text === "" ? "Empty input" : text}</p>
-        <small>Replaces your current draft. Nothing is sent.</small>
-        <button type="button" @click=${() => { this.onUseSuggestedInput?.(this.machineId, this.sessionId); }}>Use suggested input</button>
+        <small>${t("chat.suggestedInputDetail")}</small>
+        <button type="button" @click=${() => { this.onUseSuggestedInput?.(this.machineId, this.sessionId); }}>${t("chat.useSuggestedInput")}</button>
       </aside>
     `;
   }
@@ -812,9 +813,9 @@ export class ChatView extends LitElement {
     if (!this.isCompacting) return null;
     return html`
       <aside class="session-activity compacting" aria-live="polite">
-        <strong>Compacting history…</strong>
-        <span>The agent is summarizing earlier context. New prompts will be queued until compaction finishes.</span>
-        ${this.pendingMessageCount > 0 ? html`<small>${this.pendingMessageCount} queued ${this.pendingMessageCount === 1 ? "message" : "messages"}</small>` : null}
+        <strong>${t("chat.compactingTitle")}</strong>
+        <span>${t("chat.compacting")}</span>
+        ${this.pendingMessageCount > 0 ? html`<small>${t(this.pendingMessageCount === 1 ? "chat.queuedOne" : "chat.queuedMany", { count: this.pendingMessageCount })}</small>` : null}
       </aside>
     `;
   }
@@ -858,15 +859,15 @@ export class ChatView extends LitElement {
 
   private renderHistoryBoundary() {
     const range = this.historyRangeLabel();
-    if (this.loadingMore) return html`<div class="history-boundary"><span>Loading earlier messages…</span>${range}</div>`;
+    if (this.loadingMore) return html`<div class="history-boundary"><span>${t("chat.loadingEarlier")}</span>${range}</div>`;
     if (this.hasMore) return html`
       <div class="history-boundary">
-        <button type="button" class="history-load-button" ?disabled=${this.loadMoreRequested} @click=${() => { this.requestLoadMore(); }}>Load earlier messages</button>
-        <span>Scroll up to load earlier messages</span>
+        <button type="button" class="history-load-button" ?disabled=${this.loadMoreRequested} @click=${() => { this.requestLoadMore(); }}>${t("chat.loadEarlier")}</button>
+        <span>${t("chat.scrollToLoadEarlier")}</span>
         ${range}
       </div>
     `;
-    if (this.messages.length) return html`<div class="history-boundary"><span>Beginning of session</span>${range}</div>`;
+    if (this.messages.length) return html`<div class="history-boundary"><span>${t("chat.beginningOfSession")}</span>${range}</div>`;
     return null;
   }
 
@@ -966,7 +967,7 @@ export class ChatView extends LitElement {
     if (actions.length === 0) return null;
     const feedback = this.messageActionFeedback;
     return html`
-      <div class="msg-actions" aria-label="Message actions">
+      <div class="msg-actions" aria-label=${t("chat.messageActions")}>
         ${actions.map(({ action, enabled, ariaLabel }) => {
           const presentation = feedback?.machineId === this.machineId && feedback.sessionId === this.sessionId && feedback.key === key && feedback.actionId === action.id
             ? feedback.presentation : undefined;
@@ -1041,7 +1042,7 @@ export class ChatView extends LitElement {
     if (part.type === "text" || part.type === "thinking") {
       const text = part.displayText ?? part.text;
       if (text === "") return null;
-      if (part.type === "thinking") return html`<details class="part"><summary>thinking</summary><formatted-text .intentKey=${intentKey} .contentRendering=${this.contentRendering} .machineId=${this.machineId} .workspaceContext=${this.workspaceContext} .text=${text}></formatted-text></details>`;
+      if (part.type === "thinking") return html`<details class="part"><summary>${t("chat.thinking")}</summary><formatted-text .intentKey=${intentKey} .contentRendering=${this.contentRendering} .machineId=${this.machineId} .workspaceContext=${this.workspaceContext} .text=${text}></formatted-text></details>`;
       if (message.role === "bash") return html`<pre class="part shell-output">${text}</pre>`;
       return html`<formatted-text .intentKey=${intentKey} class="part" .contentRendering=${this.contentRendering} .machineId=${this.machineId} .workspaceContext=${this.workspaceContext} .text=${text}></formatted-text>`;
     }
@@ -1066,9 +1067,9 @@ export class ChatView extends LitElement {
       ></ask-user-card>
     `;
     if (part.type === "image") {
-      return html`<pi-web-transcript-image class="part chat-image" .imagePart=${part}
+      return html`<pi-studio-transcript-image class="part chat-image" .imagePart=${part}
         .session=${{ id: this.sessionId, cwd: this.sessionCwd }} .machineId=${this.machineId}
-      ></pi-web-transcript-image>`;
+      ></pi-studio-transcript-image>`;
     }
     if (part.type === "toolCall") return html`<div class="part tool-line">▶ ${part.toolName}<span class="summary">${part.summary}</span></div>`;
     if (part.type === "toolExecution") return html`<tool-execution-view class="part" .execution=${part}></tool-execution-view>`;

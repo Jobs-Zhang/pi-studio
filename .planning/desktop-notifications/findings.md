@@ -1,4 +1,4 @@
-# Findings: PI WEB Desktop Notifications
+# Findings: PI STUDIO Desktop Notifications
 
 **Last Updated**: 2026-10-09
 
@@ -28,7 +28,7 @@ From handoff document:
 
 ### Electron Shell Implementation
 - Uses `contextIsolation: true`, `nodeIntegration: false`, `sandbox: true`
-- Sets `app.setAppUserModelId("dev.pi-web.desktop")` for Windows notifications
+- Sets `app.setAppUserModelId("dev.pi-studio.desktop")` for Windows notifications
 - Tray with Show/Hide and Quit options
 - Single instance lock
 - External links open in default browser
@@ -44,7 +44,7 @@ From handoff document:
 ### Testing Status
 - **Passing**: typecheck, eslint, 1184 targeted tests
 - **Baseline verified**: Terminal plugin tests pass on clean `main` (2 runs, 7/7 tests each)
-- **Full suite**: 3 failures in `pi-web-plugins/terminal/server/server-plugin.test.ts` (same as handoff)
+- **Full suite**: 3 failures in `pi-studio-plugins/terminal/server/server-plugin.test.ts` (same as handoff)
 - **Not tested**: Electron shell on Windows, browser notification toggle
 
 ### Terminal Plugin Test Failures
@@ -63,8 +63,8 @@ Likely test order dependency or timing issue in the plugin, not related to deskt
 - Need real Windows machine for testing
 
 ### Service Architecture
-- `pi-web-sessiond.service`: No autoreload, no auto-restart
-- `pi-web-ui-dev.service`: Autoreload mode
+- `pi-studio-sessiond.service`: No autoreload, no auto-restart
+- `pi-studio-ui-dev.service`: Autoreload mode
 - Windows not supported for service management
 
 ## Next Steps Analysis

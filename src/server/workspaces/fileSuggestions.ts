@@ -4,7 +4,7 @@ import { homedir } from "node:os";
 import { basename, dirname, isAbsolute, join, relative, sep, win32 } from "node:path";
 import { promisify } from "node:util";
 import { sanitizedGitEnv } from "../git/gitEnv.js";
-import type { PiWebPathAccessConfig } from "../../shared/apiTypes.js";
+import type { PiStudioPathAccessConfig } from "../../shared/apiTypes.js";
 import type { ClientFileSuggestion } from "../types.js";
 import { createPathAccessPolicy, isAbsoluteishPath, resolvePathAccessTarget, type PathAccessPolicy } from "./pathAccessPolicy.js";
 
@@ -38,7 +38,7 @@ export type FileSuggestionScope = "tracked" | "all";
 export interface FileSuggestionOptions {
   kind?: ClientFileSuggestion["kind"] | undefined;
   scope?: FileSuggestionScope | undefined;
-  pathAccess?: PiWebPathAccessConfig | undefined;
+  pathAccess?: PiStudioPathAccessConfig | undefined;
 }
 
 export interface FileSuggestionDependencies {
@@ -69,7 +69,7 @@ export async function listFileSuggestions(cwd: string, query = "", options: File
   )).slice(0, maxFileSuggestions);
 }
 
-export async function listPathSuggestions(cwd: string, prefix = "", pathAccess?: PiWebPathAccessConfig, deps: FileSuggestionDependencies = {}): Promise<ClientFileSuggestion[]> {
+export async function listPathSuggestions(cwd: string, prefix = "", pathAccess?: PiStudioPathAccessConfig, deps: FileSuggestionDependencies = {}): Promise<ClientFileSuggestion[]> {
   const query = fileQueryText(prefix);
   const fzf = fzfRunnerForDependencies(deps);
   if (isAbsoluteishPath(query)) return listAllowedPathSuggestions(cwd, query, pathAccess, fzf);
@@ -113,7 +113,7 @@ async function resolveWorkspaceSuggestionDirectory(policy: PathAccessPolicy, dir
   }
 }
 
-async function listAllowedPathSuggestions(cwd: string, query: string, pathAccess: PiWebPathAccessConfig | undefined, fzf: CommandRunner | undefined): Promise<ClientFileSuggestion[]> {
+async function listAllowedPathSuggestions(cwd: string, query: string, pathAccess: PiStudioPathAccessConfig | undefined, fzf: CommandRunner | undefined): Promise<ClientFileSuggestion[]> {
   const policy = await createPathAccessPolicy(cwd, pathAccess);
   if (policy.allowedRoots.length === 0) throw new Error("Absolute paths are not allowed");
   const rootCandidates = allowedRootSuggestionCandidates(policy, query);

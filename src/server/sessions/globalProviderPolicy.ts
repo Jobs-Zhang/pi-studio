@@ -110,10 +110,10 @@ const PROVIDER_RECOVERY_GUIDANCE = "The startup provider, if any, remains in use
   + "For a global extension, register providers in its factory in the active agent directory, then manually restart "
   + "the session daemon when safe; this interrupts active sessions and terminals. Project-only or session_start-only "
   + "registrations are not enabled by a restart. /reload and web/API restarts do not rebuild the provider baseline. "
-  + "See https://pi-web.dev/faq#provider-extension-no-effect.";
+  + "See https://pi-studio.dev/faq#provider-extension-no-effect.";
 
 async function loadGlobalExtensionServices(runtime: ModelRuntime, agentDir: string): Promise<AgentSessionServices> {
-  const scratchCwd = await mkdtemp(join(tmpdir(), "pi-web-global-ext-"));
+  const scratchCwd = await mkdtemp(join(tmpdir(), "pi-studio-global-ext-"));
   try {
     return await createAgentSessionServices({ cwd: scratchCwd, agentDir, modelRuntime: runtime });
   } finally {
@@ -149,7 +149,7 @@ function rejectVirtualModelMutations(runtime: ModelRuntime): void {
   const reject = (operation: "registerVirtualModel" | "unregisterVirtualModel"): never => {
     // Never echo model definitions or IDs: they may contain sensitive values.
     throw new Error(
-      `PI WEB does not support ${operation}(): virtual-model routers capture session-bound context, `
+      `PI STUDIO does not support ${operation}(): virtual-model routers capture session-bound context, `
       + "but the model runtime is shared across sessions. Disable this extension's virtual-model feature "
       + "and select a physical model instead.",
     );

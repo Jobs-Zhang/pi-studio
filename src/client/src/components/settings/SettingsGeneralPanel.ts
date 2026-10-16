@@ -1,6 +1,7 @@
+import { t } from "../../i18n";
 import { css, html, LitElement, type PropertyValues, type TemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { DEFAULT_WORKSPACE_ATTACHMENTS_FOLDER, DEFAULT_WORKSPACE_UPLOADS_FOLDER, type PiWebConfigEnvOverrides, type PiWebConfigResponse, type PiWebConfigValues } from "../../api";
+import { DEFAULT_WORKSPACE_ATTACHMENTS_FOLDER, DEFAULT_WORKSPACE_UPLOADS_FOLDER, type PiStudioConfigEnvOverrides, type PiStudioConfigResponse, type PiStudioConfigValues } from "../../api";
 import "./SettingsPanelFrame";
 import type { SettingsNotice } from "./SettingsPanelFrame";
 import {
@@ -15,13 +16,13 @@ import {
 } from "./settingsConfigDraft";
 
 function generalDescription(targetLabel: string): TemplateResult {
-  return html`Gateway server fields edit this local gateway. File access and upload defaults edit ${targetLabel}.`;
+  return html`${t("settingsGeneral.description", { target: targetLabel })}`;
 }
 
 @customElement("settings-general-panel")
 export class SettingsGeneralPanel extends LitElement {
-  @property({ attribute: false }) configResponse: PiWebConfigResponse | undefined;
-  @property({ attribute: false }) machineConfigResponse: PiWebConfigResponse | undefined;
+  @property({ attribute: false }) configResponse: PiStudioConfigResponse | undefined;
+  @property({ attribute: false }) machineConfigResponse: PiStudioConfigResponse | undefined;
   @property({ type: Boolean }) loading = false;
   @property({ type: Boolean }) machineLoading = false;
   @property({ type: Boolean }) saving = false;
@@ -31,8 +32,8 @@ export class SettingsGeneralPanel extends LitElement {
   @property() targetLabel = "selected machine";
   @property({ attribute: false }) onReload?: () => void | Promise<void>;
   @property({ attribute: false }) onReloadMachine?: () => void | Promise<void>;
-  @property({ attribute: false }) onSave?: (config: PiWebConfigValues) => void | Promise<void>;
-  @property({ attribute: false }) onSaveMachineConfig?: (config: PiWebConfigValues) => void | Promise<void>;
+  @property({ attribute: false }) onSave?: (config: PiStudioConfigValues) => void | Promise<void>;
+  @property({ attribute: false }) onSaveMachineConfig?: (config: PiStudioConfigValues) => void | Promise<void>;
   @state() private gatewayDraft: GatewayServerConfigDraft = emptyGatewayServerConfigDraft();
   @state() private machineDraft: MachineAccessConfigDraft = emptyMachineAccessConfigDraft();
   @state() private gatewayLocalError = "";
@@ -52,9 +53,9 @@ export class SettingsGeneralPanel extends LitElement {
   override render(): TemplateResult {
     return html`
       <settings-panel-frame
-        heading="General configuration"
+        heading=${t("settingsGeneral.heading")}
         .description=${generalDescription(this.targetLabel)}
-        actionLabel="Reload"
+        actionLabel=${t("common.reload")}
         .actionDisabled=${this.loading || this.machineLoading}
         .notices=${this.panelNotices()}
         .onAction=${() => { this.reloadAll(); }}
@@ -71,53 +72,53 @@ export class SettingsGeneralPanel extends LitElement {
   private renderGatewayServerSettings(): TemplateResult {
     const config = this.configResponse;
     return html`
-      <section class="settings-card" aria-label="Gateway server settings">
+      <section class="settings-card" aria-label=${t("settingsGeneral.gatewayAria")}>
         <div class="card-heading">
-          <h3>Gateway server</h3>
-          <p>Host, port, and allowed hosts are saved in the gateway config. Address changes require the web service to restart before the running server binds to the new address.</p>
+          <h3>${t("settingsGeneral.gatewayHeading")}</h3>
+          <p>${t("settingsGeneral.gatewayDescription")}</p>
         </div>
-        ${config === undefined && this.loading ? html`<div class="loading-card">Loading gateway configuration…</div>` : html`
+        ${config === undefined && this.loading ? html`<div class="loading-card">${t("settingsGeneral.gatewayLoading")}</div>` : html`
           <div class="config-path-card">
-            <span>Gateway config file</span>
+            <span>${t("settingsGeneral.gatewayConfigFile")}</span>
             <code>${config?.path ?? "Unknown"}</code>
-            <small>${config?.exists === true ? "Existing file" : "This file will be created on save"}</small>
+            <small>${config?.exists === true ? t("settingsGeneral.existingFile") : t("settingsGeneral.fileCreatedOnSave")}</small>
           </div>
           <form class="config-form" @submit=${(event: Event) => { void this.saveGatewayConfig(event); }}>
             <label class="field">
               <span class="field-heading">
-                <span>Host</span>
+                <span>${t("settingsGeneral.host")}</span>
                 ${this.renderOverrideBadge("host")}
               </span>
               <input .value=${this.gatewayDraft.host} placeholder="127.0.0.1" autocomplete="off" spellcheck="false" @input=${(event: Event) => { this.updateGatewayDraft({ host: inputValue(event) }); }}>
-              <small>Address the web server should bind to. Leave empty to use PI WEB's default.</small>
+              <small>${t("settingsGeneral.hostHint")}</small>
             </label>
 
             <label class="field">
               <span class="field-heading">
-                <span>Port</span>
+                <span>${t("settingsGeneral.port")}</span>
                 ${this.renderOverrideBadge("port")}
               </span>
               <input .value=${this.gatewayDraft.port} inputmode="numeric" pattern="[0-9]*" placeholder="8504" autocomplete="off" @input=${(event: Event) => { this.updateGatewayDraft({ port: inputValue(event) }); }}>
-              <small>TCP port from 1 to 65535. Leave empty to use PI WEB's default.</small>
+              <small>${t("settingsGeneral.portHint")}</small>
             </label>
 
             <div class="field">
               <span class="field-heading">
-                <span>Allowed hosts</span>
+                <span>${t("settingsGeneral.allowedHosts")}</span>
                 ${this.renderOverrideBadge("allowedHosts")}
               </span>
               <select .value=${this.gatewayDraft.allowedHostsMode} @change=${(event: Event) => { this.updateGatewayDraft({ allowedHostsMode: selectValue(event) === "all" ? "all" : "list" }); }}>
-                <option value="list">Only listed hosts</option>
-                <option value="all">Allow every host</option>
+                <option value="list">${t("settingsGeneral.onlyListedHosts")}</option>
+                <option value="all">${t("settingsGeneral.allowEveryHost")}</option>
               </select>
-              <textarea .value=${this.gatewayDraft.allowedHostsText} ?disabled=${this.gatewayDraft.allowedHostsMode === "all"} rows="4" placeholder="example.local&#10;192.168.1.20" spellcheck="false" @input=${(event: Event) => { this.updateGatewayDraft({ allowedHostsText: textAreaValue(event) }); }}></textarea>
-              <small>Enter one host per line, or choose “Allow every host” to write <code>true</code>.</small>
+              <textarea .value=${this.gatewayDraft.allowedHostsText} ?disabled=${this.gatewayDraft.allowedHostsMode === "all"} rows="4" placeholder=${t("settingsGeneral.allowedHostsPlaceholder")} spellcheck="false" @input=${(event: Event) => { this.updateGatewayDraft({ allowedHostsText: textAreaValue(event) }); }}></textarea>
+              <small>${t("settingsGeneral.allowedHostsHint")}</small>
             </div>
 
             ${this.renderGatewayEffectiveConfig()}
 
             <footer class="form-actions">
-              <button class="primary" ?disabled=${this.loading || this.saving}>${this.saving ? "Saving…" : "Save gateway server config"}</button>
+              <button class="primary" ?disabled=${this.loading || this.saving}>${this.saving ? t("settingsGeneral.saving") : t("settingsGeneral.saveGateway")}</button>
             </footer>
           </form>
         `}
@@ -128,47 +129,47 @@ export class SettingsGeneralPanel extends LitElement {
   private renderSelectedMachineAccessSettings(): TemplateResult {
     const config = this.machineConfigResponse;
     return html`
-      <section class="settings-card" aria-label="Selected machine file access and upload settings">
+      <section class="settings-card" aria-label=${t("settingsGeneral.machineAria")}>
         <div class="card-heading">
-          <h3>Selected machine file access and uploads</h3>
-          <p>External filesystem roots and upload defaults are saved on ${this.targetLabel}.</p>
+          <h3>${t("settingsGeneral.machineHeading")}</h3>
+          <p>${t("settingsGeneral.machineDescription", { target: this.targetLabel })}</p>
         </div>
         ${this.renderMachineMessages()}
-        ${config === undefined ? html`<div class="loading-card">${this.machineLoading ? "Loading selected-machine file access config…" : "Selected-machine file access config is unavailable. Reload before saving file/upload settings."}</div>` : html`
+        ${config === undefined ? html`<div class="loading-card">${this.machineLoading ? t("settingsGeneral.machineLoading") : t("settingsGeneral.machineUnavailable")}</div>` : html`
           <div class="config-path-card">
-            <span>Selected machine config file</span>
+            <span>${t("settingsGeneral.machineConfigFile")}</span>
             <code>${config.path}</code>
-            <small>${config.exists ? "Existing file" : "This file will be created on save"}</small>
+            <small>${config.exists ? t("settingsGeneral.existingFile") : t("settingsGeneral.fileCreatedOnSave")}</small>
           </div>
           <form class="config-form" @submit=${(event: Event) => { void this.saveMachineAccessConfig(event); }}>
             <label class="field">
               <span class="field-heading">
-                <span>External filesystem roots</span>
+                <span>${t("settingsGeneral.externalRoots")}</span>
               </span>
-              <textarea .value=${this.machineDraft.allowedPathsText} rows="4" placeholder="~/SDKs&#10;/opt/reference" spellcheck="false" @input=${(event: Event) => { this.updateMachineDraft({ allowedPathsText: textAreaValue(event) }); }}></textarea>
-              <small>Allowlist for absolute <code>@</code> completions and file explorer reads outside a workspace on ${this.targetLabel}. Enter one absolute path, Windows absolute path, or <code>~</code>-prefixed path per line. Leave empty to deny external paths by default.</small>
+              <textarea .value=${this.machineDraft.allowedPathsText} rows="4" placeholder=${t("settingsGeneral.externalRootsPlaceholder")} spellcheck="false" @input=${(event: Event) => { this.updateMachineDraft({ allowedPathsText: textAreaValue(event) }); }}></textarea>
+              <small>${t("settingsGeneral.externalRootsHint", { target: this.targetLabel })}</small>
             </label>
 
             <label class="field">
               <span class="field-heading">
-                <span>Default upload folder</span>
+                <span>${t("settingsGeneral.defaultUploadFolder")}</span>
               </span>
               <input .value=${this.machineDraft.uploadDefaultFolder} placeholder=${DEFAULT_WORKSPACE_UPLOADS_FOLDER} autocomplete="off" spellcheck="false" @input=${(event: Event) => { this.updateMachineDraft({ uploadDefaultFolder: inputValue(event) }); }}>
-              <small>Workspace-relative folder for manual file uploads on ${this.targetLabel}. Leave empty to use PI WEB's default <code>${DEFAULT_WORKSPACE_UPLOADS_FOLDER}</code>.</small>
+              <small>Workspace-relative folder for manual file uploads on ${this.targetLabel}. Leave empty to use PI STUDIO's default <code>${DEFAULT_WORKSPACE_UPLOADS_FOLDER}</code>.</small>
             </label>
 
             <label class="field">
               <span class="field-heading">
-                <span>Default attachments folder</span>
+                <span>${t("settingsGeneral.defaultAttachmentsFolder")}</span>
               </span>
               <input .value=${this.machineDraft.attachmentDefaultFolder} placeholder=${DEFAULT_WORKSPACE_ATTACHMENTS_FOLDER} autocomplete="off" spellcheck="false" @input=${(event: Event) => { this.updateMachineDraft({ attachmentDefaultFolder: inputValue(event) }); }}>
-              <small>Workspace-relative folder for prompt attachments saved into the workspace on ${this.targetLabel}. Leave empty to use PI WEB's default <code>${DEFAULT_WORKSPACE_ATTACHMENTS_FOLDER}</code>.</small>
+              <small>Workspace-relative folder for prompt attachments saved into the workspace on ${this.targetLabel}. Leave empty to use PI STUDIO's default <code>${DEFAULT_WORKSPACE_ATTACHMENTS_FOLDER}</code>.</small>
             </label>
 
             ${this.renderMachineEffectiveConfig()}
 
             <footer class="form-actions">
-              <button class="primary" ?disabled=${this.machineLoading || this.saving}>${this.saving ? "Saving…" : "Save file/upload config"}</button>
+              <button class="primary" ?disabled=${this.machineLoading || this.saving}>${this.saving ? t("settingsGeneral.saving") : t("settingsGeneral.saveMachine")}</button>
             </footer>
           </form>
         `}
@@ -179,7 +180,7 @@ export class SettingsGeneralPanel extends LitElement {
   private panelNotices(): readonly SettingsNotice[] {
     const notices: SettingsNotice[] = [];
     const gatewayError = this.gatewayLocalError || this.error;
-    if (gatewayError !== "") notices.push({ type: "error", title: "Configuration", content: gatewayError });
+    if (gatewayError !== "") notices.push({ type: "error", title: t("settingsGeneral.configuration"), content: gatewayError });
     if (this.savedMessage !== "") notices.push({ type: "success", content: this.savedMessage });
     return notices;
   }
@@ -190,20 +191,20 @@ export class SettingsGeneralPanel extends LitElement {
     return html`<div class="message error-message">${error}</div>`;
   }
 
-  private renderOverrideBadge(key: keyof PiWebConfigEnvOverrides): TemplateResult | null {
+  private renderOverrideBadge(key: keyof PiStudioConfigEnvOverrides): TemplateResult | null {
     if (this.configResponse?.envOverrides[key] !== true) return null;
-    return html`<span class="override-badge">environment override</span>`;
+    return html`<span class="override-badge">${t("settingsGeneral.environmentOverride")}</span>`;
   }
 
   private renderGatewayEffectiveConfig(): TemplateResult {
     const effective = this.configResponse?.effectiveConfig ?? {};
     return html`
-      <section class="effective-card" aria-label="Effective gateway configuration summary">
-        <h3>Effective gateway settings after environment overrides</h3>
+      <section class="effective-card" aria-label=${t("settingsGeneral.effectiveGatewayAria")}>
+        <h3>${t("settingsGeneral.effectiveGateway")}</h3>
         <dl>
-          <div><dt>Host</dt><dd>${effective.host ?? html`<span class="muted">127.0.0.1 default</span>`}</dd></div>
-          <div><dt>Port</dt><dd>${effective.port ?? html`<span class="muted">8504 default</span>`}</dd></div>
-          <div><dt>Allowed hosts</dt><dd>${formatAllowedHosts(effective.allowedHosts)}</dd></div>
+          <div><dt>${t("settingsGeneral.host")}</dt><dd>${effective.host ?? html`<span class="muted">127.0.0.1 ${t("settingsGeneral.default")}</span>`}</dd></div>
+          <div><dt>${t("settingsGeneral.port")}</dt><dd>${effective.port ?? html`<span class="muted">8504 ${t("settingsGeneral.default")}</span>`}</dd></div>
+          <div><dt>${t("settingsGeneral.allowedHosts")}</dt><dd>${formatAllowedHosts(effective.allowedHosts)}</dd></div>
         </dl>
       </section>
     `;
@@ -212,12 +213,12 @@ export class SettingsGeneralPanel extends LitElement {
   private renderMachineEffectiveConfig(): TemplateResult {
     const effective = this.machineConfigResponse?.effectiveConfig ?? {};
     return html`
-      <section class="effective-card" aria-label="Effective selected machine file access and upload summary">
-        <h3>Effective selected-machine settings</h3>
+      <section class="effective-card" aria-label=${t("settingsGeneral.effectiveMachineAria")}>
+        <h3>${t("settingsGeneral.effectiveMachine")}</h3>
         <dl>
-          <div><dt>External roots</dt><dd>${formatAllowedPaths(effective.pathAccess?.allowedPaths)}</dd></div>
-          <div><dt>Upload folder</dt><dd>${effective.uploads?.defaultFolder ?? html`<span class="muted">${DEFAULT_WORKSPACE_UPLOADS_FOLDER} default</span>`}</dd></div>
-          <div><dt>Attachments folder</dt><dd>${effective.attachments?.defaultFolder ?? html`<span class="muted">${DEFAULT_WORKSPACE_ATTACHMENTS_FOLDER} default</span>`}</dd></div>
+          <div><dt>${t("settingsGeneral.externalRoots")}</dt><dd>${formatAllowedPaths(effective.pathAccess?.allowedPaths)}</dd></div>
+          <div><dt>${t("settingsGeneral.defaultUploadFolder")}</dt><dd>${effective.uploads?.defaultFolder ?? html`<span class="muted">${DEFAULT_WORKSPACE_UPLOADS_FOLDER} ${t("settingsGeneral.default")}</span>`}</dd></div>
+          <div><dt>${t("settingsGeneral.defaultAttachmentsFolder")}</dt><dd>${effective.attachments?.defaultFolder ?? html`<span class="muted">${DEFAULT_WORKSPACE_ATTACHMENTS_FOLDER} ${t("settingsGeneral.default")}</span>`}</dd></div>
         </dl>
       </section>
     `;
@@ -300,14 +301,14 @@ export class SettingsGeneralPanel extends LitElement {
   `;
 }
 
-function formatAllowedHosts(value: PiWebConfigValues["allowedHosts"]): string | TemplateResult {
+function formatAllowedHosts(value: PiStudioConfigValues["allowedHosts"]): string | TemplateResult {
   if (value === true) return "Any host";
-  if (Array.isArray(value)) return value.length === 0 ? html`<span class="muted">None listed</span>` : value.join(", ");
-  return html`<span class="muted">Unset</span>`;
+  if (Array.isArray(value)) return value.length === 0 ? html`<span class="muted">${t("settingsGeneral.noneListed")}</span>` : value.join(", ");
+  return html`<span class="muted">${t("settingsGeneral.unset")}</span>`;
 }
 
 function formatAllowedPaths(value: string[] | undefined): string | TemplateResult {
-  if (value === undefined || value.length === 0) return html`<span class="muted">External paths denied</span>`;
+  if (value === undefined || value.length === 0) return html`<span class="muted">${t("settingsGeneral.externalPathsDenied")}</span>`;
   return value.join(", ");
 }
 

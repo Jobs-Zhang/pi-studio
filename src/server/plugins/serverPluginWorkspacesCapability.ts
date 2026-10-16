@@ -1,9 +1,9 @@
 import { isAbsolute, resolve } from "node:path";
 import {
-  PI_WEB_HOST_WORKSPACES_CAPABILITY,
-  type PiWebHostWorkspaceAuthority,
-  type PiWebHostWorkspaceSelection,
-  type PiWebHostWorkspacesV1,
+  PI_STUDIO_HOST_WORKSPACES_CAPABILITY,
+  type PiStudioHostWorkspaceAuthority,
+  type PiStudioHostWorkspaceSelection,
+  type PiStudioHostWorkspacesV1,
   type ProjectInput,
   type ServerPluginPeerWorkspace,
 } from "../../server-plugin-api.js";
@@ -21,14 +21,14 @@ export interface CreateServerPluginWorkspacesCapabilityOptions {
 /** Creates the late workspaces v1 factory against one settled provider topology. */
 export function createServerPluginWorkspacesCapabilityFactory(
   options: CreateServerPluginWorkspacesCapabilityOptions,
-): ServerPluginHostCapabilityFactory<PiWebHostWorkspacesV1> {
+): ServerPluginHostCapabilityFactory<PiStudioHostWorkspacesV1> {
   return Object.freeze({
-    capability: PI_WEB_HOST_WORKSPACES_CAPABILITY,
+    capability: PI_STUDIO_HOST_WORKSPACES_CAPABILITY,
     create(context: ServerPluginHostCapabilityContext) {
       return Object.freeze({
         value: Object.freeze({
           version: 1,
-          resolve: async (selection: PiWebHostWorkspaceSelection): Promise<PiWebHostWorkspaceAuthority> => {
+          resolve: async (selection: PiStudioHostWorkspaceSelection): Promise<PiStudioHostWorkspaceAuthority> => {
             assertActive(context);
             const requested = parseSelection(selection);
             let project: Project;
@@ -63,30 +63,30 @@ export function createServerPluginWorkspacesCapabilityFactory(
               workspace: snapshotWorkspace(selected, projectProjection.id, context.pluginId),
             });
           },
-        } satisfies PiWebHostWorkspacesV1),
+        } satisfies PiStudioHostWorkspacesV1),
       });
     },
   });
 }
 
-function parseSelection(value: unknown): PiWebHostWorkspaceSelection {
-  if (!isPlainRecord(value)) throw new Error("PI WEB host workspaces selection must be an object");
+function parseSelection(value: unknown): PiStudioHostWorkspaceSelection {
+  if (!isPlainRecord(value)) throw new Error("PI STUDIO host workspaces selection must be an object");
   const supportedKeys = new Set(["projectId", "workspaceId"]);
   for (const key of Reflect.ownKeys(value)) {
     if (typeof key !== "string" || !supportedKeys.has(key)) {
-      throw new Error(`Unsupported PI WEB host workspaces selection field: ${String(key)}`);
+      throw new Error(`Unsupported PI STUDIO host workspaces selection field: ${String(key)}`);
     }
   }
   if (!Object.hasOwn(value, "projectId") || !Object.hasOwn(value, "workspaceId")) {
-    throw new Error("PI WEB host workspaces selection must contain projectId and workspaceId");
+    throw new Error("PI STUDIO host workspaces selection must contain projectId and workspaceId");
   }
   const projectId = value["projectId"];
   const workspaceId = value["workspaceId"];
   if (typeof projectId !== "string" || projectId === "") {
-    throw new Error("PI WEB host workspaces selection projectId must be a non-empty string");
+    throw new Error("PI STUDIO host workspaces selection projectId must be a non-empty string");
   }
   if (typeof workspaceId !== "string" || workspaceId === "") {
-    throw new Error("PI WEB host workspaces selection workspaceId must be a non-empty string");
+    throw new Error("PI STUDIO host workspaces selection workspaceId must be a non-empty string");
   }
   return Object.freeze({ projectId, workspaceId });
 }
@@ -128,7 +128,7 @@ function assertActive(context: ServerPluginHostCapabilityContext): void {
 
 function authorityError(pluginId: string, message: string, cause?: unknown): Error {
   return new Error(
-    `PI WEB host workspace authority for server plugin ${pluginId} ${message}`,
+    `PI STUDIO host workspace authority for server plugin ${pluginId} ${message}`,
     cause === undefined ? {} : { cause },
   );
 }

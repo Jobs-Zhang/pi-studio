@@ -9,7 +9,7 @@ import { promisify } from "node:util";
 import { smokeInstalledPluginApi } from "./plugin-api-package-smoke.mjs";
 
 const NPM_VERSION = "12.0.1";
-const MARKER = "pi-web-package-pty-ok";
+const MARKER = "pi-studio-package-pty-ok";
 const execFileAsync = promisify(execFile);
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -22,7 +22,7 @@ if (npmExecPath === undefined || npmExecPath === "") {
   throw new Error("npm_execpath is required; run this check through `npm run smoke:package-install`");
 }
 
-const root = await mkdtemp(join(tmpdir(), "pi-web-package-install-"));
+const root = await mkdtemp(join(tmpdir(), "pi-studio-package-install-"));
 try {
   const packDir = join(root, "pack");
   const npmToolDir = join(root, "npm-tool");
@@ -59,7 +59,7 @@ try {
     "--no-fund",
   ], root);
 
-  const packageRoot = join(globalPrefix, "lib", "node_modules", "@jmfederico", "pi-web");
+  const packageRoot = join(globalPrefix, "lib", "node_modules", "@pi-studio", "pi-studio");
   await smokeInstalledPiSdk(packageRoot);
   await smokeInstalledTypebox(packageRoot, true);
   await smokePiPackageExtension(packageRoot);
@@ -74,7 +74,7 @@ try {
     "install", tarballPath, "--prefix", managedRoot, "--legacy-peer-deps",
     "--ignore-scripts", "--no-audit", "--no-fund",
   ], managedRoot);
-  const managedPackageRoot = join(managedRoot, "node_modules", "@jmfederico", "pi-web");
+  const managedPackageRoot = join(managedRoot, "node_modules", "@pi-studio", "pi-studio");
   assert.throws(() => createRequire(join(managedPackageRoot, "package.json")).resolve("@earendil-works/pi-coding-agent"),
     { code: "MODULE_NOT_FOUND" }, "Managed fixture must not auto-install the Pi SDK peer");
   // Only TypeBox resolution is under test here, not provisioning the server's Pi SDK peers.
@@ -140,8 +140,8 @@ async function smokeInstalledTypebox(packageRoot, importServerTools) {
   const toolModules = ["spawnSessionTool", "spawnSubsessionTool", "askUserTool"];
   await writeFile(runtimePath, [
     'import assert from "node:assert/strict";',
-    'import { Type } from "pi-web-typebox";',
-    'import { Check } from "pi-web-typebox/value";',
+    'import { Type } from "pi-studio-typebox";',
+    'import { Check } from "pi-studio-typebox/value";',
     'const schema = Type.Object({ value: Type.String() });',
     'assert.equal(Check(schema, { value: "standalone" }), true);',
     'assert.equal(Check(schema, { value: 42 }), false);',
@@ -164,9 +164,9 @@ async function smokePiPackageExtension(packageRoot) {
   });
   await loader.reload();
   const result = loader.getExtensions();
-  assert.deepEqual(result.errors, [], "PI WEB extension must load through Pi");
-  assert.deepEqual(result.warnings ?? [], [], "PI WEB must not trigger a host-provided dependency warning");
-  assert.ok(result.extensions.some((extension) => extension.commands.has("pi-web")), "Pi must register /pi-web");
+  assert.deepEqual(result.errors, [], "PI STUDIO extension must load through Pi");
+  assert.deepEqual(result.warnings ?? [], [], "PI STUDIO must not trigger a host-provided dependency warning");
+  assert.ok(result.extensions.some((extension) => extension.commands.has("pi-studio")), "Pi must register /pi-studio");
 }
 
 async function smokeInstalledTerminalService(packageRoot) {
@@ -177,7 +177,7 @@ async function smokeInstalledTerminalService(packageRoot) {
     throw new Error(`Installed package resolved a non-stable node-pty version: ${String(nodePtyPackage.version)}`);
   }
 
-  const terminalModuleUrl = pathToFileURL(join(packageRoot, "dist", "pi-web-plugins", "terminal", "terminalService.js")).href;
+  const terminalModuleUrl = pathToFileURL(join(packageRoot, "dist", "pi-studio-plugins", "terminal", "terminalService.js")).href;
   const { TerminalService } = await import(terminalModuleUrl);
   const previousShell = process.env["SHELL"];
   process.env["SHELL"] = "/bin/sh";

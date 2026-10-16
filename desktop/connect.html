@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>PI Desktop</title>
+  <title>PI Studio</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -494,7 +494,7 @@
         <span class="input-icon">🌐</span>
         <input id="sshTarget" type="text" value="http://127.0.0.1:8504" placeholder="远程网关地址" autocomplete="off" />
       </div>
-      <div class="hint-inline">远程网关 = PI WEB 在 SSH 主机上可被访问的地址，通常为本机回环地址。</div>
+      <div class="hint-inline">远程网关 = PI STUDIO 在 SSH 主机上可被访问的地址，通常为本机回环地址。</div>
     </div>
 
     <button class="btn-connect" id="connectBtn"><span id="connectLabel">连接</span><span>→</span></button>
@@ -524,7 +524,7 @@
     // ------------------------------------------------------------------
     // Platform API
     //
-    // Desktop builds expose `window.piWebDesktop` from the Electron preload.
+    // Desktop builds expose `window.piStudioDesktop` from the Electron preload.
     // The Android shell has no preload, so its WebView bridge is adapted to the
     // same contract here and one connect page serves both clients.
     // ------------------------------------------------------------------
@@ -533,7 +533,7 @@
       let nextId = 0;
       const pending = new Map();
       // The native side answers every call through this global.
-      window.__piWebBridge = (id, json) => {
+      window.__piStudioBridge = (id, json) => {
         const entry = pending.get(Number(id));
         if (entry === undefined) return;
         pending.delete(Number(id));
@@ -563,7 +563,7 @@
       };
     }
 
-    const api = window.piWebDesktop ??
+    const api = window.piStudioDesktop ??
       (window.AndroidBridge === undefined ? undefined : createAndroidBridgeApi());
 
     // Fallbacks keep the desktop behaviour when a shell does not negotiate.
@@ -613,9 +613,9 @@
 
     function applyConnectTheme() {
       let preference;
-      try { preference = JSON.parse(localStorage.getItem('pi-web-app-theme') || 'null'); } catch {}
+      try { preference = JSON.parse(localStorage.getItem('pi-studio-app-theme') || 'null'); } catch {}
       const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      const selected = typeof preference?.themeId === 'string' ? preference.themeId : 'themes:pi-web-dark';
+      const selected = typeof preference?.themeId === 'string' ? preference.themeId : 'themes:pi-studio-dark';
       const auto = preference?.auto !== false;
       const dark = auto ? systemDark : selected.includes('dark');
       if (dark) document.documentElement.dataset.connectTheme = 'dark';
@@ -627,7 +627,7 @@
       themeMedia = window.matchMedia('(prefers-color-scheme: dark)');
       themeMedia.addEventListener?.('change', applyConnectTheme);
       window.addEventListener('storage', (event) => {
-        if (event.key === 'pi-web-app-theme') applyConnectTheme();
+        if (event.key === 'pi-studio-app-theme') applyConnectTheme();
       });
     }
 
@@ -970,7 +970,7 @@
     function validate(payload) {
       if (payload.type === 'direct') {
         const url = payload.url.trim();
-        if (url === '' || url === 'http://' || url === 'https://') return '请输入 PI WEB 网关地址';
+        if (url === '' || url === 'http://' || url === 'https://') return '请输入 PI STUDIO 网关地址';
         return undefined;
       }
       if (payload.via === 'config') {

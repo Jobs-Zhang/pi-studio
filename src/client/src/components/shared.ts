@@ -149,11 +149,11 @@ export const appStyles = css`
   .shell.workspace-panel-collapsed .workspace-panel-edge-button { transform: translateX(calc(-50% + .5px)); }
   .navigation-panel-edge-icon, .workspace-panel-edge-icon { width: 12px; height: 12px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
   workspace-panel { grid-column: 5; min-width: 0; min-height: 0; overflow: hidden; }
-  :host-context([data-pi-web-theme$="pi-web-dark"]) main,
-  :host-context([data-pi-web-theme$="classic"]) main,
-  :host-context([data-pi-web-theme$="pi-web-dark"]) workspace-panel,
-  :host-context([data-pi-web-theme$="classic"]) workspace-panel { margin: 0; border: 0; border-radius: 0; box-shadow: none; }
-  :host-context([data-pi-web-theme$="classic"]) aside { padding: 0; }
+  :host-context([data-pi-studio-theme$="pi-studio-dark"]) main,
+  :host-context([data-pi-studio-theme$="classic"]) main,
+  :host-context([data-pi-studio-theme$="pi-studio-dark"]) workspace-panel,
+  :host-context([data-pi-studio-theme$="classic"]) workspace-panel { margin: 0; border: 0; border-radius: 0; box-shadow: none; }
+  :host-context([data-pi-studio-theme$="classic"]) aside { padding: 0; }
   @media (max-width: 1180px) {
     main { margin: 0; border: 0; border-radius: 0; box-shadow: none; }
     workspace-panel { margin: 0; border: 0; border-radius: 0; box-shadow: none; }
@@ -273,13 +273,13 @@ export const listStyles = css`
   .action-main { position: relative; box-sizing: border-box; min-width: 0; width: 100%; border: 1px solid transparent; border-radius: 7px; background: transparent; color: var(--pi-text); padding: 7px 22px 7px calc(9px + var(--depth, 0) * 16px); text-align: left; }
   .action-row:hover .action-main, .action-row:hover .action-menu-toggle { background: var(--pi-surface-hover); }
   .action-row.selected:hover .action-main, .action-row.selected:hover .action-menu-toggle { background: var(--pi-selection-bg); }
-  :host-context([data-pi-web-theme$="classic"]) section { padding: 10px; }
-  :host-context([data-pi-web-theme$="classic"]) h2 { margin-bottom: 8px; }
-  :host-context([data-pi-web-theme$="classic"]) section > h2 { margin: 0 -10px; padding-bottom: 8px; }
-  :host-context([data-pi-web-theme$="classic"]) .action-row { margin: 6px 0; }
-  :host-context([data-pi-web-theme$="classic"]) .action-main { border-color: var(--pi-border); border-radius: 8px 0 0 8px; background: var(--pi-surface); }
-  :host-context([data-pi-web-theme$="classic"]) .action-row.selected .action-main,
-  :host-context([data-pi-web-theme$="classic"]) .action-row.selected .action-menu-toggle { border-color: var(--pi-accent); background: var(--pi-selection-bg); }
+  :host-context([data-pi-studio-theme$="classic"]) section { padding: 10px; }
+  :host-context([data-pi-studio-theme$="classic"]) h2 { margin-bottom: 8px; }
+  :host-context([data-pi-studio-theme$="classic"]) section > h2 { margin: 0 -10px; padding-bottom: 8px; }
+  :host-context([data-pi-studio-theme$="classic"]) .action-row { margin: 6px 0; }
+  :host-context([data-pi-studio-theme$="classic"]) .action-main { border-color: var(--pi-border); border-radius: 8px 0 0 8px; background: var(--pi-surface); }
+  :host-context([data-pi-studio-theme$="classic"]) .action-row.selected .action-main,
+  :host-context([data-pi-studio-theme$="classic"]) .action-row.selected .action-menu-toggle { border-color: var(--pi-accent); background: var(--pi-selection-bg); }
   .action-name { display: -webkit-box; max-height: 2.5em; overflow: hidden; overflow-wrap: anywhere; line-height: 1.25; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
   .action-row:not(.selected):hover .action-main { background: var(--pi-surface-hover); }
   .workspace-row .action-main { border-radius: 8px 0 0 8px; }
@@ -586,7 +586,7 @@ export const promptEditorStyles = css`
   .markdown-editor .cm-focused { outline: none; }
   /* drawSelection() renders the caret and selection itself, and CodeMirror's
      base colors for them assume a light editor (black caret, pale selection).
-     Re-theme them so they stay readable in every pi-web theme. The focused
+     Re-theme them so they stay readable in every pi-studio theme. The focused
      selection rule must outspecify CodeMirror's base rule for the focused
      selection background. */
   .markdown-editor .cm-cursor { border-left-color: var(--pi-text); }

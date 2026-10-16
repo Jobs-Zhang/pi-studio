@@ -1,5 +1,6 @@
-import type { WorkspacePanelContext } from "@jmfederico/pi-web/plugin-api";
+import type { WorkspacePanelContext } from "@pi-studio/pi-studio/plugin-api";
 import { isMarkdownDocumentPath, renderRelayDocumentHtml } from "./markdownDocument.js";
+import { t } from "./messages.js";
 import {
   ancestorDirectoryPaths,
   collectDirectoryPaths,
@@ -17,10 +18,10 @@ import {
   type RelayTreeNode,
 } from "./relayDiscovery.js";
 
-export const relaysPanelTagName = "pi-web-relays-panel";
+export const relaysPanelTagName = "pi-studio-relays-panel";
 
 export function defineRelaysPanelElement(): void {
-  if (!customElements.get(relaysPanelTagName)) customElements.define(relaysPanelTagName, PiWebRelaysPanel);
+  if (!customElements.get(relaysPanelTagName)) customElements.define(relaysPanelTagName, PiStudioRelaysPanel);
 }
 
 /** Selection a scan should restore after reloading, when the entries still exist. */
@@ -47,7 +48,7 @@ interface RelaySelection {
  * active marker in place and re-renders the viewer — so the strip's
  * horizontal scroll position and keyboard focus survive document switches.
  */
-class PiWebRelaysPanel extends HTMLElement {
+class PiStudioRelaysPanel extends HTMLElement {
   private contextValue: WorkspacePanelContext | undefined;
   private listing: RelaysListing | undefined;
   private selectedRelayPath: string | undefined;
@@ -68,8 +69,8 @@ class PiWebRelaysPanel extends HTMLElement {
     this.root.innerHTML = `
       ${relaysStyles()}
       <section class="toolbar" hidden></section>
-      <nav class="document-tabs" aria-label="Relay documents" hidden></nav>
-      <section class="viewer"><div class="empty">Select a workspace.</div></section>
+      <nav class="document-tabs" aria-label=${t("panel.documentsLabel")} hidden></nav>
+      <section class="viewer"><div class="empty">${t("panel.selectWorkspace")}</div></section>
     `;
     this.toolbar = requiredRegion(this.root, ".toolbar");
     this.tabStrip = requiredRegion(this.root, "nav.document-tabs");
@@ -289,10 +290,10 @@ class PiWebRelaysPanel extends HTMLElement {
     }
     this.toolbar.hidden = false;
     this.toolbar.innerHTML = `
-      <strong>Relays</strong>
+      <strong>${t("panel.title")}</strong>
       <span class="toolbar-actions">
         ${this.renderRelayPicker()}
-        <button class="icon-button" data-refresh aria-label="Refresh" title="Refresh">${refreshIconSvg()}</button>
+        <button class="icon-button" data-refresh aria-label=${t("panel.refresh")} title=${t("panel.refresh")}>${refreshIconSvg()}</button>
       </span>
     `;
   }
@@ -309,7 +310,7 @@ class PiWebRelaysPanel extends HTMLElement {
       const selected = relay.path === this.selectedRelayPath ? " selected" : "";
       return `<option value="${escapeAttr(relay.path)}"${selected}>${escapeHtml(relay.name)}</option>`;
     }).join("");
-    return `<select data-relay-picker aria-label="Relay">${options}</select>`;
+    return `<select data-relay-picker aria-label=${t("panel.relayPicker")}>${options}</select>`;
   }
 
   private renderTabs(): void {
@@ -352,7 +353,7 @@ class PiWebRelaysPanel extends HTMLElement {
   private renderDirectoryChip(directory: RelayDirectoryNode, containsActivePath: string | undefined): string {
     const expanded = this.expandedDirs.has(directory.path);
     const containsActive = directory.path === containsActivePath;
-    const title = containsActive ? "Contains the open document" : directory.relativePath;
+    const title = containsActive ? t("panel.containsActive") : directory.relativePath;
     return `<button class="document-tab directory-tab${containsActive ? " contains-active" : ""}" data-directory-path="${escapeAttr(directory.path)}" title="${escapeAttr(title)}" aria-expanded="${expanded ? "true" : "false"}">${chevronSvg()}${escapeHtml(directory.name)}</button>`;
   }
 
@@ -370,7 +371,7 @@ class PiWebRelaysPanel extends HTMLElement {
 
   private renderViewer(): void {
     if (this.contextValue === undefined) {
-      this.viewer.innerHTML = `<div class="empty">Select a workspace.</div>`;
+      this.viewer.innerHTML = `<div class="empty">${t("panel.selectWorkspace")}</div>`;
       return;
     }
     this.viewer.innerHTML = this.renderViewerContent();
@@ -378,27 +379,27 @@ class PiWebRelaysPanel extends HTMLElement {
 
   private renderViewerContent(): string {
     const listing = this.listing;
-    if (listing === undefined) return `<p class="muted">Scanning ${escapeHtml(RELAYS_ROOT)}…</p>`;
-    if (listing.kind === "unavailable") return renderErrorState("Could not scan workspace relays.", listing.detail);
+    if (listing === undefined) return `<p class="muted">${t("panel.scanning", { root: RELAYS_ROOT })}</p>`;
+    if (listing.kind === "unavailable") return renderErrorState(t("error.scanFailed"), listing.detail);
     if (listing.kind === "missing" || listing.relays.length === 0) return renderEmptyState();
     return this.renderSelectedRelay();
   }
 
   private renderSelectedRelay(): string {
     const documents = this.documents;
-    if (documents === undefined) return `<p class="muted">Loading relay documents…</p>`;
-    if (documents.kind === "unavailable") return renderErrorState("Could not list this relay's documents.", documents.detail);
+    if (documents === undefined) return `<p class="muted">${t("panel.loadingDocuments")}</p>`;
+    if (documents.kind === "unavailable") return renderErrorState(t("error.listFailed"), documents.detail);
     if (documents.kind === "missing") {
-      return `<div class="empty-state"><strong>This relay no longer exists.</strong><p>Click Refresh to rescan ${escapeHtml(RELAYS_ROOT)}.</p></div>`;
+      return `<div class="empty-state"><strong>${t("panel.relayMissingTitle")}</strong><p>${t("panel.relayMissingHint", { root: RELAYS_ROOT })}</p></div>`;
     }
     const partialNotice = documents.partial
-      ? `<div class="status info">Some nested content is not listed — this relay tree is deeper or larger than the panel lists.</div>`
+      ? `<div class="status info">${t("panel.partialNotice")}</div>`
       : "";
     if (documents.documentCount === 0) {
       return `${partialNotice}
         <div class="empty-state">
-          <strong>This relay has no documents yet.</strong>
-          <p>Relay Runner packets usually contain <code>status.md</code>, <code>charter.md</code>, <code>operations.md</code>, and <code>log.md</code>.</p>
+          <strong>${t("panel.noDocumentsTitle")}</strong>
+          <p>${t("panel.noDocumentsHint")}</p>
         </div>
       `;
     }
@@ -408,17 +409,17 @@ class PiWebRelaysPanel extends HTMLElement {
   private renderSelectedDocument(): string {
     const documentPath = this.selectedDocumentPath;
     const content = this.documentContent;
-    if (documentPath === undefined) return `<p class="muted">Select a document.</p>`;
-    if (content === undefined) return `<p class="muted">Loading ${escapeHtml(documentName(documentPath))}…</p>`;
-    if (content.kind === "unavailable") return renderErrorState("Could not read this document.", content.detail);
+    if (documentPath === undefined) return `<p class="muted">${t("panel.selectDocument")}</p>`;
+    if (content === undefined) return `<p class="muted">${t("panel.loadingDocument", { name: documentName(documentPath) })}</p>`;
+    if (content.kind === "unavailable") return renderErrorState(t("error.readFailed"), content.detail);
     if (content.kind === "missing") {
-      return `<div class="empty-state"><strong>This document no longer exists.</strong><p>Click Refresh to rescan the relay.</p></div>`;
+      return `<div class="empty-state"><strong>${t("panel.documentMissingTitle")}</strong><p>${t("panel.documentMissingHint")}</p></div>`;
     }
     if (content.binary) {
-      return `<div class="empty-state"><strong>Binary file: ${escapeHtml(documentName(documentPath))}</strong><p>Binary documents have no text preview.</p></div>`;
+      return `<div class="empty-state"><strong>${t("panel.binaryTitle", { name: documentName(documentPath) })}</strong><p>${t("panel.binaryHint")}</p></div>`;
     }
     const truncation = content.truncated
-      ? `<div class="status info">This document is truncated — only the beginning is shown.</div>`
+      ? `<div class="status info">${t("panel.truncatedNotice")}</div>`
       : "";
     if (isMarkdownDocumentPath(documentPath)) {
       return `${truncation}<div class="document markdown">${renderRelayDocumentHtml(content.content)}</div>`;
@@ -487,8 +488,8 @@ function documentName(path: string): string {
 function renderEmptyState(): string {
   return `
     <div class="empty-state">
-      <strong>No relays in this workspace.</strong>
-      <p>Relay packets live in <code>${escapeHtml(RELAYS_ROOT)}/&lt;name&gt;/</code>. This workspace has none yet.</p>
+      <strong>${t("panel.emptyTitle")}</strong>
+      <p>${t("panel.emptyHint", { root: RELAYS_ROOT })}</p>
     </div>
   `;
 }

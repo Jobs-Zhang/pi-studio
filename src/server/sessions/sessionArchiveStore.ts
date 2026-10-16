@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { constants } from "node:fs";
 import { access, copyFile, mkdir, readFile, rename, unlink, writeFile } from "node:fs/promises";
 import { basename, dirname, join } from "node:path";
-import { piWebDataDir } from "../../config.js";
+import { piStudioDataDir } from "../../config.js";
 import { canonicalizeStoredCwd } from "../workingDirectory.js";
 
 export interface ArchiveSessionInput {
@@ -36,7 +36,7 @@ export interface SessionArchiveFile {
 }
 
 export function defaultSessionArchiveFilePath(env: NodeJS.ProcessEnv = process.env, cwd = process.cwd()): string {
-  return join(piWebDataDir(env, cwd), "archived-sessions.json");
+  return join(piStudioDataDir(env, cwd), "archived-sessions.json");
 }
 
 export class SessionArchiveStore {

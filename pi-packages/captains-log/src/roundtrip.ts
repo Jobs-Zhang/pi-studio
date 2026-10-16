@@ -1,16 +1,16 @@
-import type { PiWebHostPiSessionConnection } from "@jmfederico/pi-web/server-plugin-api";
+import type { PiStudioHostPiSessionConnection } from "@pi-studio/pi-studio/server-plugin-api";
 import { MAX_FINDINGS, CAPTAIN_REPLY, CAPTAIN_REQUEST, SOURCE_REPLY, SOURCE_REQUEST } from "./browser/protocol.js";
 
-export function collectReply(connection: PiWebHostPiSessionConnection, requestId: string, text: string, lifetime: AbortSignal, progress: (stage: string) => void): Promise<string> {
+export function collectReply(connection: PiStudioHostPiSessionConnection, requestId: string, text: string, lifetime: AbortSignal, progress: (stage: string) => void): Promise<string> {
   return collect(connection, requestId, { requestId, text }, CAPTAIN_REQUEST, CAPTAIN_REPLY, lifetime, progress);
 }
 
-export function collectSourceReply(connection: PiWebHostPiSessionConnection, requestId: string, lifetime: AbortSignal, progress: (stage: string) => void): Promise<string> {
+export function collectSourceReply(connection: PiStudioHostPiSessionConnection, requestId: string, lifetime: AbortSignal, progress: (stage: string) => void): Promise<string> {
   return collect(connection, requestId, { requestId }, SOURCE_REQUEST, SOURCE_REPLY, lifetime, progress);
 }
 
 /** Subscribe before sending. Never retry an ambiguous send or cancel Pi on timeout. */
-async function collect(connection: PiWebHostPiSessionConnection, requestId: string, payload: { requestId: string; text?: string }, requestEvent: string, replyEvent: string, lifetime: AbortSignal, progress: (stage: string) => void): Promise<string> {
+async function collect(connection: PiStudioHostPiSessionConnection, requestId: string, payload: { requestId: string; text?: string }, requestEvent: string, replyEvent: string, lifetime: AbortSignal, progress: (stage: string) => void): Promise<string> {
   const signal = AbortSignal.any([lifetime, connection.signal]);
   signal.throwIfAborted();
   let unsubscribe: (() => void) | undefined;

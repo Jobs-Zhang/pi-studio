@@ -1,15 +1,15 @@
 import { randomUUID } from "node:crypto";
-import { PI_WEB_HOST_PI_SESSIONS_CAPABILITY, PI_WEB_HOST_PI_SESSION_EVENTS_CAPABILITY } from "@jmfederico/pi-web/server-plugin-api";
-import type { PiWebHostPiSessionsV1, PiWebHostPiSessionEventsV1, PiWebServerPlugin } from "@jmfederico/pi-web/server-plugin-api";
+import { PI_STUDIO_HOST_PI_SESSIONS_CAPABILITY, PI_STUDIO_HOST_PI_SESSION_EVENTS_CAPABILITY } from "@pi-studio/pi-studio/server-plugin-api";
+import type { PiStudioHostPiSessionsV1, PiStudioHostPiSessionEventsV1, PiStudioServerPlugin } from "@pi-studio/pi-studio/server-plugin-api";
 import { type LogEntry } from "./browser/protocol.js";
 import { LOG_CHANNEL, entryFrames, isCaptainClientFrame, type CaptainServerFrame } from "./browser/channelProtocol.js";
 import { collectReply, collectSourceReply } from "./roundtrip.js";
 import { LogStore, logScope } from "./store.js";
 
-const plugin: PiWebServerPlugin = {
+const plugin: PiStudioServerPlugin = {
   apiVersion: 3,
   name: "Captain's Log",
-  requires: [PI_WEB_HOST_PI_SESSIONS_CAPABILITY, PI_WEB_HOST_PI_SESSION_EVENTS_CAPABILITY],
+  requires: [PI_STUDIO_HOST_PI_SESSIONS_CAPABILITY, PI_STUDIO_HOST_PI_SESSION_EVENTS_CAPABILITY],
   activate(host) {
     const store = new LogStore(host.dataDirectory);
     const active = new Map<string, LogEntry>();
@@ -21,8 +21,8 @@ const plugin: PiWebServerPlugin = {
       for (const frame of entryFrames(entry, saved)) for (const send of subscribers.get(scope) ?? []) send(frame);
     }
     const tasks = new Set<Promise<void>>();
-    let sessions: PiWebHostPiSessionsV1;
-    let events: PiWebHostPiSessionEventsV1;
+    let sessions: PiStudioHostPiSessionsV1;
+    let events: PiStudioHostPiSessionEventsV1;
     function visible(scope: string, entry: LogEntry): LogEntry {
       const live = active.get(scope);
       if (live?.id === entry.id) return live;
@@ -32,8 +32,8 @@ const plugin: PiWebServerPlugin = {
     }
     return {
       start({ capabilities }) {
-        sessions = capabilities.resolve(PI_WEB_HOST_PI_SESSIONS_CAPABILITY);
-        events = capabilities.resolve(PI_WEB_HOST_PI_SESSION_EVENTS_CAPABILITY);
+        sessions = capabilities.resolve(PI_STUDIO_HOST_PI_SESSIONS_CAPABILITY);
+        events = capabilities.resolve(PI_STUDIO_HOST_PI_SESSION_EVENTS_CAPABILITY);
       },
       peer: {
         async request(context) {

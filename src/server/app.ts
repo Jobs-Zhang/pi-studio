@@ -10,7 +10,7 @@ import { ProjectService } from "./projects/projectService.js";
 import type { WorkspaceCatalog } from "./workspaces/workspaceCatalog.js";
 import { SessionDaemonWorkspaceCatalog } from "./workspaces/sessionDaemonWorkspaceCatalog.js";
 import { sendWorkspaceRequestError } from "./workspaces/workspaceRouteErrors.js";
-import { loadEffectiveProjectAttachmentsConfig, loadEffectiveProjectUploadsConfig } from "./workspaces/projectPiWebConfig.js";
+import { loadEffectiveProjectAttachmentsConfig, loadEffectiveProjectUploadsConfig } from "./workspaces/projectPiStudioConfig.js";
 import { listDirectorySuggestions } from "./projects/directorySuggestions.js";
 import { SessionDaemonClient } from "../sessiond/sessionDaemonClient.js";
 import { loadServerPluginRecoveryConfig } from "../serverPluginRecovery.js";
@@ -18,15 +18,15 @@ import { registerSessionProxyRoutes, type SessionProxyDaemon } from "./sessiond/
 import { registerWorkspaceExplorerRoutes } from "./workspaceExplorerRoutes.js";
 import { registerProjectTrustRoutes } from "./projectTrustRoutes.js";
 import { registerWorkspaceDeletionRoutes } from "./workspaces/workspaceDeletionRoutes.js";
-import { createFilePiWebConfigService, registerConfigRoutes, registerLocalMachineConfigRoutes, type PiWebConfigService } from "./configRoutes.js";
-import { PiWebPluginManifestRuntimeError, PiWebPluginService } from "./piWebPluginService.js";
+import { createFilePiStudioConfigService, registerConfigRoutes, registerLocalMachineConfigRoutes, type PiStudioConfigService } from "./configRoutes.js";
+import { PiStudioPluginManifestRuntimeError, PiStudioPluginService } from "./piStudioPluginService.js";
 import { createActiveProfilePiPackageService, type PiPackageService } from "./piPackageService.js";
 import { registerPiPackageRoutes } from "./piPackageRoutes.js";
-import { createPiWebStatusCache, type PiWebStatusCache } from "./piWebStatusCache.js";
-import { detectPiWebInstallation, getPiWebRuntime, getPiWebStatus, getPiWebVersionStatus } from "./piWebStatus.js";
+import { createPiStudioStatusCache, type PiStudioStatusCache } from "./piStudioStatusCache.js";
+import { detectPiStudioInstallation, getPiStudioRuntime, getPiStudioStatus, getPiStudioVersionStatus } from "./piStudioStatus.js";
 import { createDeploymentFlavorResolver } from "./deploymentIdentity.js";
 import { registerDeploymentIdentityAssetRoutes } from "./deploymentIdentityRoutes.js";
-import type { PiWebDeploymentFlavor } from "./deploymentIdentity.js";
+import type { PiStudioDeploymentFlavor } from "./deploymentIdentity.js";
 import {
   ActiveAgentProfileAccessError,
   requireActiveAgentProfile,
@@ -48,20 +48,20 @@ export interface AppDependencies {
   machines?: MachineService;
   sessionDaemon?: SessionProxyDaemon;
   agentProfileProvider?: ActiveAgentProfileProvider;
-  piWebPlugins?: Pick<PiWebPluginService, "manifest" | "plugins" | "readAsset">;
+  piStudioPlugins?: Pick<PiStudioPluginService, "manifest" | "plugins" | "readAsset">;
   piPackages?: PiPackageService;
-  piWebStatusCache?: PiWebStatusCache;
-  config?: PiWebConfigService;
+  piStudioStatusCache?: PiStudioStatusCache;
+  config?: PiStudioConfigService;
   clientDist?: string | false;
   /** Overrides deployment-flavor detection (dev/stable asset identity) in tests. */
-  deploymentFlavor?: () => Promise<PiWebDeploymentFlavor>;
+  deploymentFlavor?: () => Promise<PiStudioDeploymentFlavor>;
   logger?: FastifyServerOptions["logger"];
   /** Maximum accepted HTTP request body size in bytes. */
   bodyLimit?: number;
 }
 
 interface LocalProjectRouteOptions {
-  config?: Pick<PiWebConfigService, "read">;
+  config?: Pick<PiStudioConfigService, "read">;
 }
 
 function registerLocalProjectRoutes(app: FastifyInstance, projects: ProjectService, workspaces: WorkspaceCatalog, prefix: string, options: LocalProjectRouteOptions = {}): void {
@@ -88,7 +88,7 @@ function registerLocalProjectRoutes(app: FastifyInstance, projects: ProjectServi
 async function resolveWorkspacesWithEffectiveConfig(
   project: Project,
   workspaces: WorkspaceCatalog,
-  config?: Pick<PiWebConfigService, "read">,
+  config?: Pick<PiStudioConfigService, "read">,
 ): Promise<WorkspaceProviderResolution> {
   const [resolution, effectiveConfig] = await Promise.all([
     workspaces.resolveProject(project.id),
@@ -100,7 +100,7 @@ async function resolveWorkspacesWithEffectiveConfig(
   };
 }
 
-async function workspaceEffectiveConfig(projectPath: string, config?: Pick<PiWebConfigService, "read">): Promise<WorkspaceEffectiveConfig> {
+async function workspaceEffectiveConfig(projectPath: string, config?: Pick<PiStudioConfigService, "read">): Promise<WorkspaceEffectiveConfig> {
   const globalConfig = config === undefined ? {} : (await config.read()).effectiveConfig;
   return {
     uploads: await loadEffectiveProjectUploadsConfig(projectPath, globalConfig),
@@ -108,13 +108,13 @@ async function workspaceEffectiveConfig(projectPath: string, config?: Pick<PiWeb
   };
 }
 
-async function readEffectiveConfig(config: Pick<PiWebConfigService, "read">) {
+async function readEffectiveConfig(config: Pick<PiStudioConfigService, "read">) {
   return (await config.read()).effectiveConfig;
 }
 
 async function desiredPluginAgentDir(
   profiles: ActiveAgentProfileProvider,
-  config: Pick<PiWebConfigService, "read">,
+  config: Pick<PiStudioConfigService, "read">,
 ): Promise<string> {
   try {
     return (await requireActiveAgentProfile(profiles)).dir;
@@ -126,7 +126,7 @@ async function desiredPluginAgentDir(
   }
 }
 
-function invalidatePiWebStatusOnWrite(config: PiWebConfigService, statusCache: Pick<PiWebStatusCache, "invalidate">): PiWebConfigService {
+function invalidatePiStudioStatusOnWrite(config: PiStudioConfigService, statusCache: Pick<PiStudioStatusCache, "invalidate">): PiStudioConfigService {
   return {
     read: () => config.read(),
     write: async (nextConfig) => {
@@ -142,7 +142,7 @@ async function withProfileDependency<T>(reply: FastifyReply, operation: () => Pr
     return await operation();
   } catch (error) {
     if (error instanceof ActiveAgentProfileAccessError) return reply.code(503).send({ error: error.message });
-    if (error instanceof PiWebPluginManifestRuntimeError) {
+    if (error instanceof PiStudioPluginManifestRuntimeError) {
       return reply.code(error.statusCode).send({
         error: `Required Terminal plugin runtime is ${error.runtimeStatus}`,
         code: `required-plugin-runtime-${error.runtimeStatus}`,
@@ -166,68 +166,68 @@ export async function buildApp(deps: AppDependencies = {}): Promise<FastifyInsta
   installPluginBackendChannelWebSocketPayloadLimit(app.websocketServer);
 
   const projects = deps.projects ?? new ProjectService(new ProjectStore());
-  const configService = deps.config ?? createFilePiWebConfigService();
+  const configService = deps.config ?? createFilePiStudioConfigService();
   const readConfig = () => readEffectiveConfig(configService);
   const sessionDaemon = deps.sessionDaemon ?? new SessionDaemonClient();
   const daemonWorkspaces = new SessionDaemonWorkspaceCatalog(sessionDaemon);
   const workspaces = deps.workspaceCatalog ?? daemonWorkspaces;
   const agentProfileProvider = deps.agentProfileProvider ?? new SessionDaemonActiveAgentProfileProvider(sessionDaemon);
-  const piWebPlugins = deps.piWebPlugins ?? new PiWebPluginService({
+  const piStudioPlugins = deps.piStudioPlugins ?? new PiStudioPluginService({
     configProvider: readConfig,
     agentDirProvider: () => desiredPluginAgentDir(agentProfileProvider, configService),
     runtimeProvider: daemonWorkspaces,
     recoveryProvider: () => loadServerPluginRecoveryConfig(),
   });
   const piPackages = deps.piPackages ?? createActiveProfilePiPackageService(agentProfileProvider);
-  const piWebStatusCache = deps.piWebStatusCache ?? createPiWebStatusCache(
+  const piStudioStatusCache = deps.piStudioStatusCache ?? createPiStudioStatusCache(
     async ({ force }) => {
       const activeAgentProfile = await agentProfileProvider.getActiveAgentProfile();
-      return getPiWebStatus(sessionDaemon, {
+      return getPiStudioStatus(sessionDaemon, {
         forceReleaseCheck: force,
         ...(activeAgentProfile.status === "available" ? { activeAgentProfile: activeAgentProfile.profile } : {}),
       });
     },
-    { onError: (error) => { app.log.warn({ err: error }, "failed to refresh PI WEB status cache"); } },
+    { onError: (error) => { app.log.warn({ err: error }, "failed to refresh PI STUDIO status cache"); } },
   );
   const machines = deps.machines ?? new MachineService(undefined, {
-    localRuntime: () => getPiWebRuntime(sessionDaemon),
+    localRuntime: () => getPiStudioRuntime(sessionDaemon),
   });
   app.addHook("onClose", async () => {
     await machines.close();
   });
 
-  app.get("/pi-web-plugins/manifest.json", async (_request, reply) => withProfileDependency(reply, () => piWebPlugins.manifest()));
+  app.get("/pi-studio-plugins/manifest.json", async (_request, reply) => withProfileDependency(reply, () => piStudioPlugins.manifest()));
 
-  app.get<{ Params: { pluginId: string; "*": string } }>("/pi-web-plugins/:pluginId/*", async (request, reply) => {
+  app.get<{ Params: { pluginId: string; "*": string } }>("/pi-studio-plugins/:pluginId/*", async (request, reply) => {
     if (await proxyMachinePluginAsset(machines, request.params.pluginId, request.params["*"], request.url, reply)) return;
 
     return withProfileDependency(reply, async () => {
-      const asset = await piWebPlugins.readAsset(
+      const asset = await piStudioPlugins.readAsset(
         request.params.pluginId,
         request.params["*"],
-        new URL(request.url, "http://pi-web.local").searchParams.get("v") ?? undefined,
+        new URL(request.url, "http://pi-studio.local").searchParams.get("v") ?? undefined,
       );
       if (asset === undefined) return reply.code(404).send({ error: "Plugin asset not found" });
       return reply.type(asset.contentType).send(asset.content);
     });
   });
 
-  app.get<{ Querystring: { refresh?: string } }>("/api/pi-web/status", async (request) => request.query.refresh === "1"
-    ? piWebStatusCache.refresh({ force: true })
-    : piWebStatusCache.get());
-  app.get("/api/pi-web/version", async () => {
+  app.get<{ Querystring: { refresh?: string } }>("/api/pi-studio/status", async (request) => request.query.refresh === "1"
+    ? piStudioStatusCache.refresh({ force: true })
+    : piStudioStatusCache.get());
+  app.get("/api/pi-studio/version", async () => {
     const activeAgentProfile = await agentProfileProvider.getActiveAgentProfile();
-    return getPiWebVersionStatus(sessionDaemon, activeAgentProfile.status === "available" ? { activeAgentProfile: activeAgentProfile.profile } : {});
+    return getPiStudioVersionStatus(sessionDaemon, activeAgentProfile.status === "available" ? { activeAgentProfile: activeAgentProfile.profile } : {});
   });
   // Web readiness must not wait for sessiond: dev Compose starts the daemon
   // only after the web-owned initial build and API startup have completed.
-  app.get("/api/pi-web/health", () => Promise.resolve({ ok: true }));
-  app.get("/api/pi-web/runtime", async () => getPiWebRuntime(sessionDaemon));
-  app.get("/api/plugins", async (_request, reply) => withProfileDependency(reply, () => piWebPlugins.plugins()));
-  app.get("/api/machines/local/plugins", async (_request, reply) => withProfileDependency(reply, () => piWebPlugins.plugins()));
+  app.get("/api/pi-studio/health", () => Promise.resolve({ ok: true }));
+  app.get("/api/pi-studio/runtime", async () => getPiStudioRuntime(sessionDaemon));
+  app.get("/api/plugins", async (_request, reply) => withProfileDependency(reply, () => piStudioPlugins.plugins()));
+  app.get("/api/machines/local/plugins", async (_request, reply) => withProfileDependency(reply, () => piStudioPlugins.plugins()));
   registerPiPackageRoutes(app, piPackages);
   registerPiPackageRoutes(app, piPackages, "/api/machines/local");
-  const invalidatingConfigService = invalidatePiWebStatusOnWrite(configService, piWebStatusCache);
+  const invalidatingConfigService = invalidatePiStudioStatusOnWrite(configService, piStudioStatusCache);
   registerConfigRoutes(app, invalidatingConfigService);
   registerLocalMachineConfigRoutes(app, invalidatingConfigService);
 
@@ -269,9 +269,9 @@ export async function buildApp(deps: AppDependencies = {}): Promise<FastifyInsta
     const deploymentFlavor = deps.deploymentFlavor ?? createDeploymentFlavorResolver(
       async () => {
         const activeAgentProfile = await agentProfileProvider.getActiveAgentProfile();
-        return detectPiWebInstallation(activeAgentProfile.status === "available" ? activeAgentProfile.profile.dir : undefined);
+        return detectPiStudioInstallation(activeAgentProfile.status === "available" ? activeAgentProfile.profile.dir : undefined);
       },
-      (error) => { app.log.warn({ err: error }, "failed to detect PI WEB deployment flavor"); },
+      (error) => { app.log.warn({ err: error }, "failed to detect PI STUDIO deployment flavor"); },
     );
     registerDeploymentIdentityAssetRoutes(app, { clientDist, flavor: deploymentFlavor });
     app.setNotFoundHandler((_request, reply) => reply.sendFile("index.html"));

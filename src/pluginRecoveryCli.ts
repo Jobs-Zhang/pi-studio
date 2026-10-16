@@ -1,4 +1,4 @@
-import { isPiWebPluginId } from "./shared/pluginIds.js";
+import { isPiStudioPluginId } from "./shared/pluginIds.js";
 import {
   disableServerPlugin,
   loadServerPluginRecoveryConfig,
@@ -34,13 +34,13 @@ type PluginRecoveryCommand =
   | { kind: "safe-start-clear"; configPath?: string; restart: boolean };
 
 export function pluginRecoveryHelp(): string {
-  return `PI WEB server plugin recovery
+  return `PI STUDIO server plugin recovery
 
 Usage:
-  pi-web plugins disable <plugin-id> [--config <path>] [--restart]
-  pi-web plugins safe-start show [--config <path>]
-  pi-web plugins safe-start set <bundled-only|none> [--config <path>] [--restart]
-  pi-web plugins safe-start clear [--config <path>] [--restart]
+  pi-studio plugins disable <plugin-id> [--config <path>] [--restart]
+  pi-studio plugins safe-start show [--config <path>]
+  pi-studio plugins safe-start set <bundled-only|none> [--config <path>] [--restart]
+  pi-studio plugins safe-start clear [--config <path>] [--restart]
 
 Safe-start levels:
   bundled-only  Load bundled server plugins, including required Terminal, only.
@@ -101,8 +101,8 @@ function parsePluginRecoveryCommand(args: readonly string[]): PluginRecoveryComm
 
   if (command === "disable") {
     const [pluginId, ...extra] = rest;
-    if (pluginId === undefined || extra.length > 0) throw new Error("Usage: pi-web plugins disable <plugin-id> [--config <path>] [--restart]");
-    if (!isPiWebPluginId(pluginId)) throw new Error(`Invalid PI WEB plugin id: ${pluginId}`);
+    if (pluginId === undefined || extra.length > 0) throw new Error("Usage: pi-studio plugins disable <plugin-id> [--config <path>] [--restart]");
+    if (!isPiStudioPluginId(pluginId)) throw new Error(`Invalid PI STUDIO plugin id: ${pluginId}`);
     return withConfigPath({ kind: "disable", pluginId, restart: parsed.restart }, parsed.configPath);
   }
 
@@ -121,7 +121,7 @@ function parsePluginRecoveryCommand(args: readonly string[]): PluginRecoveryComm
     }
     return withConfigPath({ kind: "safe-start-set", safeStart: value, restart: parsed.restart }, parsed.configPath);
   }
-  throw new Error("Usage: pi-web plugins safe-start show|clear|set <bundled-only|none> [--config <path>] [--restart]");
+  throw new Error("Usage: pi-studio plugins safe-start show|clear|set <bundled-only|none> [--config <path>] [--restart]");
 }
 
 interface ParsedOptions {

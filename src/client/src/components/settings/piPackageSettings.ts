@@ -40,7 +40,7 @@ export function piPackageScopeLabel(packageInfo: Pick<PiPackageInfo, "scope">): 
 }
 
 export function piPackageFilteredLabel(packageInfo: Pick<PiPackageInfo, "filtered">): string {
-  return packageInfo.filtered ? "Filtered by current Pi package settings" : "Available in this PI WEB process";
+  return packageInfo.filtered ? "Filtered by current Pi package settings" : "Available in this PI STUDIO process";
 }
 
 export function piPackageInstalledPathLabel(packageInfo: Pick<PiPackageInfo, "installedPath">): string {
@@ -66,7 +66,7 @@ export function canUpdatePiPackage(packageInfo: Pick<PiPackageInfo, "scope">): b
 
 export function piPackageUpdateDisabledReason(packageInfo: Pick<PiPackageInfo, "scope">): string | undefined {
   if (canUpdatePiPackage(packageInfo)) return undefined;
-  return "Project-scope Pi packages are listed for visibility, but PI WEB only updates user-scope Pi packages safely from this view.";
+  return "Project-scope Pi packages are listed for visibility, but PI STUDIO only updates user-scope Pi packages safely from this view.";
 }
 
 export function canUpdateAllPiPackages(packages: readonly Pick<PiPackageInfo, "scope">[]): boolean {
@@ -87,8 +87,8 @@ export function isPiPackageOperationPending(operation: PiPackageOperationState |
 export function piPackageMutationFollowUpMessage(action: PiPackageMutationAction, target = piPackageTargetContext(undefined)): string {
   const verb = action === "install" ? "installed" : action === "remove" ? "removed" : "updated";
   const targetSuffix = target.kind === "local" ? "" : ` on ${target.name}`;
-  const sessionScope = target.kind === "local" ? "each idle PI WEB session" : `each idle PI WEB session on ${target.name}`;
-  const pluginScope = target.kind === "local" ? "PI WEB browser plugin changes" : `PI WEB browser plugin changes served by ${target.name}`;
+  const sessionScope = target.kind === "local" ? "each idle PI STUDIO session" : `each idle PI STUDIO session on ${target.name}`;
+  const pluginScope = target.kind === "local" ? "PI STUDIO browser plugin changes" : `PI STUDIO browser plugin changes served by ${target.name}`;
   return `Pi package ${verb}${targetSuffix}. Type /reload in ${sessionScope} to rediscover Pi runtime resources: extensions, skills, prompt templates, themes, and context/system prompt files. Reload the browser page separately for ${pluginScope}.`;
 }
 

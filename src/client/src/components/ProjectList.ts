@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { LitElement, html, type PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import type { Project } from "../api";
@@ -68,10 +69,10 @@ export class ProjectList extends LitElement implements KeyboardNavigableSection 
                   ${this.renderActivity(project)}
                 </div>
                 <div class="action-menu">
-                  <button class="action-menu-toggle" title="Project actions" aria-label=${`Actions for ${project.name}`} @click=${(event: MouseEvent) => { event.stopPropagation(); this.toggleMenu(project.id, event.currentTarget); }}>⋯</button>
+                  <button class="action-menu-toggle" title=${t("project.actions")} aria-label=${t("project.actionsFor", { name: project.name })} @click=${(event: MouseEvent) => { event.stopPropagation(); this.toggleMenu(project.id, event.currentTarget); }}>⋯</button>
                   ${this.openMenuProjectId === project.id ? html`
                     <div class="action-menu-panel" style=${this.menuStyle}>
-                      <button title="Close project" @click=${() => { this.close(project); }}>Close</button>
+                      <button title=${t("project.close")} @click=${() => { this.close(project); }}>${t("common.close")}</button>
                     </div>
                   ` : null}
                 </div>
@@ -93,10 +94,10 @@ export class ProjectList extends LitElement implements KeyboardNavigableSection 
   }
 
   private renderHeading() {
-    if (!this.collapsible) return html`<span>Projects</span>`;
+    if (!this.collapsible) return html`<span>${t("project.section")}</span>`;
     const selectedSummary = this.selected?.name ?? "No project selected";
     const selectedTitle = this.selected?.path ?? selectedSummary;
-    return html`<button class="section-toggle" aria-expanded=${String(!this.collapsed)} @click=${() => { this.onToggleCollapsed?.(); }}><span class="section-title"><span class="section-name">${this.collapsed ? "▸" : "▾"} Projects</span>${this.collapsed ? html`<small class="section-selected" title=${selectedTitle}>${selectedSummary}</small>` : null}</span><small class="section-count">${this.projects.length}</small></button>`;
+    return html`<button class="section-toggle" aria-expanded=${String(!this.collapsed)} @click=${() => { this.onToggleCollapsed?.(); }}><span class="section-title"><span class="section-name">${this.collapsed ? "▸" : "▾"} ${t("project.section")}</span>${this.collapsed ? html`<small class="section-selected" title=${selectedTitle}>${selectedSummary}</small>` : null}</span><small class="section-count">${this.projects.length}</small></button>`;
   }
 
   private renderActivity(project: Project) {
@@ -117,7 +118,7 @@ export class ProjectList extends LitElement implements KeyboardNavigableSection 
 
   private close(project: Project) {
     this.openMenuProjectId = undefined;
-    if (confirm(`Close ${project.name}?\n\nThis only removes it from PI WEB; it will not change the project folder.`)) this.onClose?.(project);
+    if (confirm(`Close ${project.name}?\n\nThis only removes it from PI STUDIO; it will not change the project folder.`)) this.onClose?.(project);
   }
 
   static override styles = listStyles;

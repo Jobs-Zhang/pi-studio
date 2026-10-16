@@ -1,7 +1,8 @@
+import { t } from "../../i18n";
 import { css, html, LitElement, type PropertyValues, type TemplateResult } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import type { AppAction } from "../../actions";
-import type { PiWebConfigResponse, PiWebConfigValues, PiWebShortcutConfig } from "../../api";
+import type { PiStudioConfigResponse, PiStudioConfigValues, PiStudioShortcutConfig } from "../../api";
 import { formatShortcut, parseShortcutInput, resolveShortcutBindings, shortcutPreferenceForAction, shortcutSequenceTimeoutMs, shortcutTokenFromEvent, type ShortcutBindingResolution } from "../../keyboardShortcuts";
 import { composerShortcutActions, isComposerShortcut } from "../../composerShortcuts";
 import "./SettingsPanelFrame";
@@ -10,19 +11,19 @@ import type { SettingsNotice } from "./SettingsPanelFrame";
 const RECORD_SHORTCUT_LISTENER_OPTIONS = { capture: true } as const;
 
 function renderShortcutsDescription(): TemplateResult {
-  return html`Edit app shortcuts by action. Type a shortcut such as <code>mod+k</code> or <code>g p</code>, record one from the keyboard, disable it with None, or reset it to the default. Unmodified app shortcuts work outside editable fields. Composer send bindings accept one key combination and take priority inside the editor; unassigned Enter and Shift+Enter insert newlines. Touch or narrow screen applies when the browser reports a coarse primary pointer (typically touch) or a viewport at most 760px wide; otherwise, desktop applies. When app shortcuts conflict, custom shortcuts win before defaults; ties are resolved by action id, and shorter shortcuts shadow longer sequences with the same prefix.`;
+  return html`${t("shortcuts.description")}`;
 }
 
 @customElement("settings-shortcuts-panel")
 export class SettingsShortcutsPanel extends LitElement {
   @property({ attribute: false }) actions: AppAction[] = [];
-  @property({ attribute: false }) configResponse: PiWebConfigResponse | undefined;
+  @property({ attribute: false }) configResponse: PiStudioConfigResponse | undefined;
   @property({ type: Boolean }) loading = false;
   @property({ type: Boolean }) saving = false;
   @property() error = "";
   @property() savedMessage = "";
   @property({ attribute: false }) onReload?: () => void | Promise<void>;
-  @property({ attribute: false }) onSave?: (config: PiWebConfigValues) => void | Promise<void>;
+  @property({ attribute: false }) onSave?: (config: PiStudioConfigValues) => void | Promise<void>;
   @state() private drafts: Record<string, string> = {};
   @state() private localError = "";
   @state() private recording: RecordingState | undefined;
@@ -42,7 +43,7 @@ export class SettingsShortcutsPanel extends LitElement {
 
     const token = shortcutTokenFromEvent(event);
     if (token === undefined) {
-      this.localError = "Press a letter, number, punctuation, function, or navigation key. Press Esc to cancel recording.";
+      this.localError = t("shortcuts.localErrorKey");
       return;
     }
     const tokens = [...recording.tokens, token];
@@ -71,20 +72,20 @@ export class SettingsShortcutsPanel extends LitElement {
     const shortcutResolutions = this.shortcutResolutions();
     return html`
       <settings-panel-frame
-        heading="Keyboard shortcuts"
+        heading=${t("shortcuts.heading")}
         .description=${renderShortcutsDescription()}
-        actionLabel="Reload"
+        actionLabel=${t("common.reload")}
         .actionDisabled=${this.loading}
         .notices=${this.panelNotices()}
         .onAction=${this.onReload}
       >
-        ${this.configResponse === undefined && this.loading ? html`<div class="loading-card">Loading shortcuts…</div>` : html`
+        ${this.configResponse === undefined && this.loading ? html`<div class="loading-card">${t("shortcuts.loading")}</div>` : html`
           <div class="config-path-card">
-            <span>Config file</span>
+            <span>${t("shortcuts.configFile")}</span>
             <code>${this.configResponse?.path ?? "Unknown"}</code>
-            <small>Shortcut overrides are saved under <code>shortcuts</code>. A value of <code>null</code> disables the action shortcut.</small>
+            <small>${t("shortcuts.configFileHint")}</small>
           </div>
-          ${groups.length === 0 ? html`<div class="loading-card">No actions registered.</div>` : groups.map((group) => html`
+          ${groups.length === 0 ? html`<div class="loading-card">${t("shortcuts.noActions")}</div>` : groups.map((group) => html`
             <section class="shortcut-group">
               <h3>${group.name}</h3>
               <div class="shortcut-list">
@@ -123,16 +124,16 @@ export class SettingsShortcutsPanel extends LitElement {
           <strong>${action.title}</strong>
           ${action.description !== undefined && action.description !== "" ? html`<small>${action.description}</small>` : null}
           <small class="shortcut-id">${action.id}</small>
-          <small>${action.shortcut !== undefined && action.shortcut !== "" ? html`Default: <kbd>${formatShortcut(action.shortcut)}</kbd>` : "No default shortcut"}</small>
+          <small>${action.shortcut !== undefined && action.shortcut !== "" ? html`${t("shortcuts.defaultLabel")}: <kbd>${formatShortcut(action.shortcut)}</kbd>` : t("shortcuts.noDefaultShortcut")}</small>
         </div>
         <div class="shortcut-editor">
           <div class="shortcut-status">
-            ${previewShortcut !== undefined && previewShortcut !== "" ? html`<kbd>${formatShortcut(previewShortcut)}</kbd>` : html`<span class="unassigned">${state === "disabled" ? "Disabled" : "Unassigned"}</span>`}
+            ${previewShortcut !== undefined && previewShortcut !== "" ? html`<kbd>${formatShortcut(previewShortcut)}</kbd>` : html`<span class="unassigned">${state === "disabled" ? t("shortcuts.disabled") : t("shortcuts.unassigned")}</span>`}
             <small class=${displayState}>${shortcutStateLabel(displayState)}${hasDraft ? " · Unsaved" : ""}</small>
             ${conflictLabel === undefined ? null : html`<small class=${shortcutConflictClass(resolution)}>${conflictLabel}</small>`}
           </div>
           <label class="shortcut-input-label">
-            <span>Shortcut</span>
+            <span>${t("shortcuts.shortcut")}</span>
             <input
               class="shortcut-input"
               data-action-id=${action.id}
@@ -147,10 +148,10 @@ export class SettingsShortcutsPanel extends LitElement {
           </label>
           ${recordingHint !== "" ? html`<small class="recording-hint">${recordingHint}</small>` : null}
           <div class="shortcut-actions">
-            <button class="primary" ?disabled=${this.loading || this.saving || !hasDraft || inputText.trim() === ""} @click=${() => { void this.saveShortcut(action); }}>Save</button>
-            <button ?disabled=${this.loading || this.saving} @click=${() => { void this.toggleRecording(action.id); }}>${this.recording?.actionId === action.id ? "Cancel recording" : "Record"}</button>
-            <button ?disabled=${this.loading || this.saving || configured === null} @click=${() => { void this.setShortcutNone(action); }}>None</button>
-            <button ?disabled=${this.loading || this.saving || !hasConfiguredShortcut} @click=${() => { void this.resetShortcut(action); }}>Reset</button>
+            <button class="primary" ?disabled=${this.loading || this.saving || !hasDraft || inputText.trim() === ""} @click=${() => { void this.saveShortcut(action); }}>${t("shortcuts.save")}</button>
+            <button ?disabled=${this.loading || this.saving} @click=${() => { void this.toggleRecording(action.id); }}>${this.recording?.actionId === action.id ? t("shortcuts.cancelRecording") : t("shortcuts.record")}</button>
+            <button ?disabled=${this.loading || this.saving || configured === null} @click=${() => { void this.setShortcutNone(action); }}>${t("shortcuts.none")}</button>
+            <button ?disabled=${this.loading || this.saving || !hasConfiguredShortcut} @click=${() => { void this.resetShortcut(action); }}>${t("shortcuts.reset")}</button>
           </div>
         </div>
       </article>
@@ -168,7 +169,7 @@ export class SettingsShortcutsPanel extends LitElement {
   private recordingHint(actionId: string): string {
     const recording = this.recording;
     if (recording?.actionId !== actionId) return "";
-    if (recording.tokens.length === 0) return "Recording: press Ctrl/⌘ or Alt with a key. Press Esc to cancel.";
+    if (recording.tokens.length === 0) return t("shortcuts.recordingHint");
     return `Recording: ${formatShortcut(recording.tokens.join(" "))}. Press another key to add a sequence, or wait to finish.`;
   }
 
@@ -186,7 +187,7 @@ export class SettingsShortcutsPanel extends LitElement {
       return;
     }
     if (isComposerShortcut(action.id) && parsed.tokens.length !== 1) {
-      this.localError = "Composer send shortcuts must be a single key combination, not a sequence.";
+      this.localError = t("shortcuts.sequenceError");
       return;
     }
     this.localError = "";
@@ -206,7 +207,7 @@ export class SettingsShortcutsPanel extends LitElement {
   }
 
   private async saveShortcutPreference(action: AppAction, shortcut: string | null | undefined): Promise<void> {
-    const config: PiWebConfigValues = { ...(this.configResponse?.config ?? {}) };
+    const config: PiStudioConfigValues = { ...(this.configResponse?.config ?? {}) };
     const currentShortcuts = config.shortcuts ?? {};
     const migratedShortcuts = withoutShortcutPreferences(currentShortcuts, [action.id, ...(action.shortcutAliases ?? [])]);
     const shortcuts = shortcut === undefined ? migratedShortcuts : { ...migratedShortcuts, [action.id]: shortcut };
@@ -228,7 +229,7 @@ export class SettingsShortcutsPanel extends LitElement {
     return new Map(resolutions.map((resolution) => [resolution.action.id, resolution]));
   }
 
-  private previewShortcutConfig(): PiWebShortcutConfig | undefined {
+  private previewShortcutConfig(): PiStudioShortcutConfig | undefined {
     const shortcuts = { ...(this.configResponse?.config.shortcuts ?? {}) };
     for (const [actionId, draft] of Object.entries(this.drafts)) {
       const trimmedDraft = draft.trim();
@@ -383,18 +384,18 @@ function compareActions(left: AppAction, right: AppAction): number {
   return (left.group ?? "Other").localeCompare(right.group ?? "Other") || left.title.localeCompare(right.title);
 }
 
-function withoutShortcutPreferences(shortcuts: PiWebShortcutConfig, actionIds: readonly string[]): PiWebShortcutConfig {
+function withoutShortcutPreferences(shortcuts: PiStudioShortcutConfig, actionIds: readonly string[]): PiStudioShortcutConfig {
   const removed = new Set(actionIds);
   return Object.fromEntries(Object.entries(shortcuts).filter(([shortcutActionId]) => !removed.has(shortcutActionId)));
 }
 
-function effectiveShortcut(action: AppAction, shortcuts: PiWebShortcutConfig | undefined): string | undefined {
+function effectiveShortcut(action: AppAction, shortcuts: PiStudioShortcutConfig | undefined): string | undefined {
   const configured = shortcutPreferenceForAction(action, shortcuts);
   if (configured === null) return undefined;
   return configured ?? action.shortcut;
 }
 
-function shortcutState(action: AppAction, shortcuts: PiWebShortcutConfig | undefined): ShortcutState {
+function shortcutState(action: AppAction, shortcuts: PiStudioShortcutConfig | undefined): ShortcutState {
   const configured = shortcutPreferenceForAction(action, shortcuts);
   if (configured === null) return "disabled";
   if (configured !== undefined) return "custom";
@@ -406,7 +407,7 @@ function shortcutStateLabel(state: ShortcutState): string {
     case "default": return "Default";
     case "custom": return "Custom";
     case "disabled": return "Disabled";
-    case "unassigned": return "No default";
+    case "unassigned": return t("shortcuts.noDefault");
   }
 }
 

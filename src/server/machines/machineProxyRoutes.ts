@@ -5,7 +5,7 @@ import {
   PAIRED_PLUGIN_BACKEND_CHANNEL_ROUTE_PATH,
   PLUGIN_BACKEND_CHANNEL_DATA_FRAME_MAX_BYTES,
 } from "../../shared/pluginBackendProtocol.js";
-import { mergeSelectedMachineConfig, parsePiWebConfigResponseBody, parseSelectedMachineConfigRequest, selectedMachineConfigResponse } from "../configRoutes.js";
+import { mergeSelectedMachineConfig, parsePiStudioConfigResponseBody, parseSelectedMachineConfigRequest, selectedMachineConfigResponse } from "../configRoutes.js";
 import {
   type PluginBackendChannelProxyAdmissionPool,
   type PluginBackendChannelProxyScope,
@@ -174,7 +174,7 @@ async function proxyHttpRequest(
         error: "Remote machine plugin lifecycle is incompatible",
         code: "plugin-lifecycle-incompatible",
         machineId,
-        detail: "The remote machine does not support this plugin backend route. Update and restart PI WEB on the remote machine.",
+        detail: "The remote machine does not support this plugin backend route. Update and restart PI STUDIO on the remote machine.",
       });
     }
     reply.code(upstream.statusCode);
@@ -229,7 +229,7 @@ async function proxySelectedMachineConfigRequest(client: MachineClient, machineI
     const currentResponse = await client.requestJson("GET", remotePath);
     if (!isSuccessfulStatus(currentResponse.statusCode)) return sendUpstreamJsonResponse(reply, currentResponse, machineId);
 
-    const current = parsePiWebConfigResponseBody(currentResponse.body, "Remote machine config response");
+    const current = parsePiStudioConfigResponseBody(currentResponse.body, "Remote machine config response");
     const merged = mergeSelectedMachineConfig(current.config, patch);
     return sendSelectedMachineConfigResponse(reply, await client.requestJson("PUT", remotePath, { config: merged }), machineId);
   }
@@ -243,7 +243,7 @@ function configPayload(body: unknown): unknown {
 
 function sendSelectedMachineConfigResponse(reply: FastifyReply, upstream: MachineJsonResponse, machineId: string): FastifyReply {
   if (!isSuccessfulStatus(upstream.statusCode)) return sendUpstreamJsonResponse(reply, upstream, machineId);
-  const response = parsePiWebConfigResponseBody(upstream.body, "Remote machine config response");
+  const response = parsePiStudioConfigResponseBody(upstream.body, "Remote machine config response");
   reply.code(upstream.statusCode);
   applySafeHeaders(reply, upstream.headers);
   return reply.send(selectedMachineConfigResponse(response));
@@ -349,7 +349,7 @@ interface RemoteFilePreviewRequest {
 
 function remoteFilePreviewRequest(spec: FederatedHttpRouteSpec, remotePath: string): RemoteFilePreviewRequest | undefined {
   if (spec.path !== WORKSPACE_FILE_PREVIEW_ROUTE_PATH) return undefined;
-  const url = new URL(remotePath, "http://pi-web.local");
+  const url = new URL(remotePath, "http://pi-studio.local");
   const path = url.searchParams.get("path");
   if (path === null || path === "") throw new Error("path query parameter is required");
   const downloadValue = url.searchParams.get("download");
@@ -494,7 +494,7 @@ function destroyReadable(body: NodeJS.ReadableStream): void {
 }
 
 function isSelectedMachineConfigRequestError(error: unknown): boolean {
-  return error instanceof Error && error.message.startsWith("PI WEB selected-machine config");
+  return error instanceof Error && error.message.startsWith("PI STUDIO selected-machine config");
 }
 
 function errorMessage(error: unknown): string {

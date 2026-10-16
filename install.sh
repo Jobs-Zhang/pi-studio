@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
 set -eu
 
-npm install -g @jmfederico/pi-web --allow-scripts=node-pty
-pi-web install
+npm install -g @pi-studio/pi-studio --allow-scripts=node-pty
+pi-studio install

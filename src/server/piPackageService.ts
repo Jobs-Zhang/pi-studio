@@ -2,7 +2,7 @@ import { DefaultPackageManager, SettingsManager } from "@earendil-works/pi-codin
 import type { PiPackageInfo, PiPackageInstallableSuggestion, PiPackageMutationAction, PiPackageMutationResponse, PiPackageScope, PiPackagesResponse } from "../shared/apiTypes.js";
 import { requireActiveAgentProfile, type ActiveAgentProfileProvider } from "./activeAgentProfileProvider.js";
 import {
-  defaultPiWebPackageRoot,
+  defaultPiStudioPackageRoot,
   isKnownAutoInstallablePiPackageId,
   resolveShippedPiPackagePath,
 } from "./knownAutoInstallPiPackages.js";
@@ -54,7 +54,7 @@ export class ActiveProfilePiPackageService implements PiPackageService {
     private readonly dismissalTracker: PiPackageDismissalTracker = noopDismissalTracker,
     private readonly identityResolver: PiPackageIdentityResolver = defaultIdentityResolver,
     private readonly knownPackages: readonly KnownPiPackage[] = KNOWN_PI_PACKAGES,
-    private readonly packageRoot: string = defaultPiWebPackageRoot(),
+    private readonly packageRoot: string = defaultPiStudioPackageRoot(),
   ) {}
 
   async list(): Promise<PiPackagesResponse> {

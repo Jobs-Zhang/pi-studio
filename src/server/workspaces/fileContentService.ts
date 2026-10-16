@@ -1,11 +1,11 @@
 import { lstat, mkdir, open, realpath, rename, stat, unlink, writeFile } from "node:fs/promises";
 import { basename, dirname, join } from "node:path";
-import type { DeleteWorkspaceFileResponse, FileContentMediaType, FileContentResponse, MoveWorkspaceFileOptions, MoveWorkspaceFileResponse, PiWebPathAccessConfig, WriteWorkspaceFileOptions, WriteWorkspaceFileResponse } from "../../shared/apiTypes.js";
+import type { DeleteWorkspaceFileResponse, FileContentMediaType, FileContentResponse, MoveWorkspaceFileOptions, MoveWorkspaceFileResponse, PiStudioPathAccessConfig, WriteWorkspaceFileOptions, WriteWorkspaceFileResponse } from "../../shared/apiTypes.js";
 import { classifyWorkspaceFile, MAX_WORKSPACE_FILE_CONTENT_BYTES, type WorkspaceFileClassification } from "../../shared/workspaceFiles.js";
 import { resolveWorkspacePathAccessTarget } from "./pathAccessPolicy.js";
 import { ensureInside, isNodeErrorWithCode, resolveInsideWorkspace, resolveParentInsideWorkspace } from "./pathSafety.js";
 
-export async function readWorkspaceFile(rootPath: string, path: string | undefined, pathAccess?: PiWebPathAccessConfig): Promise<FileContentResponse> {
+export async function readWorkspaceFile(rootPath: string, path: string | undefined, pathAccess?: PiStudioPathAccessConfig): Promise<FileContentResponse> {
   if (path === undefined || path === "") throw new Error("path query parameter is required");
   const { target, displayPath } = await resolveWorkspacePathAccessTarget(rootPath, path, pathAccess);
   const s = await stat(target);

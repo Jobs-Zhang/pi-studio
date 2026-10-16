@@ -1,5 +1,5 @@
 import type { FastifyInstance, FastifyReply } from "fastify";
-import { isPiWebPluginId } from "../../shared/pluginIds.js";
+import { isPiStudioPluginId } from "../../shared/pluginIds.js";
 import {
   PAIRED_PLUGIN_BACKEND_REQUEST_ROUTE_PATH,
   parsePluginBackendRequestEnvelope,
@@ -52,7 +52,7 @@ export function registerPairedPluginBackendRoutes(app: FastifyInstance, dependen
       let operation = request.params.operation;
       let envelope: PluginBackendRequestEnvelope;
       try {
-        if (!isPiWebPluginId(pluginId)) throw new Error(`Invalid PI WEB plugin id: ${pluginId}`);
+        if (!isPiStudioPluginId(pluginId)) throw new Error(`Invalid PI STUDIO plugin id: ${pluginId}`);
         operation = requirePluginBackendOperation(operation);
         if (projectId === "") throw new Error("Project id is required");
         if (workspaceId === "") throw new Error("Workspace id is required");

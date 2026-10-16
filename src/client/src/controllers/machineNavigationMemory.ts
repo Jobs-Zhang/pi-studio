@@ -27,7 +27,7 @@ export interface MachineNavigationMemory {
   forget(machineId: string): void;
 }
 
-const machineNavigationStorageKey = "pi-web:machine-navigation:v1";
+const machineNavigationStorageKey = "pi-studio:machine-navigation:v1";
 
 export class SessionStorageMachineNavigationMemory implements MachineNavigationMemory {
   private readonly snapshotsByMachine: PersistentValueMap<MachineNavigationSnapshot>;

@@ -1,0 +1,9 @@
+{
+  "name": "@pi-studio/info-plugin",
+  "private": true,
+  "piStudio": {
+    "plugins": [
+      { "id": "info", "browserRoot": ".", "module": "pi-studio-plugin.js" }
+    ]
+  }
+}

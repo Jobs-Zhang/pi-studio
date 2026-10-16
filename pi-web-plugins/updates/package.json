@@ -1,9 +1,0 @@
-{
-  "name": "@pi-web/updates-plugin",
-  "private": true,
-  "piWeb": {
-    "plugins": [
-      { "id": "updates", "browserRoot": ".", "module": "pi-web-plugin.js", "machineSpecific": true }
-    ]
-  }
-}

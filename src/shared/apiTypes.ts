@@ -12,16 +12,16 @@ import type {
   MachineKind,
   MoveWorkspaceFileOptions,
   MoveWorkspaceFileResponse,
-  PiWebComponentStatus,
-  PiWebDockerMode,
-  PiWebInstallationInfo,
-  PiWebInstallationKind,
-  PiWebReleaseStatus,
-  PiWebServiceComponent,
-  PiWebStatusMessage,
-  PiWebStatusResponse,
-  PiWebStatusSeverity,
-  PiWebVersionResponse,
+  PiStudioComponentStatus,
+  PiStudioDockerMode,
+  PiStudioInstallationInfo,
+  PiStudioInstallationKind,
+  PiStudioReleaseStatus,
+  PiStudioServiceComponent,
+  PiStudioStatusMessage,
+  PiStudioStatusResponse,
+  PiStudioStatusSeverity,
+  PiStudioVersionResponse,
   TerminalCommandRun,
   TerminalCommandRunHandle,
   TerminalCommandRunStatus,
@@ -44,16 +44,16 @@ export type {
   MachineKind,
   MoveWorkspaceFileOptions,
   MoveWorkspaceFileResponse,
-  PiWebComponentStatus,
-  PiWebDockerMode,
-  PiWebInstallationInfo,
-  PiWebInstallationKind,
-  PiWebReleaseStatus,
-  PiWebServiceComponent,
-  PiWebStatusMessage,
-  PiWebStatusResponse,
-  PiWebStatusSeverity,
-  PiWebVersionResponse,
+  PiStudioComponentStatus,
+  PiStudioDockerMode,
+  PiStudioInstallationInfo,
+  PiStudioInstallationKind,
+  PiStudioReleaseStatus,
+  PiStudioServiceComponent,
+  PiStudioStatusMessage,
+  PiStudioStatusResponse,
+  PiStudioStatusSeverity,
+  PiStudioVersionResponse,
   TerminalCommandRun,
   TerminalCommandRunHandle,
   TerminalCommandRunStatus,
@@ -71,11 +71,11 @@ export type MachineStatus = "unknown" | "online" | "offline" | "error";
  * runtime/requirements entries in `capabilities.ts`) when a feature needs
  * rolling-version gating.
  */
-export const PI_WEB_CAPABILITIES = {
+export const PI_STUDIO_CAPABILITIES = {
   pluginLifecycle: "plugins.lifecycle",
 } as const;
 
-export type PiWebCapability = typeof PI_WEB_CAPABILITIES[keyof typeof PI_WEB_CAPABILITIES];
+export type PiStudioCapability = typeof PI_STUDIO_CAPABILITIES[keyof typeof PI_STUDIO_CAPABILITIES];
 
 export interface Machine {
   id: string;
@@ -126,8 +126,8 @@ export interface MachineHealth {
   ok: boolean;
   checkedAt: string;
   status?: MachineStatus;
-  web?: PiWebComponentStatus;
-  sessiond?: PiWebComponentStatus;
+  web?: PiStudioComponentStatus;
+  sessiond?: PiStudioComponentStatus;
   tunnel?: MachineTunnelStatus;
   error?: string;
 }
@@ -138,36 +138,36 @@ export interface MachineRuntime {
   checkedAt: string;
   packageName?: string;
   generatedAt?: string;
-  components?: PiWebRuntimeResponse["components"];
-  capabilities?: PiWebCapability[];
+  components?: PiStudioRuntimeResponse["components"];
+  capabilities?: PiStudioCapability[];
   /** Deprecated agent-configuration inputs detected on this machine (union of the web and session daemon reports, deduplicated); omitted when none. */
-  deprecatedAgentInputs?: readonly PiWebDeprecatedAgentInput[];
+  deprecatedAgentInputs?: readonly PiStudioDeprecatedAgentInput[];
   error?: string;
 }
 
-export type PiWebShortcutConfig = Record<string, string | null>;
-export type PiWebPluginSettings = Record<string, unknown>;
-export type PiWebPluginConfigMap = Record<string, PiWebPluginConfig>;
+export type PiStudioShortcutConfig = Record<string, string | null>;
+export type PiStudioPluginSettings = Record<string, unknown>;
+export type PiStudioPluginConfigMap = Record<string, PiStudioPluginConfig>;
 
-export interface PiWebPluginConfig {
+export interface PiStudioPluginConfig {
   enabled?: boolean;
-  settings?: PiWebPluginSettings;
+  settings?: PiStudioPluginSettings;
   [key: string]: unknown;
 }
 
-export interface PiWebPathAccessConfig {
+export interface PiStudioPathAccessConfig {
   allowedPaths?: string[];
 }
 
-export interface PiWebUploadsConfig {
+export interface PiStudioUploadsConfig {
   defaultFolder?: string;
 }
 
-export interface PiWebAttachmentsConfig {
+export interface PiStudioAttachmentsConfig {
   defaultFolder?: string;
 }
 
-export interface PiWebAgentConfig {
+export interface PiStudioAgentConfig {
   /** Deprecated and ignored: the multi-implementation CLI abstraction was removed; sessions always run on the bundled pi SDK. Detected for the deprecation warning. */
   command?: string;
   /** Deprecated alias for the PI_CODING_AGENT_DIR env var: pi agent state directory containing auth.json, models.json, settings.json, and sessions/. */
@@ -176,12 +176,12 @@ export interface PiWebAgentConfig {
 
 /**
  * A deprecated agent-configuration input detected on one machine, as reported
- * over the runtime/status pipeline. Values from the legacy PI_WEB_AGENT_* env
+ * over the runtime/status pipeline. Values from the legacy PI_STUDIO_AGENT_* env
  * vars and the agent.* config keys are still honored (or, for the removed
  * command concept, ignored) during the deprecation window; every detected
  * input is surfaced as a non-dismissable UI warning until the input is removed.
  */
-export interface PiWebDeprecatedAgentInput {
+export interface PiStudioDeprecatedAgentInput {
   /** Where the input was found: the process environment or the config file. */
   readonly source: "environment" | "config";
   /** The deprecated input as the user set it: an env var name or a config key path. */
@@ -190,25 +190,25 @@ export interface PiWebDeprecatedAgentInput {
   readonly replacement?: string;
 }
 
-export interface PiWebThemePreference {
+export interface PiStudioThemePreference {
   themeId: string;
   auto: boolean;
 }
 
-export interface PiWebConfigValues {
+export interface PiStudioConfigValues {
   /** App-wide theme default; browser-local theme preferences take precedence. */
-  defaultTheme?: PiWebThemePreference;
+  defaultTheme?: PiStudioThemePreference;
   host?: string;
   port?: number;
   allowedHosts?: string[] | true;
-  shortcuts?: PiWebShortcutConfig;
-  plugins?: PiWebPluginConfigMap;
-  /** External filesystem roots PI WEB may expose outside a workspace. */
-  pathAccess?: PiWebPathAccessConfig;
+  shortcuts?: PiStudioShortcutConfig;
+  plugins?: PiStudioPluginConfigMap;
+  /** External filesystem roots PI STUDIO may expose outside a workspace. */
+  pathAccess?: PiStudioPathAccessConfig;
   /** Workspace-relative defaults for manual file uploads. */
-  uploads?: PiWebUploadsConfig;
+  uploads?: PiStudioUploadsConfig;
   /** Workspace-relative defaults for prompt attachments saved into the workspace. */
-  attachments?: PiWebAttachmentsConfig;
+  attachments?: PiStudioAttachmentsConfig;
   /** Maximum accepted HTTP request body size in bytes (uploads/attachments). */
   maxUploadBytes?: number;
   /** When true, LLMs can start new sessions via the spawn_session tool. */
@@ -226,8 +226,8 @@ export interface PiWebConfigValues {
    */
   askUser?: boolean;
   /**
-   * When true, PI WEB appends environment facts to session system prompts:
-   * the pi-web session nesting every session runs in, plus container facts in
+   * When true, PI STUDIO appends environment facts to session system prompts:
+   * the pi-studio session nesting every session runs in, plus container facts in
    * Docker deployments. On by default.
    */
   environmentFacts?: boolean;
@@ -238,28 +238,28 @@ export interface PiWebConfigValues {
    * Tuning knob only — extension dialogs are always enabled.
    */
   extensionDialogsTimeoutMs?: number;
-  /** Deprecated agent-configuration keys, still honored as aliases during the deprecation window and detected for the deprecation warning (see PiWebAgentConfig). */
-  agent?: PiWebAgentConfig;
+  /** Deprecated agent-configuration keys, still honored as aliases during the deprecation window and detected for the deprecation warning (see PiStudioAgentConfig). */
+  agent?: PiStudioAgentConfig;
 }
 
-export type PiWebPluginScope = "bundled" | "local" | "user" | "project";
+export type PiStudioPluginScope = "bundled" | "local" | "user" | "project";
 
-export const PI_WEB_PLUGIN_LIFECYCLE_VERSION = 2;
+export const PI_STUDIO_PLUGIN_LIFECYCLE_VERSION = 2;
 
-export type PiWebPluginServerState = "active" | "failed" | "incompatible" | "disabled" | "missing" | "unknown";
-export type PiWebPluginLifecyclePhase = "import" | "activate" | "validate" | "start" | "health" | "dispose";
-export type PiWebPluginHealthStatus = "healthy" | "degraded" | "unhealthy";
-export type PiWebPluginRuntimeStatus = "available" | "unavailable" | "incompatible";
-export type PiWebPluginSafeStart = "bundled-only" | "none";
+export type PiStudioPluginServerState = "active" | "failed" | "incompatible" | "disabled" | "missing" | "unknown";
+export type PiStudioPluginLifecyclePhase = "import" | "activate" | "validate" | "start" | "health" | "dispose";
+export type PiStudioPluginHealthStatus = "healthy" | "degraded" | "unhealthy";
+export type PiStudioPluginRuntimeStatus = "available" | "unavailable" | "incompatible";
+export type PiStudioPluginSafeStart = "bundled-only" | "none";
 
-export interface PiWebPluginServerInfo {
-  state: PiWebPluginServerState;
+export interface PiStudioPluginServerInfo {
+  state: PiStudioPluginServerState;
   desiredRevision?: string;
   activeRevision?: string;
-  phase?: PiWebPluginLifecyclePhase;
+  phase?: PiStudioPluginLifecyclePhase;
   message?: string;
   health?: {
-    status: PiWebPluginHealthStatus;
+    status: PiStudioPluginHealthStatus;
     message?: string;
   };
   staleRevision: boolean;
@@ -268,14 +268,14 @@ export interface PiWebPluginServerInfo {
   disableCommand: string;
 }
 
-export interface PiWebPluginInfo {
+export interface PiStudioPluginInfo {
   id: string;
   /** The bundled Terminal package is required outside explicit recovery mode. */
   required?: true;
   /** Browser module URL for the currently discovered package, if any. */
   module?: string;
   source: string;
-  scope: PiWebPluginScope;
+  scope: PiStudioPluginScope;
   machineSpecific: boolean;
   /** Desired config state; the active server snapshot may intentionally differ. */
   enabled: boolean;
@@ -283,10 +283,10 @@ export interface PiWebPluginInfo {
   discovered: boolean;
   /** A duplicate id was diagnosed in either the desired or active catalog. */
   conflict: boolean;
-  server?: PiWebPluginServerInfo;
+  server?: PiStudioPluginServerInfo;
 }
 
-export interface PiWebPluginDiagnostic {
+export interface PiStudioPluginDiagnostic {
   kind: "conflict" | "discovery";
   snapshot: "desired" | "active";
   source: string;
@@ -294,30 +294,30 @@ export interface PiWebPluginDiagnostic {
   pluginId?: string;
 }
 
-export interface PiWebPluginRecoveryCommands {
+export interface PiStudioPluginRecoveryCommands {
   showSafeStart: string;
   bundledOnly: string;
   noServerPlugins: string;
   clearSafeStart: string;
 }
 
-export interface PiWebPluginRuntimeInfo {
-  status: PiWebPluginRuntimeStatus;
+export interface PiStudioPluginRuntimeInfo {
+  status: PiStudioPluginRuntimeStatus;
   terminalMode: TerminalPluginMode;
   /** Safe-start level active in sessiond; absence means sessiond started normally. */
-  safeStart?: PiWebPluginSafeStart;
+  safeStart?: PiStudioPluginSafeStart;
   /** Current offline recovery config, including explicit `off` when known. */
-  desiredSafeStart?: PiWebPluginSafeStart | "off";
+  desiredSafeStart?: PiStudioPluginSafeStart | "off";
   restartRequired: boolean;
   message?: string;
-  recovery: PiWebPluginRecoveryCommands;
+  recovery: PiStudioPluginRecoveryCommands;
 }
 
-export interface PiWebPluginsResponse {
-  lifecycleVersion: typeof PI_WEB_PLUGIN_LIFECYCLE_VERSION;
-  plugins: PiWebPluginInfo[];
-  diagnostics: PiWebPluginDiagnostic[];
-  serverRuntime: PiWebPluginRuntimeInfo;
+export interface PiStudioPluginsResponse {
+  lifecycleVersion: typeof PI_STUDIO_PLUGIN_LIFECYCLE_VERSION;
+  plugins: PiStudioPluginInfo[];
+  diagnostics: PiStudioPluginDiagnostic[];
+  serverRuntime: PiStudioPluginRuntimeInfo;
 }
 
 export type PiPackageScope = "user" | "project";
@@ -332,7 +332,7 @@ export interface PiPackageInfo {
 export interface PiPackagesResponse {
   packages: PiPackageInfo[];
   /**
-   * Known Pi packages PI WEB ships (including explicit opt-in packages)
+   * Known Pi packages PI STUDIO ships (including explicit opt-in packages)
    * that are not currently configured
    * for the active profile — omitted or empty once every known package is
    * configured. Lets the Settings UI offer a one-click (re)install with no
@@ -376,7 +376,7 @@ export interface PiPackageMutationResponse extends PiPackagesResponse {
   removed?: boolean;
 }
 
-export interface PiWebConfigEnvOverrides {
+export interface PiStudioConfigEnvOverrides {
   host: boolean;
   port: boolean;
   allowedHosts: boolean;
@@ -385,12 +385,12 @@ export interface PiWebConfigEnvOverrides {
   askUser: boolean;
 }
 
-export interface PiWebConfigResponse {
+export interface PiStudioConfigResponse {
   path: string;
   exists: boolean;
-  config: PiWebConfigValues;
-  effectiveConfig: PiWebConfigValues;
-  envOverrides: PiWebConfigEnvOverrides;
+  config: PiStudioConfigValues;
+  effectiveConfig: PiStudioConfigValues;
+  envOverrides: PiStudioConfigEnvOverrides;
 }
 
 export interface Project {
@@ -401,11 +401,11 @@ export interface Project {
 }
 
 export interface WorkspaceEffectiveConfig {
-  readonly uploads?: Readonly<PiWebUploadsConfig>;
-  readonly attachments?: Readonly<PiWebAttachmentsConfig>;
+  readonly uploads?: Readonly<PiStudioUploadsConfig>;
+  readonly attachments?: Readonly<PiStudioAttachmentsConfig>;
 }
 
-/** Host-only removal state carried by PI WEB's browser/sessiond protocol. */
+/** Host-only removal state carried by PI STUDIO's browser/sessiond protocol. */
 export interface WorkspaceRemovalHostState extends WorkspaceRemovalPresentation {
   /** Opaque token binding a removal confirmation to this exact owner snapshot. */
   readonly precondition: string;
@@ -764,7 +764,7 @@ export interface QueuedSessionMessage {
  * `customType` of the follow-up custom message that carries a closed ask back to
  * the model and into the transcript. Its `details` are an {@link AskUserOutcome}.
  */
-export const ASK_USER_ANSWERS_CUSTOM_TYPE = "pi-web.ask.answers";
+export const ASK_USER_ANSWERS_CUSTOM_TYPE = "pi-studio.ask.answers";
 
 /** Largest question set one `ask_user` call may post. */
 export const ASK_USER_QUESTION_LIMIT = 20;
@@ -1062,7 +1062,7 @@ export interface SessionModel {
  * its membership in pi's effective enabled-models scope (`enabledModels`
  * setting). Model scope is selection UX for picking/cycling, never an
  * authorization boundary. Workspace overrides mark rows non-editable because
- * PI WEB's picker writes only the global setting.
+ * PI STUDIO's picker writes only the global setting.
  */
 export interface SessionModelCatalogEntry {
   provider: string;
@@ -1190,7 +1190,7 @@ export interface SessionStatus {
   /** True when the server has verified a backing session file exists; false when known transient. */
   persisted?: boolean;
   /**
-   * Best-effort observation of recent activity on this session in another PI WEB
+   * Best-effort observation of recent activity on this session in another PI STUDIO
    * instance, not an ownership lock. Current daemons report both true and false;
    * optional for older producers. Browsers own acknowledgement and presentation.
    */
@@ -1253,29 +1253,29 @@ export interface ActiveAgentProfileDescriptor {
   readonly dir: string;
 }
 
-export interface PiWebRuntimeComponent {
-  component: PiWebServiceComponent;
+export interface PiStudioRuntimeComponent {
+  component: PiStudioServiceComponent;
   label: string;
   runtimeVersion?: string;
   /** Version of the Pi coding agent library loaded by this component's process; omitted when the component does not report it. */
   piVersion?: string;
   available: boolean;
-  capabilities: PiWebCapability[];
+  capabilities: PiStudioCapability[];
   /** Present only for a session daemon that supports active-profile reporting. */
   activeAgentProfile?: ActiveAgentProfileDescriptor;
   /** Deprecated agent-configuration inputs detected in this component's process environment and config file; omitted when none. */
-  deprecatedAgentInputs?: readonly PiWebDeprecatedAgentInput[];
+  deprecatedAgentInputs?: readonly PiStudioDeprecatedAgentInput[];
   error?: string;
 }
 
-export interface PiWebRuntimeResponse {
+export interface PiStudioRuntimeResponse {
   packageName: string;
   generatedAt: string;
   components: {
-    web: PiWebRuntimeComponent;
-    sessiond: PiWebRuntimeComponent;
+    web: PiStudioRuntimeComponent;
+    sessiond: PiStudioRuntimeComponent;
   };
-  capabilities: PiWebCapability[];
+  capabilities: PiStudioCapability[];
 }
 
 export interface CommandOption {

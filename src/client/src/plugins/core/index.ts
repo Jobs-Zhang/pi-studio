@@ -1,9 +1,9 @@
-import type { PiWebPlugin } from "../types";
+import type { PiStudioPlugin } from "../types";
 import { createCoreActions } from "./actions";
 import { createCoreMessageActions } from "./messageActions";
-export const corePlugin: PiWebPlugin = {
+export const corePlugin: PiStudioPlugin = {
   apiVersion: 4,
-  name: "PI WEB Core",
+  name: "PI STUDIO Core",
   activate: () => ({
     contributions: {
       actions: createCoreActions(),

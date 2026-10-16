@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { LitElement, css, html, nothing, type PropertyValues, type TemplateResult } from "lit";
 import { customElement, property, query, state } from "lit/decorators.js";
 import type { AuthDialogState } from "../appState";
@@ -46,7 +47,7 @@ export class AuthDialog extends LitElement {
       >
         <header>
           <strong>${this.dialogTitle(state)}</strong>
-          <button title="Close" aria-label="Close" @click=${() => { this.cancel(); }}>×</button>
+          <button title=${t("common.close")} aria-label=${t("common.close")} @click=${() => { this.cancel(); }}>×</button>
         </header>
         ${this.renderBody(state)}
       </modal-surface>
@@ -58,8 +59,8 @@ export class AuthDialog extends LitElement {
     switch (state.step) {
       case "method":
         return [
-          { key: "oauth", title: "Use a subscription", detail: "ChatGPT Plus/Pro, Claude Pro/Max, or GitHub Copilot", searchText: "Use a subscription", run: () => { this.onChooseMethod?.("oauth"); } },
-          { key: "api_key", title: "Use provider credentials", detail: "Configure an API key or provider-specific credentials in the active Pi-compatible profile's auth.json", searchText: "Use provider credentials", run: () => { this.onChooseMethod?.("api_key"); } },
+          { key: "oauth", title: t("auth.subscriptionTitle"), detail: t("auth.subscriptionDetail"), searchText: t("auth.subscriptionTitle"), run: () => { this.onChooseMethod?.("oauth"); } },
+          { key: "api_key", title: t("auth.apiKeyTitle"), detail: t("auth.apiKeyDetail"), searchText: t("auth.apiKeyTitle"), run: () => { this.onChooseMethod?.("api_key"); } },
         ];
       case "providers":
         return state.providers.map((provider) => ({
@@ -144,10 +145,10 @@ export class AuthDialog extends LitElement {
 
   private dialogTitle(state: AuthDialogState): string {
     switch (state.step) {
-      case "method": return "Configure provider authentication";
-      case "providers": return state.authType === undefined ? "Select provider authentication" : state.authType === "oauth" ? "Select subscription provider" : "Select credential provider";
+      case "method": return t("auth.configure");
+      case "providers": return state.authType === undefined ? t("auth.selectProvider") : state.authType === "oauth" ? t("auth.selectSubscription") : t("auth.selectCredential");
       case "oauth": return `Login to ${state.flow.providerName}`;
-      case "logout": return "Remove stored provider authentication";
+      case "logout": return t("auth.removeStored");
     }
   }
 
@@ -157,11 +158,11 @@ export class AuthDialog extends LitElement {
     const visible = this.filteredOptions(options);
     return html`
       ${this.stepHasSearch(state) && options.length > 0 ? html`
-        <input aria-label="Search providers" placeholder="Search providers" .value=${this.query} @input=${(event: Event) => { this.handleSearchInput(event); }}>
+        <input aria-label=${t("auth.searchProviders")} placeholder=${t("auth.searchProviders")} .value=${this.query} @input=${(event: Event) => { this.handleSearchInput(event); }}>
       ` : null}
       <div class="options">
-        ${options.length === 0 ? html`<div class="empty">${state.step === "logout" ? "No stored credentials. Environment variables and models.json settings are unchanged." : "No providers available."}</div>`
-        : visible.length === 0 ? html`<div class="empty">No matching providers</div>`
+        ${options.length === 0 ? html`<div class="empty">${state.step === "logout" ? t("auth.noStoredCredentials") : t("auth.noProviders")}</div>`
+        : visible.length === 0 ? html`<div class="empty">${t("auth.noMatchingProviders")}</div>`
         : visible.map((option, index) => html`
           <button
             class=${index === this.selectedIndex ? "selected" : ""}
@@ -191,23 +192,23 @@ export class AuthDialog extends LitElement {
     return html`
       <div class="form">
         ${flow.auth !== undefined ? html`
-          <p>Open this authorization link:</p>
+          <p>${t("auth.openLink")}</p>
           <p><a href=${flow.auth.url} target="_blank" rel="noreferrer">${flow.auth.url}</a></p>
           ${flow.auth.deviceCode !== undefined ? html`
-            <p class="warning">Enter code: <code>${flow.auth.deviceCode.userCode}</code></p>
+            <p class="warning">${t("auth.enterCode")}: <code>${flow.auth.deviceCode.userCode}</code></p>
           ` : flow.auth.instructions !== undefined ? html`<p class="warning">${flow.auth.instructions}</p>` : null}
-        ` : html`<p>Starting login flow…</p>`}
+        ` : html`<p>${t("auth.starting")}</p>`}
         ${showPasteNote ? html`<p class="warning">After you approve, the redirect page will probably fail to load — that is expected. Copy the full URL from your browser's address bar and paste it below.</p>` : null}
         ${flow.progress.length > 0 ? html`<ul class="progress">${flow.progress.map((line) => html`<li>${line}</li>`)}</ul>` : null}
         ${flow.info?.map((item) => item.links === undefined || item.links.length === 0 ? null : html`
-          <div class="info-links" aria-label="Related information">
+          <div class="info-links" aria-label=${t("auth.relatedInfo")}>
             ${item.links.map((link) => html`<a href=${link.url} target="_blank" rel="noreferrer" title=${item.message}>${link.label ?? link.url}</a>`)}
           </div>
         `) ?? null}
         ${prompt !== undefined ? html`
           <label>${prompt.message}</label>
           <input type=${promptInputType} autocomplete=${promptInputType === "password" ? "off" : "on"} .value=${state.inputValue ?? ""} placeholder=${prompt.placeholder ?? ""} @input=${(event: Event) => { if (event.target instanceof HTMLInputElement) this.onOAuthInput?.(event.target.value); }}>
-          <div class="actions"><button @click=${() => { this.onOAuthCancel?.(); }}>Cancel</button><button class="primary" ?disabled=${state.responding === true} @click=${() => { this.onOAuthRespond?.(); }}>Submit</button></div>
+          <div class="actions"><button @click=${() => { this.onOAuthCancel?.(); }}>${t("common.cancel")}</button><button class="primary" ?disabled=${state.responding === true} @click=${() => { this.onOAuthRespond?.(); }}>${t("auth.submit")}</button></div>
         ` : null}
         ${select !== undefined ? html`
           <p>${select.message}</p>
@@ -219,8 +220,8 @@ export class AuthDialog extends LitElement {
           `)}</div>
         ` : null}
         ${state.error !== undefined && state.error !== "" ? html`<div class="error-text">${state.error}</div>` : null}
-        ${flow.status === "error" || flow.status === "cancelled" ? html`<div class="error-text">${flow.error ?? flow.status}</div><div class="actions"><button @click=${() => { this.cancel(); }}>Close</button></div>` : null}
-        ${prompt === undefined && select === undefined && flow.status === "running" ? html`<div class="actions"><button @click=${() => { this.onOAuthCancel?.(); }}>Cancel</button></div>` : null}
+        ${flow.status === "error" || flow.status === "cancelled" ? html`<div class="error-text">${flow.error ?? flow.status}</div><div class="actions"><button @click=${() => { this.cancel(); }}>${t("common.close")}</button></div>` : null}
+        ${prompt === undefined && select === undefined && flow.status === "running" ? html`<div class="actions"><button @click=${() => { this.onOAuthCancel?.(); }}>${t("common.cancel")}</button></div>` : null}
       </div>
     `;
   }

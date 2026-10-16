@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
-import { PI_WEB_HOST_PI_SESSIONS_CAPABILITY, PI_WEB_HOST_PI_SESSION_EVENTS_CAPABILITY } from "@jmfederico/pi-web/server-plugin-api";
-import type { PiWebHostPiSessionsV1, PiWebHostPiSessionEventsV1, PiWebServerPlugin, ServerPluginActivationContext } from "@jmfederico/pi-web/server-plugin-api";
+import { PI_STUDIO_HOST_PI_SESSIONS_CAPABILITY, PI_STUDIO_HOST_PI_SESSION_EVENTS_CAPABILITY } from "@pi-studio/pi-studio/server-plugin-api";
+import type { PiStudioHostPiSessionsV1, PiStudioHostPiSessionEventsV1, PiStudioServerPlugin, ServerPluginActivationContext } from "@pi-studio/pi-studio/server-plugin-api";
 import type { Review } from "./browser/protocol.js";
 import { collectReview } from "./reviewRun.js";
 import { ReviewStore, reviewScope } from "./store.js";
@@ -8,15 +8,15 @@ import { ReviewStore, reviewScope } from "./store.js";
 const plugin = {
   apiVersion: 3,
   name: "Workspace Reviews",
-  requires: [PI_WEB_HOST_PI_SESSIONS_CAPABILITY, PI_WEB_HOST_PI_SESSION_EVENTS_CAPABILITY],
+  requires: [PI_STUDIO_HOST_PI_SESSIONS_CAPABILITY, PI_STUDIO_HOST_PI_SESSION_EVENTS_CAPABILITY],
   activate(host: ServerPluginActivationContext) {
     const store = new ReviewStore(host.dataDirectory);
     const active = new Map<string, Review>();
     const tasks = new Set<Promise<void>>();
     // Retain failed writes in memory so a refresh cannot present stale running/success state.
     const unsaved = new Map<string, Review>();
-    let piSessions: PiWebHostPiSessionsV1;
-    let sessionEvents: PiWebHostPiSessionEventsV1;
+    let piSessions: PiStudioHostPiSessionsV1;
+    let sessionEvents: PiStudioHostPiSessionEventsV1;
     const visible = (scope: string, record: Review): Review => {
       const failed = unsaved.get(record.id);
       if (failed) return failed;
@@ -26,8 +26,8 @@ const plugin = {
     };
     return {
       start({ capabilities }) {
-        piSessions = capabilities.resolve(PI_WEB_HOST_PI_SESSIONS_CAPABILITY);
-        sessionEvents = capabilities.resolve(PI_WEB_HOST_PI_SESSION_EVENTS_CAPABILITY);
+        piSessions = capabilities.resolve(PI_STUDIO_HOST_PI_SESSIONS_CAPABILITY);
+        sessionEvents = capabilities.resolve(PI_STUDIO_HOST_PI_SESSION_EVENTS_CAPABILITY);
       },
       peer: {
         async request(context) {
@@ -81,5 +81,5 @@ const plugin = {
       async dispose() { await Promise.all(tasks); active.clear(); unsaved.clear(); },
     };
   },
-} satisfies PiWebServerPlugin;
+} satisfies PiStudioServerPlugin;
 export default plugin;

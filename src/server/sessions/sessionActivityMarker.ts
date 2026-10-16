@@ -13,7 +13,7 @@ interface Entry {
   busy?: boolean;
 }
 
-const markerPath = (sessionFile: string): string => `${sessionFile}.pi-web-activity.json`;
+const markerPath = (sessionFile: string): string => `${sessionFile}.pi-studio-activity.json`;
 const isMissing = (error: unknown): boolean =>
   typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT";
 

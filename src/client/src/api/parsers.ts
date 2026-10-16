@@ -1,10 +1,10 @@
-import { PI_WEB_PLUGIN_LIFECYCLE_VERSION, ASK_USER_ID_MAX_LENGTH, ASK_USER_OPTION_LIMIT, ASK_USER_OTHER_TEXT_MAX_LENGTH, ASK_USER_QUESTION_LIMIT, ASK_USER_TEXT_MAX_LENGTH, EXTENSION_DIALOG_ID_MAX_LENGTH, EXTENSION_DIALOG_INPUT_MAX_LENGTH, EXTENSION_DIALOG_OPTION_LIMIT, EXTENSION_DIALOG_TEXT_MAX_LENGTH, SESSION_NOTIFICATION_LIMIT, SESSION_NOTIFICATION_MESSAGE_BYTES, SESSION_UNREAD_CATALOG_ID_MAX_LENGTH, SESSION_UNREAD_COMPLETED_AT_MAX_LENGTH, SESSION_UNREAD_CWD_MAX_LENGTH, SESSION_UNREAD_LIMIT, SESSION_UNREAD_SESSION_ID_MAX_LENGTH, type ArchiveSessionsResponse, type AskUserCloseReason, type AskUserCloseResponse, type AskUserOutcome, type AskUserQuestion, type AskUserQuestionOption, type AskUserQuestionRecord, type PendingAskUser, type PendingExtensionDialog, type AuthProviderOption, type AuthProviderStatus, type AuthProvidersResponse, type AuthStatusSource, type AuthType, type CommandOption, type CommandResult, type DeleteWorkspaceFileResponse, type ExtensionDialogAnswer, type ExtensionDialogCloseReason, type ExtensionDialogCloseResponse, type ExtensionDialogKind, type ExtensionDialogOutcome, type FileContentResponse, type FileSuggestion, type FileTreeEntry, type FileTreeResponse, type GlobalSessionEvent, type Machine, type MachineConnection, type MachineHealth, type MachineKind, type MachineTunnelStatus, type MachineRuntime, type MachineStatus, type MessagePage, type ModelSelectionResponse, type MoveWorkspaceFileResponse, type OAuthFlowState, type PiWebCapability, type PiWebComponentStatus, type PiWebConfigEnvOverrides, type PiWebConfigResponse, type PiWebConfigValues, type PiWebDeprecatedAgentInput, type PiWebInstallationInfo, type PiWebPluginConfigMap, type PiWebPluginInfo, type PiWebPluginsResponse, type PiWebPluginScope, type PiWebReleaseStatus, type PiWebRuntimeComponent, type PiWebRuntimeResponse, type PiWebServiceComponent, type PiWebShortcutConfig, type PiWebStatusMessage, type PiWebStatusResponse, type PiWebStatusSeverity, type Project, type QueuedSessionMessage, type SavedPromptAttachment, type SessionBulkArchiveResponse, type SessionBulkDeleteArchivedResponse, type SessionBulkFailure, type SessionCleanupExecuteResponse, type SessionCleanupPreviewResponse, type SessionCleanupProjectSummary, type SessionCleanupThresholds, type SessionCleanupTotals, type SessionInfo, type SessionModel, type SessionModelCatalogEntry, type SessionModelCatalogResponse, type SessionNotification, type SessionNotificationClearReason, type SessionNotificationDismissThrough, type SessionNotificationInboxDelta, type SessionNotificationInboxEvent, type SessionNotificationInboxSnapshot, type SessionNotificationSeverity, type SessionNotificationSummary, type SessionRenameResponse, type ServerNotice, type ServerNoticeEvent, type ServerNoticeSeverity, type ServerNoticeSnapshot, type SessionStatus, type SessionStreamSnapshot, type SessionTranscriptSnapshot, type SessionUiEvent, type SessionUnreadCatalogSnapshot, type SessionUnreadEvent, type SessionUnreadSummary, type SessionWarning, type SessionWarningSeverity, type SlashCommand, type ThinkingLevelsResponse, type WriteWorkspaceFileResponse, type Workspace, type WorkspaceEffectiveConfig, type WorkspaceTrustResponse } from "../../../shared/apiTypes";
+import { PI_STUDIO_PLUGIN_LIFECYCLE_VERSION, ASK_USER_ID_MAX_LENGTH, ASK_USER_OPTION_LIMIT, ASK_USER_OTHER_TEXT_MAX_LENGTH, ASK_USER_QUESTION_LIMIT, ASK_USER_TEXT_MAX_LENGTH, EXTENSION_DIALOG_ID_MAX_LENGTH, EXTENSION_DIALOG_INPUT_MAX_LENGTH, EXTENSION_DIALOG_OPTION_LIMIT, EXTENSION_DIALOG_TEXT_MAX_LENGTH, SESSION_NOTIFICATION_LIMIT, SESSION_NOTIFICATION_MESSAGE_BYTES, SESSION_UNREAD_CATALOG_ID_MAX_LENGTH, SESSION_UNREAD_COMPLETED_AT_MAX_LENGTH, SESSION_UNREAD_CWD_MAX_LENGTH, SESSION_UNREAD_LIMIT, SESSION_UNREAD_SESSION_ID_MAX_LENGTH, type ArchiveSessionsResponse, type AskUserCloseReason, type AskUserCloseResponse, type AskUserOutcome, type AskUserQuestion, type AskUserQuestionOption, type AskUserQuestionRecord, type PendingAskUser, type PendingExtensionDialog, type AuthProviderOption, type AuthProviderStatus, type AuthProvidersResponse, type AuthStatusSource, type AuthType, type CommandOption, type CommandResult, type DeleteWorkspaceFileResponse, type ExtensionDialogAnswer, type ExtensionDialogCloseReason, type ExtensionDialogCloseResponse, type ExtensionDialogKind, type ExtensionDialogOutcome, type FileContentResponse, type FileSuggestion, type FileTreeEntry, type FileTreeResponse, type GlobalSessionEvent, type Machine, type MachineConnection, type MachineHealth, type MachineKind, type MachineTunnelStatus, type MachineRuntime, type MachineStatus, type MessagePage, type ModelSelectionResponse, type MoveWorkspaceFileResponse, type OAuthFlowState, type PiStudioCapability, type PiStudioComponentStatus, type PiStudioConfigEnvOverrides, type PiStudioConfigResponse, type PiStudioConfigValues, type PiStudioDeprecatedAgentInput, type PiStudioInstallationInfo, type PiStudioPluginConfigMap, type PiStudioPluginInfo, type PiStudioPluginsResponse, type PiStudioPluginScope, type PiStudioReleaseStatus, type PiStudioRuntimeComponent, type PiStudioRuntimeResponse, type PiStudioServiceComponent, type PiStudioShortcutConfig, type PiStudioStatusMessage, type PiStudioStatusResponse, type PiStudioStatusSeverity, type Project, type QueuedSessionMessage, type SavedPromptAttachment, type SessionBulkArchiveResponse, type SessionBulkDeleteArchivedResponse, type SessionBulkFailure, type SessionCleanupExecuteResponse, type SessionCleanupPreviewResponse, type SessionCleanupProjectSummary, type SessionCleanupThresholds, type SessionCleanupTotals, type SessionInfo, type SessionModel, type SessionModelCatalogEntry, type SessionModelCatalogResponse, type SessionNotification, type SessionNotificationClearReason, type SessionNotificationDismissThrough, type SessionNotificationInboxDelta, type SessionNotificationInboxEvent, type SessionNotificationInboxSnapshot, type SessionNotificationSeverity, type SessionNotificationSummary, type SessionRenameResponse, type ServerNotice, type ServerNoticeEvent, type ServerNoticeSeverity, type ServerNoticeSnapshot, type SessionStatus, type SessionStreamSnapshot, type SessionTranscriptSnapshot, type SessionUiEvent, type SessionUnreadCatalogSnapshot, type SessionUnreadEvent, type SessionUnreadSummary, type SessionWarning, type SessionWarningSeverity, type SlashCommand, type ThinkingLevelsResponse, type WriteWorkspaceFileResponse, type Workspace, type WorkspaceEffectiveConfig, type WorkspaceTrustResponse } from "../../../shared/apiTypes";
 import { parseMachineStatusSnapshot, type MachineStatusSnapshot, type MachineStatusUiEvent } from "../../../shared/machineStatus";
 import type { JsonValue, PiPackageInfo, PiPackageInstallableSuggestion, PiPackageMutationAction, PiPackageMutationResponse, PiPackageScope, PiPackagesResponse, SessionActivity, SessionStartupProgressEvent, SessionTreeForkResult, SessionTreeNavigateResult, SessionTreeNode, SessionTreeNodeKind, SessionTreeSnapshot, WorkspaceProviderDiagnostic, WorkspaceProviderDiagnosticCode, WorkspaceProviderResolution, WorkspaceProviderResolutionStatus, WorkspaceProviderTier } from "../../../shared/apiTypes";
 
-import { parseKnownPiWebCapabilities } from "../../../shared/capabilities";
-import { parseDeprecatedAgentInputs } from "../../../shared/piWebStatusParsing";
-import { PI_WEB_PLUGIN_RECOVERY_COMMANDS, pluginDisableRecoveryCommand } from "../../../shared/pluginRecoveryCommands";
+import { parseKnownPiStudioCapabilities } from "../../../shared/capabilities";
+import { parseDeprecatedAgentInputs } from "../../../shared/piStudioStatusParsing";
+import { PI_STUDIO_PLUGIN_RECOVERY_COMMANDS, pluginDisableRecoveryCommand } from "../../../shared/pluginRecoveryCommands";
 import { parseServerNoticeScope } from "../../../shared/serverNoticeContract";
 import { requireDefaultThemePreference } from "../../../shared/themePreference";
 
@@ -140,8 +140,8 @@ export function parseMachineHealth(value: unknown): MachineHealth {
     ok: requireBoolean(record, "ok"),
     checkedAt: requireString(record, "checkedAt"),
     ...(status === undefined ? {} : { status }),
-    ...(record["web"] === undefined ? {} : { web: parsePiWebComponentStatus(record["web"]) }),
-    ...(record["sessiond"] === undefined ? {} : { sessiond: parsePiWebComponentStatus(record["sessiond"]) }),
+    ...(record["web"] === undefined ? {} : { web: parsePiStudioComponentStatus(record["web"]) }),
+    ...(record["sessiond"] === undefined ? {} : { sessiond: parsePiStudioComponentStatus(record["sessiond"]) }),
     ...(tunnel === undefined ? {} : { tunnel }),
     ...(error === undefined ? {} : { error }),
   };
@@ -156,16 +156,16 @@ export function parseMachineRuntime(value: unknown): MachineRuntime {
     checkedAt: requireString(record, "checkedAt"),
     ...optionalField("packageName", optionalString(record, "packageName")),
     ...optionalField("generatedAt", optionalString(record, "generatedAt")),
-    ...(record["components"] === undefined ? {} : { components: parsePiWebRuntimeComponents(record["components"]) }),
-    ...(record["capabilities"] === undefined ? {} : { capabilities: parsePiWebCapabilities(record["capabilities"]) }),
+    ...(record["components"] === undefined ? {} : { components: parsePiStudioRuntimeComponents(record["components"]) }),
+    ...(record["capabilities"] === undefined ? {} : { capabilities: parsePiStudioCapabilities(record["capabilities"]) }),
     ...(record["deprecatedAgentInputs"] === undefined ? {} : { deprecatedAgentInputs: parseMachineDeprecatedAgentInputs(record["deprecatedAgentInputs"]) }),
     ...(error === undefined ? {} : { error }),
   };
 }
 
-function parseMachineDeprecatedAgentInputs(value: unknown): PiWebDeprecatedAgentInput[] {
+function parseMachineDeprecatedAgentInputs(value: unknown): PiStudioDeprecatedAgentInput[] {
   const inputs = parseDeprecatedAgentInputs(value);
-  if (inputs === undefined) throw new Error("Invalid PI WEB deprecated agent inputs");
+  if (inputs === undefined) throw new Error("Invalid PI STUDIO deprecated agent inputs");
   return inputs;
 }
 
@@ -350,9 +350,11 @@ function parseSessionWarning(value: unknown): SessionWarning {
 
 /** Rolling compatibility for daemons that encoded this status fact as a warning. */
 function isLegacyOtherInstanceActivityWarning(warning: SessionWarning): boolean {
+  // The literals are the wire values daemons send for this warning, not product wording:
+  // they must stay byte-identical or the compatibility path stops matching.
   return warning.severity === "info"
-    && warning.source === "PI-WEB"
-    && warning.message === "Recently active in another PI-WEB instance. Avoid working on this session in both instances at once.";
+    && warning.source === "PI-STUDIO"
+    && warning.message === "Recently active in another PI-STUDIO instance. Avoid working on this session in both instances at once.";
 }
 
 function parseAskUserQuestionOption(value: unknown): AskUserQuestionOption {
@@ -1511,18 +1513,18 @@ export function requireMachineStatusSnapshot(value: unknown): MachineStatusSnaps
   return snapshot;
 }
 
-export function parsePiWebConfigResponse(value: unknown): PiWebConfigResponse {
+export function parsePiStudioConfigResponse(value: unknown): PiStudioConfigResponse {
   const record = requireRecord(value);
   return {
     path: requireString(record, "path"),
     exists: requireBoolean(record, "exists"),
-    config: parsePiWebConfigValues(record["config"]),
-    effectiveConfig: parsePiWebConfigValues(record["effectiveConfig"]),
-    envOverrides: parsePiWebConfigEnvOverrides(record["envOverrides"]),
+    config: parsePiStudioConfigValues(record["config"]),
+    effectiveConfig: parsePiStudioConfigValues(record["effectiveConfig"]),
+    envOverrides: parsePiStudioConfigEnvOverrides(record["envOverrides"]),
   };
 }
 
-function parsePiWebConfigValues(value: unknown): PiWebConfigValues {
+function parsePiStudioConfigValues(value: unknown): PiStudioConfigValues {
   const record = requireRecord(value);
   return {
     ...optionalField("host", optionalString(record, "host")),
@@ -1542,25 +1544,25 @@ function parsePiWebConfigValues(value: unknown): PiWebConfigValues {
   };
 }
 
-function optionalAgent(value: unknown): PiWebConfigValues["agent"] | undefined {
+function optionalAgent(value: unknown): PiStudioConfigValues["agent"] | undefined {
   if (value === undefined) return undefined;
-  if (!isRecord(value) || Array.isArray(value)) throw new Error("Invalid PI WEB agent field");
+  if (!isRecord(value) || Array.isArray(value)) throw new Error("Invalid PI STUDIO agent field");
   return {
     ...optionalField("command", optionalString(value, "command")),
     ...optionalField("dir", optionalString(value, "dir")),
   };
 }
 
-function optionalAllowedHosts(value: unknown): PiWebConfigValues["allowedHosts"] | undefined {
+function optionalAllowedHosts(value: unknown): PiStudioConfigValues["allowedHosts"] | undefined {
   if (value === undefined) return undefined;
   if (value === true) return true;
   if (isStringArray(value)) return value;
-  throw new Error("Invalid PI WEB allowedHosts field");
+  throw new Error("Invalid PI STUDIO allowedHosts field");
 }
 
-function optionalPathAccess(value: unknown): PiWebConfigValues["pathAccess"] | undefined {
+function optionalPathAccess(value: unknown): PiStudioConfigValues["pathAccess"] | undefined {
   if (value === undefined) return undefined;
-  if (!isRecord(value)) throw new Error("Invalid PI WEB pathAccess field");
+  if (!isRecord(value)) throw new Error("Invalid PI STUDIO pathAccess field");
   const allowedPaths = value["allowedPaths"];
   return {
     ...optionalField("allowedPaths", optionalStringArray(allowedPaths, "pathAccess.allowedPaths")),
@@ -1570,20 +1572,20 @@ function optionalPathAccess(value: unknown): PiWebConfigValues["pathAccess"] | u
 function optionalStringArray(value: unknown, field: string): string[] | undefined {
   if (value === undefined) return undefined;
   if (isNonEmptyStringArray(value)) return value;
-  throw new Error(`Invalid PI WEB ${field} field`);
+  throw new Error(`Invalid PI STUDIO ${field} field`);
 }
 
-function optionalUploads(value: unknown): PiWebConfigValues["uploads"] | undefined {
+function optionalUploads(value: unknown): PiStudioConfigValues["uploads"] | undefined {
   if (value === undefined) return undefined;
-  if (!isRecord(value) || Array.isArray(value)) throw new Error("Invalid PI WEB uploads field");
+  if (!isRecord(value) || Array.isArray(value)) throw new Error("Invalid PI STUDIO uploads field");
   return {
     ...optionalField("defaultFolder", optionalString(value, "defaultFolder")),
   };
 }
 
-function optionalAttachments(value: unknown): PiWebConfigValues["attachments"] | undefined {
+function optionalAttachments(value: unknown): PiStudioConfigValues["attachments"] | undefined {
   if (value === undefined) return undefined;
-  if (!isRecord(value) || Array.isArray(value)) throw new Error("Invalid PI WEB attachments field");
+  if (!isRecord(value) || Array.isArray(value)) throw new Error("Invalid PI STUDIO attachments field");
   return {
     ...optionalField("defaultFolder", optionalString(value, "defaultFolder")),
   };
@@ -1597,29 +1599,29 @@ function isNonEmptyStringArray(value: unknown): value is string[] {
   return Array.isArray(value) && value.every((item) => typeof item === "string" && item !== "");
 }
 
-function optionalShortcuts(value: unknown): PiWebShortcutConfig | undefined {
+function optionalShortcuts(value: unknown): PiStudioShortcutConfig | undefined {
   if (value === undefined) return undefined;
-  if (!isRecord(value) || Array.isArray(value)) throw new Error("Invalid PI WEB shortcuts field");
+  if (!isRecord(value) || Array.isArray(value)) throw new Error("Invalid PI STUDIO shortcuts field");
   return Object.fromEntries(Object.entries(value).map(([actionId, shortcut]) => {
-    if (shortcut !== null && (typeof shortcut !== "string" || shortcut === "")) throw new Error("Invalid PI WEB shortcut field");
+    if (shortcut !== null && (typeof shortcut !== "string" || shortcut === "")) throw new Error("Invalid PI STUDIO shortcut field");
     return [actionId, shortcut];
   }));
 }
 
-function optionalPlugins(value: unknown): PiWebPluginConfigMap | undefined {
+function optionalPlugins(value: unknown): PiStudioPluginConfigMap | undefined {
   if (value === undefined) return undefined;
-  if (!isRecord(value) || Array.isArray(value)) throw new Error("Invalid PI WEB plugins field");
+  if (!isRecord(value) || Array.isArray(value)) throw new Error("Invalid PI STUDIO plugins field");
   return Object.fromEntries(Object.entries(value).map(([pluginId, config]) => {
-    if (!isRecord(config) || Array.isArray(config)) throw new Error("Invalid PI WEB plugin config field");
+    if (!isRecord(config) || Array.isArray(config)) throw new Error("Invalid PI STUDIO plugin config field");
     const enabled = config["enabled"];
-    if (enabled !== undefined && typeof enabled !== "boolean") throw new Error("Invalid PI WEB plugin enabled field");
+    if (enabled !== undefined && typeof enabled !== "boolean") throw new Error("Invalid PI STUDIO plugin enabled field");
     const settings = config["settings"];
-    if (settings !== undefined && (!isRecord(settings) || Array.isArray(settings))) throw new Error("Invalid PI WEB plugin settings field");
+    if (settings !== undefined && (!isRecord(settings) || Array.isArray(settings))) throw new Error("Invalid PI STUDIO plugin settings field");
     return [pluginId, config];
   }));
 }
 
-function parsePiWebConfigEnvOverrides(value: unknown): PiWebConfigEnvOverrides {
+function parsePiStudioConfigEnvOverrides(value: unknown): PiStudioConfigEnvOverrides {
   const record = requireRecord(value);
   return {
     host: requireBoolean(record, "host"),
@@ -1688,44 +1690,44 @@ function parsePiPackageMutationAction(value: unknown): PiPackageMutationAction {
   return value;
 }
 
-export function parsePiWebPluginsResponse(value: unknown): PiWebPluginsResponse {
+export function parsePiStudioPluginsResponse(value: unknown): PiStudioPluginsResponse {
   const record = requireRecord(value);
-  const plugins = arrayOf(parsePiWebPluginInfo)(record["plugins"]);
+  const plugins = arrayOf(parsePiStudioPluginInfo)(record["plugins"]);
   if (record["lifecycleVersion"] === undefined) {
     return {
-      lifecycleVersion: PI_WEB_PLUGIN_LIFECYCLE_VERSION,
+      lifecycleVersion: PI_STUDIO_PLUGIN_LIFECYCLE_VERSION,
       plugins,
       diagnostics: [],
       serverRuntime: {
         status: "incompatible",
         terminalMode: "required",
         restartRequired: false,
-        message: "PI WEB does not support plugin lifecycle diagnostics. Update and restart PI WEB, then try again.",
+        message: "PI STUDIO does not support plugin lifecycle diagnostics. Update and restart PI STUDIO, then try again.",
         recovery: legacyPluginRecoveryCommands(),
       },
     };
   }
-  if (record["lifecycleVersion"] !== PI_WEB_PLUGIN_LIFECYCLE_VERSION) throw new Error("Unsupported PI WEB plugin lifecycle version");
+  if (record["lifecycleVersion"] !== PI_STUDIO_PLUGIN_LIFECYCLE_VERSION) throw new Error("Unsupported PI STUDIO plugin lifecycle version");
   return {
-    lifecycleVersion: PI_WEB_PLUGIN_LIFECYCLE_VERSION,
+    lifecycleVersion: PI_STUDIO_PLUGIN_LIFECYCLE_VERSION,
     plugins,
-    diagnostics: arrayOf(parsePiWebPluginDiagnostic)(record["diagnostics"]),
-    serverRuntime: parsePiWebPluginRuntimeInfo(record["serverRuntime"]),
+    diagnostics: arrayOf(parsePiStudioPluginDiagnostic)(record["diagnostics"]),
+    serverRuntime: parsePiStudioPluginRuntimeInfo(record["serverRuntime"]),
   };
 }
 
-function parsePiWebPluginInfo(value: unknown): PiWebPluginInfo {
+function parsePiStudioPluginInfo(value: unknown): PiStudioPluginInfo {
   const record = requireRecord(value);
   const id = requireString(record, "id");
-  const server = record["server"] === undefined ? undefined : parsePiWebPluginServerInfo(record["server"], id);
+  const server = record["server"] === undefined ? undefined : parsePiStudioPluginServerInfo(record["server"], id);
   const required = parseOptionalBoolean(record["required"], "required");
-  if (required === false) throw new Error("Invalid PI WEB required plugin marker");
+  if (required === false) throw new Error("Invalid PI STUDIO required plugin marker");
   return {
     id,
     ...(required === true ? { required: true as const } : {}),
     ...optionalField("module", optionalString(record, "module")),
     source: requireString(record, "source"),
-    scope: parsePiWebPluginScope(record["scope"]),
+    scope: parsePiStudioPluginScope(record["scope"]),
     machineSpecific: parseOptionalBoolean(record["machineSpecific"], "machineSpecific") ?? false,
     enabled: requireBoolean(record, "enabled"),
     discovered: parseOptionalBoolean(record["discovered"], "discovered") ?? true,
@@ -1734,19 +1736,19 @@ function parsePiWebPluginInfo(value: unknown): PiWebPluginInfo {
   };
 }
 
-function parsePiWebPluginServerInfo(value: unknown, pluginId: string): NonNullable<PiWebPluginInfo["server"]> {
+function parsePiStudioPluginServerInfo(value: unknown, pluginId: string): NonNullable<PiStudioPluginInfo["server"]> {
   const record = requireRecord(value);
   const state = record["state"];
   const phase = record["phase"];
   if (state !== "active" && state !== "failed" && state !== "incompatible" && state !== "disabled" && state !== "missing" && state !== "unknown") {
-    throw new Error("Invalid PI WEB server plugin state");
+    throw new Error("Invalid PI STUDIO server plugin state");
   }
   if (phase !== undefined && phase !== "import" && phase !== "activate" && phase !== "validate" && phase !== "start" && phase !== "health" && phase !== "dispose") {
-    throw new Error("Invalid PI WEB server plugin phase");
+    throw new Error("Invalid PI STUDIO server plugin phase");
   }
-  const health = record["health"] === undefined ? undefined : parsePiWebPluginHealth(record["health"]);
+  const health = record["health"] === undefined ? undefined : parsePiStudioPluginHealth(record["health"]);
   const disableCommand = requireString(record, "disableCommand");
-  if (disableCommand !== pluginDisableRecoveryCommand(pluginId)) throw new Error("Invalid PI WEB server plugin recovery command");
+  if (disableCommand !== pluginDisableRecoveryCommand(pluginId)) throw new Error("Invalid PI STUDIO server plugin recovery command");
   return {
     state,
     ...optionalField("desiredRevision", optionalString(record, "desiredRevision")),
@@ -1760,19 +1762,19 @@ function parsePiWebPluginServerInfo(value: unknown, pluginId: string): NonNullab
   };
 }
 
-function parsePiWebPluginHealth(value: unknown): NonNullable<NonNullable<PiWebPluginInfo["server"]>["health"]> {
+function parsePiStudioPluginHealth(value: unknown): NonNullable<NonNullable<PiStudioPluginInfo["server"]>["health"]> {
   const record = requireRecord(value);
   const status = record["status"];
-  if (status !== "healthy" && status !== "degraded" && status !== "unhealthy") throw new Error("Invalid PI WEB server plugin health status");
+  if (status !== "healthy" && status !== "degraded" && status !== "unhealthy") throw new Error("Invalid PI STUDIO server plugin health status");
   return { status, ...optionalField("message", optionalString(record, "message")) };
 }
 
-function parsePiWebPluginDiagnostic(value: unknown): PiWebPluginsResponse["diagnostics"][number] {
+function parsePiStudioPluginDiagnostic(value: unknown): PiStudioPluginsResponse["diagnostics"][number] {
   const record = requireRecord(value);
   const kind = record["kind"];
   const snapshot = record["snapshot"];
-  if (kind !== "conflict" && kind !== "discovery") throw new Error("Invalid PI WEB plugin diagnostic kind");
-  if (snapshot !== "desired" && snapshot !== "active") throw new Error("Invalid PI WEB plugin diagnostic snapshot");
+  if (kind !== "conflict" && kind !== "discovery") throw new Error("Invalid PI STUDIO plugin diagnostic kind");
+  if (snapshot !== "desired" && snapshot !== "active") throw new Error("Invalid PI STUDIO plugin diagnostic snapshot");
   return {
     kind,
     snapshot,
@@ -1782,23 +1784,23 @@ function parsePiWebPluginDiagnostic(value: unknown): PiWebPluginsResponse["diagn
   };
 }
 
-function parsePiWebPluginRuntimeInfo(value: unknown): PiWebPluginsResponse["serverRuntime"] {
+function parsePiStudioPluginRuntimeInfo(value: unknown): PiStudioPluginsResponse["serverRuntime"] {
   const record = requireRecord(value);
   const status = record["status"];
   const terminalMode = record["terminalMode"];
   const safeStart = record["safeStart"];
   const desiredSafeStart = record["desiredSafeStart"];
-  if (status !== "available" && status !== "unavailable" && status !== "incompatible") throw new Error("Invalid PI WEB server-plugin runtime status");
-  if (terminalMode !== "required" && terminalMode !== "recovery-disabled") throw new Error("Invalid PI WEB Terminal plugin mode");
-  if (safeStart !== undefined && safeStart !== "bundled-only" && safeStart !== "none") throw new Error("Invalid PI WEB server-plugin safe-start state");
+  if (status !== "available" && status !== "unavailable" && status !== "incompatible") throw new Error("Invalid PI STUDIO server-plugin runtime status");
+  if (terminalMode !== "required" && terminalMode !== "recovery-disabled") throw new Error("Invalid PI STUDIO Terminal plugin mode");
+  if (safeStart !== undefined && safeStart !== "bundled-only" && safeStart !== "none") throw new Error("Invalid PI STUDIO server-plugin safe-start state");
   if (desiredSafeStart !== undefined && desiredSafeStart !== "off" && desiredSafeStart !== "bundled-only" && desiredSafeStart !== "none") {
-    throw new Error("Invalid desired PI WEB server-plugin safe-start state");
+    throw new Error("Invalid desired PI STUDIO server-plugin safe-start state");
   }
   if (status !== "available" && terminalMode === "recovery-disabled") {
-    throw new Error("Unavailable PI WEB runtime cannot declare Terminal recovery mode");
+    throw new Error("Unavailable PI STUDIO runtime cannot declare Terminal recovery mode");
   }
   if ((safeStart === "none") !== (terminalMode === "recovery-disabled") && status === "available") {
-    throw new Error("PI WEB Terminal plugin mode does not match safe start");
+    throw new Error("PI STUDIO Terminal plugin mode does not match safe start");
   }
   return {
     status,
@@ -1807,11 +1809,11 @@ function parsePiWebPluginRuntimeInfo(value: unknown): PiWebPluginsResponse["serv
     ...(desiredSafeStart === undefined ? {} : { desiredSafeStart }),
     restartRequired: requireBoolean(record, "restartRequired"),
     ...optionalField("message", optionalString(record, "message")),
-    recovery: parsePiWebPluginRecoveryCommands(record["recovery"]),
+    recovery: parsePiStudioPluginRecoveryCommands(record["recovery"]),
   };
 }
 
-function parsePiWebPluginRecoveryCommands(value: unknown): PiWebPluginsResponse["serverRuntime"]["recovery"] {
+function parsePiStudioPluginRecoveryCommands(value: unknown): PiStudioPluginsResponse["serverRuntime"]["recovery"] {
   const record = requireRecord(value);
   const commands = {
     showSafeStart: requireString(record, "showSafeStart"),
@@ -1819,21 +1821,21 @@ function parsePiWebPluginRecoveryCommands(value: unknown): PiWebPluginsResponse[
     noServerPlugins: requireString(record, "noServerPlugins"),
     clearSafeStart: requireString(record, "clearSafeStart"),
   };
-  if (commands.showSafeStart !== PI_WEB_PLUGIN_RECOVERY_COMMANDS.showSafeStart
-    || commands.bundledOnly !== PI_WEB_PLUGIN_RECOVERY_COMMANDS.bundledOnly
-    || commands.noServerPlugins !== PI_WEB_PLUGIN_RECOVERY_COMMANDS.noServerPlugins
-    || commands.clearSafeStart !== PI_WEB_PLUGIN_RECOVERY_COMMANDS.clearSafeStart) {
-    throw new Error("Invalid PI WEB server plugin recovery commands");
+  if (commands.showSafeStart !== PI_STUDIO_PLUGIN_RECOVERY_COMMANDS.showSafeStart
+    || commands.bundledOnly !== PI_STUDIO_PLUGIN_RECOVERY_COMMANDS.bundledOnly
+    || commands.noServerPlugins !== PI_STUDIO_PLUGIN_RECOVERY_COMMANDS.noServerPlugins
+    || commands.clearSafeStart !== PI_STUDIO_PLUGIN_RECOVERY_COMMANDS.clearSafeStart) {
+    throw new Error("Invalid PI STUDIO server plugin recovery commands");
   }
   return commands;
 }
 
-function legacyPluginRecoveryCommands(): PiWebPluginsResponse["serverRuntime"]["recovery"] {
-  return { ...PI_WEB_PLUGIN_RECOVERY_COMMANDS };
+function legacyPluginRecoveryCommands(): PiStudioPluginsResponse["serverRuntime"]["recovery"] {
+  return { ...PI_STUDIO_PLUGIN_RECOVERY_COMMANDS };
 }
 
-function parsePiWebPluginScope(value: unknown): PiWebPluginScope {
-  if (value !== "bundled" && value !== "local" && value !== "user" && value !== "project") throw new Error("Invalid PI WEB plugin scope");
+function parsePiStudioPluginScope(value: unknown): PiStudioPluginScope {
+  if (value !== "bundled" && value !== "local" && value !== "user" && value !== "project") throw new Error("Invalid PI STUDIO plugin scope");
   return value;
 }
 
@@ -1843,75 +1845,75 @@ function parseOptionalBoolean(value: unknown, key: string): boolean | undefined 
   return value;
 }
 
-export function parsePiWebStatusResponse(value: unknown): PiWebStatusResponse {
+export function parsePiStudioStatusResponse(value: unknown): PiStudioStatusResponse {
   const record = requireRecord(value);
   return {
     packageName: requireString(record, "packageName"),
     generatedAt: requireString(record, "generatedAt"),
-    components: parsePiWebComponents(record["components"]),
-    release: parsePiWebReleaseStatus(record["release"]),
-    commands: parsePiWebCommands(record["commands"]),
-    messages: arrayOf(parsePiWebStatusMessage)(record["messages"]),
+    components: parsePiStudioComponents(record["components"]),
+    release: parsePiStudioReleaseStatus(record["release"]),
+    commands: parsePiStudioCommands(record["commands"]),
+    messages: arrayOf(parsePiStudioStatusMessage)(record["messages"]),
   };
 }
 
-export function parsePiWebRuntimeResponse(value: unknown): PiWebRuntimeResponse {
+export function parsePiStudioRuntimeResponse(value: unknown): PiStudioRuntimeResponse {
   const record = requireRecord(value);
   return {
     packageName: requireString(record, "packageName"),
     generatedAt: requireString(record, "generatedAt"),
-    components: parsePiWebRuntimeComponents(record["components"]),
-    capabilities: parsePiWebCapabilities(record["capabilities"]),
+    components: parsePiStudioRuntimeComponents(record["components"]),
+    capabilities: parsePiStudioCapabilities(record["capabilities"]),
   };
 }
 
-function parsePiWebComponents(value: unknown): PiWebStatusResponse["components"] {
+function parsePiStudioComponents(value: unknown): PiStudioStatusResponse["components"] {
   const record = requireRecord(value);
-  return { web: parsePiWebComponentStatus(record["web"]), sessiond: parsePiWebComponentStatus(record["sessiond"]) };
+  return { web: parsePiStudioComponentStatus(record["web"]), sessiond: parsePiStudioComponentStatus(record["sessiond"]) };
 }
 
-function parsePiWebRuntimeComponents(value: unknown): PiWebRuntimeResponse["components"] {
+function parsePiStudioRuntimeComponents(value: unknown): PiStudioRuntimeResponse["components"] {
   const record = requireRecord(value);
-  return { web: parsePiWebRuntimeComponent(record["web"]), sessiond: parsePiWebRuntimeComponent(record["sessiond"]) };
+  return { web: parsePiStudioRuntimeComponent(record["web"]), sessiond: parsePiStudioRuntimeComponent(record["sessiond"]) };
 }
 
-function parsePiWebRuntimeComponent(value: unknown): PiWebRuntimeComponent {
+function parsePiStudioRuntimeComponent(value: unknown): PiStudioRuntimeComponent {
   const record = requireRecord(value);
   return {
-    component: parsePiWebServiceComponent(record["component"]),
+    component: parsePiStudioServiceComponent(record["component"]),
     label: requireString(record, "label"),
     ...optionalField("runtimeVersion", optionalString(record, "runtimeVersion")),
     ...optionalField("piVersion", optionalString(record, "piVersion")),
     available: requireBoolean(record, "available"),
-    capabilities: parsePiWebCapabilities(record["capabilities"]),
+    capabilities: parsePiStudioCapabilities(record["capabilities"]),
     ...optionalField("error", optionalString(record, "error")),
   };
 }
 
-function parsePiWebComponentStatus(value: unknown): PiWebComponentStatus {
+function parsePiStudioComponentStatus(value: unknown): PiStudioComponentStatus {
   const record = requireRecord(value);
   return {
-    component: parsePiWebServiceComponent(record["component"]),
+    component: parsePiStudioServiceComponent(record["component"]),
     label: requireString(record, "label"),
     ...optionalField("runtimeVersion", optionalString(record, "runtimeVersion")),
     ...optionalField("installedVersion", optionalString(record, "installedVersion")),
     ...optionalField("piVersion", optionalString(record, "piVersion")),
     stale: requireBoolean(record, "stale"),
     available: requireBoolean(record, "available"),
-    ...optionalField("installation", optionalPiWebInstallationInfo(record["installation"])),
+    ...optionalField("installation", optionalPiStudioInstallationInfo(record["installation"])),
     ...optionalField("error", optionalString(record, "error")),
   };
 }
 
-function optionalPiWebInstallationInfo(value: unknown): PiWebInstallationInfo | undefined {
+function optionalPiStudioInstallationInfo(value: unknown): PiStudioInstallationInfo | undefined {
   if (value === undefined) return undefined;
   const record = requireRecord(value);
   const kind = requireString(record, "kind");
-  if (kind !== "pi-package" && kind !== "npm-global" && kind !== "local" && kind !== "docker" && kind !== "unknown") throw new Error("Invalid PI WEB installation kind");
+  if (kind !== "pi-package" && kind !== "npm-global" && kind !== "local" && kind !== "docker" && kind !== "unknown") throw new Error("Invalid PI STUDIO installation kind");
   const scope = record["scope"];
-  if (scope !== undefined && scope !== "user" && scope !== "project") throw new Error("Invalid PI WEB installation scope");
+  if (scope !== undefined && scope !== "user" && scope !== "project") throw new Error("Invalid PI STUDIO installation scope");
   const dockerMode = record["dockerMode"];
-  if (dockerMode !== undefined && dockerMode !== "runtime" && dockerMode !== "dev") throw new Error("Invalid PI WEB Docker mode");
+  if (dockerMode !== undefined && dockerMode !== "runtime" && dockerMode !== "dev") throw new Error("Invalid PI STUDIO Docker mode");
   return {
     kind,
     ...optionalField("path", optionalString(record, "path")),
@@ -1922,7 +1924,7 @@ function optionalPiWebInstallationInfo(value: unknown): PiWebInstallationInfo | 
   };
 }
 
-function parsePiWebReleaseStatus(value: unknown): PiWebReleaseStatus {
+function parsePiStudioReleaseStatus(value: unknown): PiStudioReleaseStatus {
   const record = requireRecord(value);
   return {
     packageName: requireString(record, "packageName"),
@@ -1934,7 +1936,7 @@ function parsePiWebReleaseStatus(value: unknown): PiWebReleaseStatus {
   };
 }
 
-function parsePiWebCommands(value: unknown): PiWebStatusResponse["commands"] {
+function parsePiStudioCommands(value: unknown): PiStudioStatusResponse["commands"] {
   const record = requireRecord(value);
   return {
     ...optionalField("update", optionalString(record, "update")),
@@ -1945,30 +1947,30 @@ function parsePiWebCommands(value: unknown): PiWebStatusResponse["commands"] {
   };
 }
 
-function parsePiWebStatusMessage(value: unknown): PiWebStatusMessage {
+function parsePiStudioStatusMessage(value: unknown): PiStudioStatusMessage {
   const record = requireRecord(value);
   return {
     id: requireString(record, "id"),
-    severity: parsePiWebStatusSeverity(record["severity"]),
+    severity: parsePiStudioStatusSeverity(record["severity"]),
     title: requireString(record, "title"),
     body: requireString(record, "body"),
     ...optionalField("command", optionalString(record, "command")),
   };
 }
 
-function parsePiWebServiceComponent(value: unknown): PiWebServiceComponent {
-  if (value !== "web" && value !== "sessiond") throw new Error("Invalid PI WEB service component");
+function parsePiStudioServiceComponent(value: unknown): PiStudioServiceComponent {
+  if (value !== "web" && value !== "sessiond") throw new Error("Invalid PI STUDIO service component");
   return value;
 }
 
-function parsePiWebCapabilities(value: unknown): PiWebCapability[] {
-  const capabilities = parseKnownPiWebCapabilities(value);
-  if (capabilities === undefined) throw new Error("Invalid PI WEB capabilities");
+function parsePiStudioCapabilities(value: unknown): PiStudioCapability[] {
+  const capabilities = parseKnownPiStudioCapabilities(value);
+  if (capabilities === undefined) throw new Error("Invalid PI STUDIO capabilities");
   return capabilities;
 }
 
-function parsePiWebStatusSeverity(value: unknown): PiWebStatusSeverity {
-  if (value !== "info" && value !== "warning" && value !== "error") throw new Error("Invalid PI WEB status severity");
+function parsePiStudioStatusSeverity(value: unknown): PiStudioStatusSeverity {
+  if (value !== "info" && value !== "warning" && value !== "error") throw new Error("Invalid PI STUDIO status severity");
   return value;
 }
 
@@ -2167,7 +2169,7 @@ export function parseReloaded(value: unknown): { reloaded: true } {
 function optionalBoolean(record: Record<string, unknown>, key: string): boolean | undefined {
   const value = record[key];
   if (value === undefined) return undefined;
-  if (typeof value !== "boolean") throw new Error(`Invalid PI WEB ${key} field`);
+  if (typeof value !== "boolean") throw new Error(`Invalid PI STUDIO ${key} field`);
   return value;
 }
 

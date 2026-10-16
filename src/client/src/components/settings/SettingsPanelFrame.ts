@@ -1,3 +1,4 @@
+import { t } from "../../i18n";
 import { css, html, LitElement, nothing, type TemplateResult } from "lit";
 import { customElement, property } from "lit/decorators.js";
 
@@ -72,7 +73,7 @@ export class SettingsPanelFrame extends LitElement {
   private renderNoticeStack(): TemplateResult | typeof nothing {
     if (this.notices.length === 0) return nothing;
     return html`
-      <div class="notice-stack" aria-label="Settings notices">
+      <div class="notice-stack" aria-label=${t("settings.notices")}>
         ${this.notices.map((notice) => this.renderNotice(notice))}
       </div>
     `;

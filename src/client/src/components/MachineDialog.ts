@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { LitElement, css, html } from "lit";
 import { customElement, property, query, state } from "lit/decorators.js";
 import type { MachineConnectionInput } from "../../../shared/apiTypes";
@@ -145,87 +146,87 @@ export class MachineDialog extends LitElement {
       <modal-surface
         .onClose=${() => this.onCancel?.()}
         .initialFocus=${"input[name='baseUrl']"}
-        .label=${"添加机器"}
+        .label=${t("machineDialog.title")}
         @keydown=${(event: KeyboardEvent) => { this.handleKeyDown(event); }}
       >
         <form @submit=${(event: SubmitEvent) => { this.handleSubmit(event); }}>
           <header>
-            <strong>添加机器</strong>
-            <button type="button" @click=${() => { this.onCancel?.(); }} aria-label="Close">×</button>
+            <strong>${t("machineDialog.title")}</strong>
+            <button type="button" @click=${() => { this.onCancel?.(); }} aria-label=${t("common.close")}>×</button>
           </header>
           <div class="body">
             ${this.error === "" ? null : html`<div class="dialog-error" role="alert">${this.error}</div>`}
             <label>
-              远程网关地址
+              ${t("machineDialog.gatewayAddress")}
               <input name="baseUrl" type="url" .value=${this.url} @input=${(event: InputEvent) => { this.handleUrlInput(event); }} placeholder=${this.mode === "ssh" ? "http://127.0.0.1:8505" : "http://dev-box.local:8504"} autocomplete="url" inputmode="url" />
             </label>
-            <small class=${urlError === undefined ? "hint" : "field-error"}>${urlError ?? (this.mode === "ssh" ? "Address of the remote PI WEB as reachable from the SSH host; usually its localhost." : "Enter the reachable base URL first, including http:// or https://.")}</small>
+            <small class=${urlError === undefined ? "hint" : "field-error"}>${urlError ?? (this.mode === "ssh" ? t("machineDialog.urlHintSsh") : t("machineDialog.urlHint"))}</small>
             <fieldset class="connection-mode">
-              <legend>连接方式</legend>
+              <legend>${t("machineDialog.connectionMode")}</legend>
               <label class="mode-option">
                 <input type="radio" name="connectionMode" value="direct" .checked=${this.mode === "direct"} @change=${() => { this.switchMode("direct"); }} />
-                <span>直连 — 从当前 Gateway 访问</span>
+                <span>${t("machineDialog.direct")}</span>
               </label>
               <label class="mode-option">
                 <input type="radio" name="connectionMode" value="ssh" .checked=${this.mode === "ssh"} @change=${() => { this.switchMode("ssh"); }} />
-                <span>SSH — 通过安全隧道访问</span>
+                <span>${t("machineDialog.ssh")}</span>
               </label>
             </fieldset>
             ${this.mode === "ssh" ? html`
               <div class="ssh-grid">
-                <button type="button" @click=${() => { this.sshVia = "config"; this.sshHost = this.sshHosts[0] ?? ""; }}>SSH 配置</button>
-                <button type="button" @click=${() => { this.sshVia = "manual"; this.sshHost = ""; }}>手动连接</button>
+                <button type="button" @click=${() => { this.sshVia = "config"; this.sshHost = this.sshHosts[0] ?? ""; }}>${t("machineDialog.sshConfig")}</button>
+                <button type="button" @click=${() => { this.sshVia = "manual"; this.sshHost = ""; }}>${t("machineDialog.sshManual")}</button>
               </div>
               ${this.sshVia === "config" ? html`
-                <label>SSH 主机配置
+                <label>${t("machineDialog.sshHostConfig")}
                   <select .value=${this.sshHost} @change=${(event: Event) => { if (event.target instanceof HTMLSelectElement) this.sshHost = event.target.value; }}>
                     ${this.sshHosts.map((host) => html`<option value=${host}>${host}</option>`)}
                   </select>
                 </label>
-                <small class="hint">读取当前 Gateway 所在机器的 ~/.ssh/config，自动使用其中的端口、用户和密钥。</small>
+                <small class="hint">${t("machineDialog.sshConfigHint")}</small>
               ` : html`
               <label>
-                SSH host <span class="optional">required</span>
-                <input name="sshHost" type="text" list="ssh-config-hosts" .value=${this.sshHost} @input=${(event: InputEvent) => { this.handleSshInput(event, "host"); }} placeholder="~/.ssh/config alias or user@host" autocomplete="off" />
+                ${t("machineDialog.sshHost")} <span class="optional">${t("machineDialog.required")}</span>
+                <input name="sshHost" type="text" list="ssh-config-hosts" .value=${this.sshHost} @input=${(event: InputEvent) => { this.handleSshInput(event, "host"); }} placeholder=${t("machineDialog.sshHostPlaceholder")} autocomplete="off" />
               </label>
-              <small class="hint">Pick a host from your ~/.ssh/config, or type one; port, user, and keys from the config apply automatically.</small>
+              <small class="hint">${t("machineDialog.sshManualHint")}</small>
               <div class="ssh-grid">
                 <label>
-                  Port <span class="optional">optional</span>
+                  ${t("machineDialog.port")} <span class="optional">${t("machineDialog.optional")}</span>
                   <input name="sshPort" type="text" inputmode="numeric" .value=${this.sshPort} @input=${(event: InputEvent) => { this.handleSshInput(event, "port"); }} placeholder="22" autocomplete="off" />
                 </label>
                 <label>
-                  User <span class="optional">optional</span>
-                  <input name="sshUser" type="text" .value=${this.sshUser} @input=${(event: InputEvent) => { this.handleSshInput(event, "user"); }} placeholder="from ssh config" autocomplete="off" />
+                  ${t("machineDialog.user")} <span class="optional">${t("machineDialog.optional")}</span>
+                  <input name="sshUser" type="text" .value=${this.sshUser} @input=${(event: InputEvent) => { this.handleSshInput(event, "user"); }} placeholder=${t("machineDialog.sshUserPlaceholder")} autocomplete="off" />
                 </label>
               </div>
               <label>
-                Identity file <span class="optional">optional</span>
-                <input name="sshIdentityFile" type="text" .value=${this.sshIdentityFile} @input=${(event: InputEvent) => { this.handleSshInput(event, "identityFile"); }} placeholder="~/.ssh/id_ed25519" autocomplete="off" />
+                ${t("machineDialog.identityFile")} <span class="optional">${t("machineDialog.optional")}</span>
+                <input name="sshIdentityFile" type="text" .value=${this.sshIdentityFile} @input=${(event: InputEvent) => { this.handleSshInput(event, "identityFile"); }} placeholder=${t("machineDialog.identityPlaceholder")} autocomplete="off" />
               </label>
               <label>
-                Password <span class="optional">optional</span>
-                <input name="sshPassword" type="password" .value=${this.sshPassword} @input=${(event: InputEvent) => { this.handleSshInput(event, "password"); }} placeholder="Prefer a key; stored like the machine token" autocomplete="off" />
+                ${t("machineDialog.password")} <span class="optional">${t("machineDialog.optional")}</span>
+                <input name="sshPassword" type="password" .value=${this.sshPassword} @input=${(event: InputEvent) => { this.handleSshInput(event, "password"); }} placeholder=${t("machineDialog.sshPasswordPlaceholder")} autocomplete="off" />
               </label>
-              <small class=${authConflict ? "field-error" : "hint"}>${authConflict ? "私钥和密码只能选择一种。" : "密码加密保存在当前 Gateway 所在机器，用于后续重新连接。"}</small>
+              <small class=${authConflict ? "field-error" : "hint"}>${authConflict ? t("machineDialog.authConflict") : t("machineDialog.passwordHint")}</small>
               `}
             ` : null}
             ${hasUrl ? html`
               <label>
-                Machine name
-                <input name="name" type="text" .value=${this.name} @input=${(event: InputEvent) => { this.handleNameInput(event); }} placeholder=${this.previousSuggestedName || "Dev Box"} autocomplete="off" />
+                ${t("machineDialog.machineName")}
+                <input name="name" type="text" .value=${this.name} @input=${(event: InputEvent) => { this.handleNameInput(event); }} placeholder=${this.previousSuggestedName || t("machineDialog.namePlaceholder")} autocomplete="off" />
               </label>
-              <small class="hint">Suggested from the URL. Edit it to use a friendlier sidebar label.</small>
+              <small class="hint">${t("machineDialog.nameHint")}</small>
               <label>
-                Bearer token <span class="optional">optional</span>
-                <input name="token" type="password" .value=${this.token} @input=${(event: InputEvent) => { this.handleTokenInput(event); }} placeholder="Leave blank if the remote machine does not require one" autocomplete="off" />
+                ${t("machineDialog.bearerToken")} <span class="optional">${t("machineDialog.optional")}</span>
+                <input name="token" type="password" .value=${this.token} @input=${(event: InputEvent) => { this.handleTokenInput(event); }} placeholder=${t("machineDialog.tokenPlaceholder")} autocomplete="off" />
               </label>
-              <small class="hint">Paste only the token value; PI WEB sends it as an Authorization: Bearer header.</small>
-            ` : html`<p class="hint intro">After you enter a URL, PI WEB will suggest a machine name and let you add an optional bearer token.</p>`}
+              <small class="hint">${t("machineDialog.tokenHint")}</small>
+            ` : html`<p class="hint intro">${t("machineDialog.introHint")}</p>`}
           </div>
           <footer>
-            <button type="button" @click=${() => { this.onCancel?.(); }}>取消</button>
-            <button class="primary" type="submit" ?disabled=${!canSubmit}>${this.submitting ? "正在添加…" : "添加机器"}</button>
+            <button type="button" @click=${() => { this.onCancel?.(); }}>${t("common.cancel")}</button>
+            <button class="primary" type="submit" ?disabled=${!canSubmit}>${this.submitting ? t("machineDialog.submitting") : t("machineDialog.title")}</button>
           </footer>
         </form>
       </modal-surface>
@@ -272,16 +273,16 @@ export function suggestedMachineNameFromUrl(value: string): string {
 
 export function machineBaseUrlValidationMessage(value: string): string | undefined {
   const raw = value.trim();
-  if (raw === "") return "Remote PI WEB URL is required.";
+  if (raw === "") return t("machineDialog.errorRequired");
   let url: URL;
   try {
     url = new URL(raw);
   } catch {
-    return "Enter a valid URL including http:// or https://.";
+    return t("machineDialog.errorInvalid");
   }
-  if (url.protocol !== "http:" && url.protocol !== "https:") return "Use an http:// or https:// URL.";
-  if (url.username !== "" || url.password !== "") return "Do not include credentials in the machine URL.";
-  if (url.search !== "" || url.hash !== "") return "Do not include a query string or fragment.";
+  if (url.protocol !== "http:" && url.protocol !== "https:") return t("machineDialog.errorProtocol");
+  if (url.username !== "" || url.password !== "") return t("machineDialog.errorCredentials");
+  if (url.search !== "" || url.hash !== "") return t("machineDialog.errorQuery");
   return undefined;
 }
 

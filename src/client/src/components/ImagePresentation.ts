@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { LitElement, css, html, type PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { keyed } from "lit/directives/keyed.js";
@@ -8,7 +9,7 @@ export interface ImageOpenDetail {
 }
 
 /** Native image states and controls only; the owner decides when a source may be assigned. */
-@customElement("pi-web-image-presentation")
+@customElement("pi-studio-image-presentation")
 export class ImagePresentation extends LitElement {
   @property({ attribute: false }) source: string | undefined;
   @property() description = "";
@@ -58,17 +59,17 @@ export class ImagePresentation extends LitElement {
       <div class=${`frame ${pending ? "pending" : this.phase}`} aria-busy=${!pending && this.phase === "loading" ? "true" : "false"}>
         ${pending ? html`
           <button class="placeholder" type="button" @click=${(event: MouseEvent) => { this.requestImage(event); }}>
-            <span>Show image</span>${this.renderLabel()}
+            <span>${t("image.show")}</span>${this.renderLabel()}
           </button>` : null}
         ${!pending && this.phase === "loading" ? html`
-          <div class="placeholder" role="status"><span>Loading image…</span>${this.renderLabel()}</div>` : null}
+          <div class="placeholder" role="status"><span>${t("image.loading")}</span>${this.renderLabel()}</div>` : null}
         ${!pending && this.phase === "error" ? html`
           <div class="placeholder" role="status">
-            <span>Image unavailable: the file may be missing, inaccessible, unsupported, or too large.</span>
-            ${this.renderLabel()}<button type="button" @click=${(event: MouseEvent) => { this.retry(event); }}>Retry</button>
+            <span>${t("image.unavailable")}</span>
+            ${this.renderLabel()}<button type="button" @click=${(event: MouseEvent) => { this.retry(event); }}>${t("common.retry")}</button>
           </div>` : null}
         ${source !== undefined && this.phase !== "error" ? keyed(source, html`
-          <button class="image-button" type="button" aria-label=${`Enlarge ${this.description || "image"}`} title="Click to enlarge"
+          <button class="image-button" type="button" aria-label=${t("image.enlarge", { name: this.description || t("image.image") })} title=${t("image.clickToEnlarge")}
             ?disabled=${this.phase !== "loaded"} @click=${(event: MouseEvent) => { this.open(event); }}
             @keydown=${(event: KeyboardEvent) => { if (event.key === "Enter" || event.key === " ") this.open(event); }}>
             <img src=${source} alt=${this.description} decoding="async"

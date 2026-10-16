@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { LitElement, css, html } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { writeClipboardText } from "../clipboard";
@@ -6,7 +7,7 @@ import type { ToolExecutionPart } from "./shared";
 const MAX_COLLAPSED_DIFF_LINES = 180;
 
 interface ToolTarget {
-  label: "Command" | "File" | "Input";
+  kind: "file" | "command" | "input";
   text: string;
 }
 
@@ -46,24 +47,24 @@ export class ToolExecutionView extends LitElement {
           </div>
         </div>
 
-        ${previewMismatch ? html`<p class="notice">Applied diff differs from the preview.</p>` : null}
+        ${previewMismatch ? html`<p class="notice">${t("toolExecution.diffMismatch")}</p>` : null}
         ${errorText === undefined || errorText === "" ? null : html`<pre class="error-text">${errorText}</pre>`}
-        ${visibleDiff === undefined ? this.renderTextBody(bodyText, execution.status === "error", target) : this.renderDiffBody(visibleDiff, actualDiff === undefined ? "Preview diff" : "Applied diff", target)}
+        ${visibleDiff === undefined ? this.renderTextBody(bodyText, execution.status === "error", target) : this.renderDiffBody(visibleDiff, actualDiff === undefined ? t("toolExecution.previewDiff") : t("toolExecution.appliedDiff"), target)}
       </section>
     `;
   }
 
   private renderHeaderTarget(target: ToolTarget | undefined) {
     if (target === undefined) return null;
-    const className = target.label === "File" ? "path" : "summary";
-    return html`<span class=${className} title=${target.text} aria-label=${`${target.label}: ${target.text}`}>${target.text}</span>`;
+    const className = target.kind === "file" ? "path" : "summary";
+    return html`<span class=${className} title=${target.text} aria-label=${`${toolTargetLabel(target)}: ${target.text}`}>${target.text}</span>`;
   }
 
   private renderExpandedTarget(target: ToolTarget | undefined) {
     if (target === undefined) return null;
     return html`
       <div class="detail-target">
-        <span class="detail-label">${target.label}</span>
+        <span class="detail-label">${toolTargetLabel(target)}</span>
         <pre class="detail-target-value">${target.text}</pre>
       </div>
     `;
@@ -73,11 +74,11 @@ export class ToolExecutionView extends LitElement {
     if ((text === undefined || text === "") && target === undefined) return null;
     return html`
       <details class="text-body" ?open=${open}>
-        <summary>Details</summary>
+        <summary>${t("toolExecution.details")}</summary>
         ${this.renderExpandedTarget(target)}
         ${text === undefined || text === "" ? null : html`
           <div class="detail-result">
-            <span class="detail-label">Result</span>
+            <span class="detail-label">${t("toolExecution.result")}</span>
             <pre>${text}</pre>
           </div>
         `}
@@ -93,7 +94,7 @@ export class ToolExecutionView extends LitElement {
       <details class="diff-details" ?open=${this.diffOpen} @toggle=${(event: Event) => { this.onDiffToggle(event); }}>
         <summary>
           <span>${label}</span>
-          <small>${String(lines.length)} ${lines.length === 1 ? "line" : "lines"}</small>
+          <small>${String(lines.length)} ${lines.length === 1 ? t("toolExecution.lineOne", { count: lines.length }) : t("toolExecution.lineMany", { count: lines.length })}</small>
         </summary>
         ${this.renderExpandedTarget(target)}
         <div class="diff-toolbar">
@@ -173,11 +174,19 @@ export class ToolExecutionView extends LitElement {
 }
 
 function toolTarget(execution: ToolExecutionPart, path: string | undefined): ToolTarget | undefined {
-  if (path !== undefined && path !== "") return { label: "File", text: path };
+  if (path !== undefined && path !== "") return { kind: "file", text: path };
   const command = getString(execution.args, "command");
-  if (command !== undefined && command !== "") return { label: "Command", text: command };
-  if (execution.summary !== "") return { label: "Input", text: execution.summary };
+  if (command !== undefined && command !== "") return { kind: "command", text: command };
+  if (execution.summary !== "") return { kind: "input", text: execution.summary };
   return undefined;
+}
+
+function toolTargetLabel(target: ToolTarget): string {
+  switch (target.kind) {
+    case "file": return t("toolExecution.target.file");
+    case "command": return t("toolExecution.target.command");
+    case "input": return t("toolExecution.target.input");
+  }
 }
 
 function pathFromArgs(args: unknown): string | undefined {

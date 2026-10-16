@@ -45,8 +45,8 @@ jobs:
         run: npm publish --access public --provenance --ignore-scripts
 
   deploy-docs:
-    name: Deploy stable docs to pi-web.dev
-    # Stable docs only move on GitHub Releases; the dev variant at pi-web.dev/dev/
+    name: Deploy stable docs to pi-studio.dev
+    # Stable docs only move on GitHub Releases; the dev variant at pi-studio.dev/dev/
     # deploys from main via docs-dev.yml. Skipped on manual workflow_dispatch runs.
     if: github.event_name == 'release'
     needs: publish

@@ -1,6 +1,6 @@
 # Plugins and Pi packages
 
-Customize PI WEB with workspace tools, useful shortcuts, and integrations. You can install an existing package or ask an agent to build one for your workflow. You do not need to modify PI WEB itself.
+Customize PI STUDIO with workspace tools, useful shortcuts, and integrations. You can install an existing package or ask an agent to build one for your workflow. You do not need to modify PI STUDIO itself.
 
 This guide explains what is possible and what to expect. For implementation, use the [public contracts and examples](#agent-development), rather than treating this page as a second API reference.
 
@@ -29,13 +29,13 @@ For example, ask an agent to build “a panel that runs our checks and shows the
 
 These are related, but serve different purposes:
 
-- **Pi packages** are installable bundles. They can contain extensions, skills, prompt templates, themes, and PI WEB plugins.
+- **Pi packages** are installable bundles. They can contain extensions, skills, prompt templates, themes, and PI STUDIO plugins.
 - **Pi extensions** customize the agent: tools, commands, hooks, model providers, and session behavior.
-- **PI WEB plugins** customize the web application and its workspace integrations.
+- **PI STUDIO plugins** customize the web application and its workspace integrations.
 
-One package can contain all three kinds of customization. Installing a package and enabling its PI WEB plugin are separate decisions. Disabling a PI WEB plugin does not remove the package's Pi extensions, skills, or prompts.
+One package can contain all three kinds of customization. Installing a package and enabling its PI STUDIO plugin are separate decisions. Disabling a PI STUDIO plugin does not remove the package's Pi extensions, skills, or prompts.
 
-Use a Pi extension for agent behavior and a PI WEB plugin for web UI. When a feature needs both, ship them together and let them communicate through the hosted session connection.
+Use a Pi extension for agent behavior and a PI STUDIO plugin for web UI. When a feature needs both, ship them together and let them communicate through the hosted session connection.
 
 ## How plugins work
 
@@ -84,7 +84,7 @@ export default {
 };
 ```
 
-The returned unsubscribe function is idempotent and can be called as soon as observation is no longer needed. The host also stops subscriptions when the plugin lifetime ends, including failed activation/start rollback; retaining the service cannot start a new subscription after that point. A throwing or rejected subscriber is logged with its plugin identity without blocking other subscribers. For rendering alone, use the panel's fresh `state` instead of subscribing. `selection` is optional on older hosts; update PI WEB when the service is needed.
+The returned unsubscribe function is idempotent and can be called as soon as observation is no longer needed. The host also stops subscriptions when the plugin lifetime ends, including failed activation/start rollback; retaining the service cannot start a new subscription after that point. A throwing or rejected subscriber is logged with its plugin identity without blocking other subscribers. For rendering alone, use the panel's fresh `state` instead of subscribing. `selection` is optional on older hosts; update PI STUDIO when the service is needed.
 
 ### Discover projects on the context's machine
 
@@ -92,7 +92,7 @@ Action, application-panel, and workspace contexts supply read-only `projects` ac
 
 ```ts
 const access = context.projects;
-if (access === undefined) throw new Error("Update PI WEB to use project discovery");
+if (access === undefined) throw new Error("Update PI STUDIO to use project discovery");
 const registered = await access.listProjects();
 const suggestions = await access.suggestDirectories("/home/me/projects/");
 // Keep the discovery target when later navigating to a result.
@@ -101,9 +101,9 @@ if (registered[0]) {
 }
 ```
 
-Each service captures its `machineId` when the host creates the context. Retaining it, or completing an in-flight request after selection changes, still targets that machine. A fresh context follows the selected machine for portable gateway plugins; machine-specific instances receive contexts only on their registration machine, under the existing loading and visibility rules. Remote request failures reject rather than substituting gateway projects. Results contain detached basic information, and the service exposes no project mutation or generic HTTP methods. `projects` is optional on older hosts; update PI WEB when it is needed.
+Each service captures its `machineId` when the host creates the context. Retaining it, or completing an in-flight request after selection changes, still targets that machine. A fresh context follows the selected machine for portable gateway plugins; machine-specific instances receive contexts only on their registration machine, under the existing loading and visibility rules. Remote request failures reject rather than substituting gateway projects. Results contain detached basic information, and the service exposes no project mutation or generic HTTP methods. `projects` is optional on older hosts; update PI STUDIO when it is needed.
 
-Browser API v4 remains unchanged. No capability requirement is needed for application panels, selection observation, or project discovery. Older hosts may omit the tab silently; update PI WEB to use it. Current hosts warn at registration about unknown contribution names, attributing the warning to the plugin, and ignore them while keeping recognized contributions.
+Browser API v4 remains unchanged. No capability requirement is needed for application panels, selection observation, or project discovery. Older hosts may omit the tab silently; update PI STUDIO to use it. Current hosts warn at registration about unknown contribution names, attributing the warning to the plugin, and ignore them while keeping recognized contributions.
 
 ### Attach text context to a message
 
@@ -113,7 +113,7 @@ Each prompt facade captures the machine and conversation when its context is cre
 
 ```ts
 const prompt = context.prompt;
-if (!prompt.setChip) throw new Error("Update PI WEB to attach text context");
+if (!prompt.setChip) throw new Error("Update PI STUDIO to attach text context");
 prompt.setChip({
   id: "selected-note", // local to this plugin and captured conversation
   label: "Selected note",
@@ -163,7 +163,7 @@ The promise settles after host restoration, or normally when newer navigation su
 
 ### Message actions
 
-Contribute `messageActions` to put a plugin-defined button beside a displayed transcript message. Each action has a plugin-local `id`, a `title`, an optional Lit `icon`, and a `run(context)` callback. The callback performs your own workflow; it is not a choice from a host operation catalog. PI WEB adds no confirmation. Fork, Go back, and Copy are core plugin contributions using these generic APIs; Fork and Go back retain their existing confirmations.
+Contribute `messageActions` to put a plugin-defined button beside a displayed transcript message. Each action has a plugin-local `id`, a `title`, an optional Lit `icon`, and a `run(context)` callback. The callback performs your own workflow; it is not a choice from a host operation catalog. PI STUDIO adds no confirmation. Fork, Go back, and Copy are core plugin contributions using these generic APIs; Fork and Go back retain their existing confirmations.
 
 ```ts
 return {
@@ -176,7 +176,7 @@ return {
       visible: ({ message }) => message.role === "user" && message.text !== "",
       enabled: ({ session }) => !session.archived && !session.pending,
       run: ({ message, prompt }) => {
-        if (!prompt.setChip) throw new Error("Update PI WEB to attach text context");
+        if (!prompt.setChip) throw new Error("Update PI STUDIO to attach text context");
         prompt.setChip({ id: "quote", label: "Quoted message", text: message.text });
         return { title: "Quoted", ariaLabel: "Message text attached to next prompt" };
       },
@@ -197,7 +197,7 @@ Message-level **Fork** and **Go back**, including `history.fork()` and `history.
 
 For either target, `run` may return nothing or a `MessageActionFeedback` object, synchronously or through a promise. Feedback requires `title` and optionally supplies `ariaLabel` and a Lit `icon`. The host shows this successful-workflow feedback on the clicked button for **1.2 seconds**, then restores its usual presentation. The feedback's accessible label defaults to its `title`; omitting `icon` retains the action's usual icon or text. Feedback is generic, not limited to copying.
 
-Browser API v4 remains compatible; older hosts may ignore `messageActions`. Update PI WEB to use this contribution point and before relying on `target: "display"`, `ariaLabel`, or feedback. It does not expose a whole-transcript subscription.
+Browser API v4 remains compatible; older hosts may ignore `messageActions`. Update PI STUDIO to use this contribution point and before relying on `target: "display"`, `ariaLabel`, or feedback. It does not expose a whole-transcript subscription.
 
 ### Content previews in chat and Files
 
@@ -207,7 +207,11 @@ Chat keeps **Raw**, **Preview**, and **Copy source** available in a toolbar on e
 
 `input` contains `text`, an abort `signal`, and `fail(error)`. Render synchronously, own async work in a component, clean up on disconnect or abort, and report asynchronous failures with `fail`. Obsolete failures are ignored. Renderers receive untrusted text: escape or sanitize output, avoid executing source, and do not relax the surrounding Markdown policy. The host skips plugin rendering for truncated input and blocks over 100,000 UTF-16 code units; Files also retains its inline byte-size limit. Ordinary chat Markdown and Files Markdown retain their distinct sanitizers.
 
-A browser consumer such as Files declares the host capability `{ pluginId: "pi-web", id: "content-rendering", version: 1, parse }` in `requires`, then resolves it in `start`. The exported `ContentRenderingCapability` type describes `listRenderers(request)`, `renderText(request)`, and `renderMarkdown({ machineId, text, truncated?, toSafeHtml, allowManualPreview? })`. `listRenderers` returns sorted eligible `{ id, label, renderMode }` choices without invoking renderers. `renderText` accepts an optional `rendererId` only with `controls: "external"`; absent or unavailable IDs select the first match. Embedded controls own their selection and ignore externally supplied IDs. Use `controls: "external"` when the consumer owns the renderer chooser, mode switching, and raw-source access (as Files does in its header beside Download); otherwise controls remain embedded. Consumers own their user-intent policy and may pass `allowManualPreview: true` to `renderText` or `renderMarkdown` to authorize manual previews (for example, an explicit Render click or Files’ saved or URL Preview preference). For Markdown this applies to eligible fences without overriding per-block Raw choices. Omitting it or passing false retains renderer defaults, including automatic previews. Chat never passes this override. External Raw controls must remove the preview. The public capability stores no remembered intent. Chat’s bounded per-block memory is private host policy, not a plugin option. Markdown requests have their own shape without file-path or language selectors; languages come from fences. Creating a `renderText` template does not invoke a renderer. Markdown diagrams each own an independent chooser. Switching renderers cancels the previous preview and clears its failure state. `renderMarkdown` requires the consumer's trusted sanitizer; it is not permission to insert untrusted HTML. See the [Files consumer](https://github.com/jmfederico/pi-web/blob/main/pi-web-plugins/files/pi-web-plugin.ts) and [Mermaid contribution](https://github.com/jmfederico/pi-web/tree/main/pi-web-plugins/mermaid) for complete implementations.
+A browser consumer such as Files declares the host capability `{ pluginId: "pi-studio", id: "content-rendering", version: 1, parse }` in `requires`, then resolves it in `start`. The exported `ContentRenderingCapability` type describes `listRenderers(request)`, `renderText(request)`, and `renderMarkdown({ machineId, text, truncated?, toSafeHtml, allowManualPreview? })`. `listRenderers` returns sorted eligible `{ id, label, renderMode }` choices without invoking renderers. `renderText` accepts an optional `rendererId` only with `controls: "external"`; absent or unavailable IDs select the first match. Embedded controls own their selection and ignore externally supplied IDs. Use `controls: "external"` when the consumer owns the renderer chooser, mode switching, and raw-source access (as Files does in its header beside Download); otherwise controls remain embedded. Consumers own their user-intent policy and may pass `allowManualPreview: true` to `renderText` or `renderMarkdown` to authorize manual previews (for example, an explicit Render click or Files’ saved or URL Preview preference). For Markdown this applies to eligible fences without overriding per-block Raw choices. Omitting it or passing false retains renderer defaults, including automatic previews. Chat never passes this override. External Raw controls must remove the preview. The public capability stores no remembered intent. Chat’s bounded per-block memory is private host policy, not a plugin option. Markdown requests have their own shape without file-path or language selectors; languages come from fences. Creating a `renderText` template does not invoke a renderer. Markdown diagrams each own an independent chooser. Switching renderers cancels the previous preview and clears its failure state. `renderMarkdown` requires the consumer's trusted sanitizer; it is not permission to insert untrusted HTML. See the [Files consumer](https://github.com/pi-studio/pi-studio/blob/main/pi-studio-plugins/files/pi-studio-plugin.ts) and [Mermaid contribution](https://github.com/pi-studio/pi-studio/tree/main/pi-studio-plugins/mermaid) for complete implementations.
+
+### Localized plugin strings
+
+Browser plugins receive `context.i18n` during activation: `locale` is the locale the host is rendering with, `t(key, params?)` translates a plugin-local key, and `registerCatalog(catalog)` registers or replaces that plugin's catalog. Register the catalog before using `t` for contribution titles, actions, and panel content. The host namespaces every key as `plugin:<runtimePluginId>:<key>`, so a plugin cannot shadow host messages, and an unresolved key falls back to the host catalogs and finally to English. Catalogs map a plugin-local key to a template with `{name}` placeholders; a `<key>_one` / `<key>_other` pair is selected from a numeric `count` parameter with `Intl.PluralRules`. Contribution titles are resolved from the activation locale, so pass `t(...)` rather than literal text when declaring panels, tabs, and actions, and localize strings inside panel render functions so they follow the page's locale.
 
 ### Conversations and companion extensions
 
@@ -233,35 +237,35 @@ Workspace discovery must be available before host session services start. If a p
 
 ## Install and manage
 
-Use **Settings → Pi packages** to install, update, or remove a package. Enter its npm, git/URL, or local package source. Use **Settings → PI WEB plugins** to enable or disable its web integration and see whether it is active or needs a restart.
+Use **Settings → Pi packages** to install, update, or remove a package. Enter its npm, git/URL, or local package source. Use **Settings → PI STUDIO plugins** to enable or disable its web integration and see whether it is active or needs a restart.
 
 | Change | What to do next |
 | --- | --- |
 | Install or edit a browser-only plugin | Reload the browser page |
 | Install, update, configure, enable, or disable a server-backed plugin | Restart the target session daemon, then reload the browser |
 | Change ordinary Pi resources such as extensions, skills, or prompts | Run `/reload` in each idle session |
-| Change an extension that registers model providers | Follow the separate [provider restart guidance](https://pi-web.dev/config#pi-extension-provider-baseline) |
+| Change an extension that registers model providers | Follow the separate [provider restart guidance](https://pi-studio.dev/config#pi-extension-provider-baseline) |
 
 **Restarting the session daemon may interrupt active sessions and terminals.** Inspect active work first and restart from outside the sessions it hosts. For the native systemd user install:
 
 ```sh
-systemctl --user restart pi-web-sessiond
+systemctl --user restart pi-studio-sessiond
 ```
 
 A browser reload, web/API restart, or Pi's `/reload` does not activate server-plugin changes. Until the daemon restarts, Settings can show different desired and active states. A paired browser entry is withheld when it no longer matches the active server entry, rather than running incompatible code.
 
-Most plugins are enabled by default. Packages can opt out, and Settings can override the default. Plugin settings live in the normal [PI WEB configuration](https://pi-web.dev/config), not inside the package's installed files.
+Most plugins are enabled by default. Packages can opt out, and Settings can override the default. Plugin settings live in the normal [PI STUDIO configuration](https://pi-studio.dev/config), not inside the package's installed files.
 
 ### Local development
 
 An agent can develop a package anywhere and symlink it into the local plugin directory:
 
 ```sh
-mkdir -p ~/.pi-web/plugins
-ln -s /path/to/plugin-folder ~/.pi-web/plugins/my-plugin
+mkdir -p ~/.pi-studio/plugins
+ln -s /path/to/plugin-folder ~/.pi-studio/plugins/my-plugin
 ```
 
-If `PI_WEB_DATA_DIR` is set, use `$PI_WEB_DATA_DIR/plugins` instead. No PI WEB rebuild is required. The package must contain its built JavaScript; PI WEB does not compile arbitrary installed plugin source.
+If `PI_STUDIO_DATA_DIR` is set, use `$PI_STUDIO_DATA_DIR/plugins` instead. No PI STUDIO rebuild is required. The package must contain its built JavaScript; PI STUDIO does not compile arbitrary installed plugin source.
 
 ## Remote machines
 
@@ -269,7 +273,7 @@ Plugin installation and settings target the machine selected in Settings. A remo
 
 File, terminal, and peer helpers keep operations on the selected machine. Plugins tied to a particular machine use that machine's own installation. Portable browser-only plugins can reuse a gateway copy; themes remain app-wide and remote theme contributions are ignored.
 
-Keep gateways and targets compatible. During this plugin API transition, upgrade them together, restart the updated web/API processes and affected session daemons, then reload the browser. Mixed versions can make remote plugins and Git unavailable; PI WEB does not silently substitute a gateway backend.
+Keep gateways and targets compatible. During this plugin API transition, upgrade them together, restart the updated web/API processes and affected session daemons, then reload the browser. Mixed versions can make remote plugins and Git unavailable; PI STUDIO does not silently substitute a gateway backend.
 
 ## Included tools and optional packages
 
@@ -277,13 +281,13 @@ Keep gateways and targets compatible. During this plugin API transition, upgrade
 - **Files** supplies file browsing, previews, and uploads. Disabling its panel does not remove other plugins' file helpers.
 - **Git** discovers Git workspaces and provides status/diff. Disabling it leaves the project-folder workspace available unless another provider takes over.
 - **Mermaid** uses the default manual mode: choose **Render** to preview `mermaid` fences and `.mmd`/`.mermaid` text files. Its bundled engine runs locally in an opaque-origin sandbox with network access blocked; no diagram service receives your source. Interactive links and external resources are intentionally unavailable. Disable Mermaid in plugin Settings to keep plain code rendering. Only a browser reload is needed after changing this browser-only plugin.
-- **Info** displays machine and PI WEB status without requiring a workspace, adds workspace details when selected, and provides copyable diagnostics.
+- **Info** displays machine and PI STUDIO status without requiring a workspace, adds workspace details when selected, and provides copyable diagnostics.
 - **Updates** shows update/restart guidance when relevant and offers a manual update check. Guidance and Copy work without a workspace; Run requires a selected workspace with an available Terminal provider on that machine.
 - **Workspace Tasks** turns project commands into runnable buttons.
 
 ### Workspace Tasks
 
-Create `.pi-web/tasks.json` in a project:
+Create `.pi-studio/tasks.json` in a project:
 
 ```json
 {
@@ -299,28 +303,28 @@ Open the **Tasks** tab to run a command in a workspace terminal. Tasks can also 
 
 ### Relays
 
-The shipped Relay package adds agent prompts and skills for carrying work across sessions, plus a read-only **Relays** tab for inspecting plans and progress under `.pi-web/relays/`. The tab does not start or edit a relay.
+The shipped Relay package adds agent prompts and skills for carrying work across sessions, plus a read-only **Relays** tab for inspecting plans and progress under `.pi-studio/relays/`. The tab does not start or edit a relay.
 
-PI WEB installs Relay automatically for the active agent profile if it is not configured. Removing it through **Settings → Pi packages** is remembered; it will not be silently reinstalled. Reinstall from **Available packages** if you change your mind. Disabling just the Relays plugin hides its tab but leaves its agent resources available.
+PI STUDIO installs Relay automatically for the active agent profile if it is not configured. Removing it through **Settings → Pi packages** is remembered; it will not be silently reinstalled. Reinstall from **Available packages** if you change your mind. Disabling just the Relays plugin hides its tab but leaves its agent resources available.
 
 ### Try Captain's Log
 
 Captain's Log is an optional example that retells a conversation's latest assistant reply as a pirate briefing. It demonstrates a browser panel, backend, and Pi companion working together.
 
 1. On the target machine, install **Captain's Log** from **Settings → Pi packages → Available packages**.
-2. Enable it in **Settings → PI WEB plugins**.
+2. Enable it in **Settings → PI STUDIO plugins**.
 3. Restart that machine's session daemon when safe, then reload the browser.
 4. Select a conversation, open **Captain's Log**, and choose **Let the Captain tell it**.
 
 The package is prebuilt; no compilation is required. It reads the source reply without modifying that conversation and uses a separate pirate conversation. Model credentials are required, and the source text goes to the pirate's model provider. Previous results are saved. After a daemon restart, open the previous pirate conversation in Sessions if you want to reuse its context.
 
-See the [Captain's Log usage guide](https://github.com/jmfederico/pi-web/blob/main/pi-packages/captains-log/docs/usage.md) for the demo's behavior and troubleshooting.
+See the [Captain's Log usage guide](https://github.com/pi-studio/pi-studio/blob/main/pi-packages/captains-log/docs/usage.md) for the demo's behavior and troubleshooting.
 
 ## Pi extension dialogs
 
-Pi extensions can ask for confirmation, a selection, or text input. PI WEB shows these questions inline in the conversation, including during session startup or while a tool is waiting. They remain answerable after a browser reload, and the first answer wins across tabs.
+Pi extensions can ask for confirmation, a selection, or text input. PI STUDIO shows these questions inline in the conversation, including during session startup or while a tool is waiting. They remain answerable after a browser reload, and the first answer wins across tabs.
 
-Dialogs use the extension's timeout and the host's configured [dialog timeout](https://pi-web.dev/config#extension-dialogs). Aborting work, replacing a runtime, or reloading extensions closes the relevant outstanding questions. Answered cards are browser-local and need not survive a reload. If you reload during startup, find the live conversation in Sessions and open it to answer its pending questions.
+Dialogs use the extension's timeout and the host's configured [dialog timeout](https://pi-studio.dev/config#extension-dialogs). Aborting work, replacing a runtime, or reloading extensions closes the relevant outstanding questions. Answered cards are browser-local and need not survive a reload. If you reload during startup, find the live conversation in Sessions and open it to answer its pending questions.
 
 These three dialog methods are supported; other Pi extension UI surfaces, such as custom editors and widgets, are not. An extension should not assume every UI feature works just because `hasUI` is true.
 
@@ -334,7 +338,7 @@ Extension idle/reload actions are supported. `ctx.newSession()` and `ctx.switchS
 
 ### Pi Markdown transformers
 
-PI WEB applies a session's `pi.registerMarkdownTransformer()` chain to completed and historical user text, assistant text, and assistant thinking. Transformations run in the session daemon before browser Markdown sanitization and code-fence previews; file previews are unaffected. Original session content and **Copy message** stay unchanged. Code-fence Raw/copy controls use the transformed fence source.
+PI STUDIO applies a session's `pi.registerMarkdownTransformer()` chain to completed and historical user text, assistant text, and assistant thinking. Transformations run in the session daemon before browser Markdown sanitization and code-fence previews; file previews are unaffected. Original session content and **Copy message** stay unchanged. Code-fence Raw/copy controls use the transformed fence source.
 
 Live partial responses remain untransformed until completion, including after reconnect. Transformers receive `isStreaming: false` and a fixed `availableWidth: 80` (a compatibility approximation, not browser geometry). Empty transformed parts are hidden, but their message row remains. Failed transformers are logged and skipped; later transformers receive the last successful result. Keep transformers synchronous and cheap, since history reads also invoke them.
 
@@ -343,35 +347,35 @@ Live partial responses remain untransformed until completion, including after re
 Give the agent a goal, the data it should use, and the actions it may take:
 
 ```text
-Build a PI WEB plugin for this project.
+Build a PI STUDIO plugin for this project.
 Goal: <describe the workflow and expected UI>.
-Read https://pi-web.dev/plugins.md, then follow its public-contract
-and example links for the PI WEB version installed here.
-Use supported plugin APIs; do not modify PI WEB or call private routes.
+Read https://pi-studio.dev/plugins.md, then follow its public-contract
+and example links for the PI STUDIO version installed here.
+Use supported plugin APIs; do not modify PI STUDIO or call private routes.
 Explain installation, any permissions or model use, and how to reload it.
 Test the behavior, including failures and cleanup.
 ```
 
 ### Where to implement
 
-Use the smallest example that fits. Source links below track development on `main`; **use the tag or installed declarations matching your PI WEB version** when implementing against a release.
+Use the smallest example that fits. Source links below track development on `main`; **use the tag or installed declarations matching your PI STUDIO version** when implementing against a release.
 
 | Need | Start here |
 | --- | --- |
-| Browser contributions and helpers | [`plugin-api.ts`](https://github.com/jmfederico/pi-web/blob/main/src/plugin-api.ts), published as `@jmfederico/pi-web/plugin-api` |
-| Server lifecycle, peers, providers, and host capabilities | [`server-plugin-api.ts`](https://github.com/jmfederico/pi-web/blob/main/src/server-plugin-api.ts), published as `@jmfederico/pi-web/server-plugin-api` |
-| A small browser plugin | [Info](https://github.com/jmfederico/pi-web/tree/main/pi-web-plugins/info) |
-| A standalone browser/server package | [Workspace-provider example](https://github.com/jmfederico/pi-web/tree/main/examples/workspace-provider-plugin) |
-| A production workspace provider and paired UI | [Git](https://github.com/jmfederico/pi-web/tree/main/pi-web-plugins/git) |
-| Hosted sessions, live updates, and a Pi companion | [Captain's Log](https://github.com/jmfederico/pi-web/tree/main/pi-packages/captains-log) |
-| A simpler initial-prompt workflow | [Workspace Reviews example](https://github.com/jmfederico/pi-web/tree/main/examples/session-bridge-plugin) |
-| Package discovery rules and diagnostics | [Plugin catalog](https://github.com/jmfederico/pi-web/blob/main/src/server/piWebPluginCatalog.ts) |
+| Browser contributions and helpers | [`plugin-api.ts`](https://github.com/pi-studio/pi-studio/blob/main/src/plugin-api.ts), published as `@pi-studio/pi-studio/plugin-api` |
+| Server lifecycle, peers, providers, and host capabilities | [`server-plugin-api.ts`](https://github.com/pi-studio/pi-studio/blob/main/src/server-plugin-api.ts), published as `@pi-studio/pi-studio/server-plugin-api` |
+| A small browser plugin | [Info](https://github.com/pi-studio/pi-studio/tree/main/pi-studio-plugins/info) |
+| A standalone browser/server package | [Workspace-provider example](https://github.com/pi-studio/pi-studio/tree/main/examples/workspace-provider-plugin) |
+| A production workspace provider and paired UI | [Git](https://github.com/pi-studio/pi-studio/tree/main/pi-studio-plugins/git) |
+| Hosted sessions, live updates, and a Pi companion | [Captain's Log](https://github.com/pi-studio/pi-studio/tree/main/pi-packages/captains-log) |
+| A simpler initial-prompt workflow | [Workspace Reviews example](https://github.com/pi-studio/pi-studio/tree/main/examples/session-bridge-plugin) |
+| Package discovery rules and diagnostics | [Plugin catalog](https://github.com/pi-studio/pi-studio/blob/main/src/server/piStudioPluginCatalog.ts) |
 
 The current browser contract is **API v4** and the server contract is **API v3**. Older entries need migration; there is no compatibility shim. The public source contracts and their tests are the reference for signatures, validation, limits, and lifecycle details.
 
 A few design boundaries matter before implementation:
 
-- Declare entries in `package.json` under `piWeb.plugins`; copy packaging from a standalone example. A package can contain multiple entries.
+- Declare entries in `package.json` under `piStudio.plugins`; copy packaging from a standalone example. A package can contain multiple entries.
 - Use only the public package entrypoints. Internal routes, services, and `dist/**` imports are not supported APIs.
 - Keep browser assets in a narrow `browserRoot`: everything inside it is browser-public. Include the built dependencies and assets it needs, and keep secrets outside it. The installed plugin package is limited to 4,096 entries and 16 MiB, excluding `.git` and `node_modules`.
 - Use host helpers for machine/workspace operations and module-relative URLs for plugin assets. Avoid hard-coded application paths.
@@ -382,16 +386,16 @@ A few design boundaries matter before implementation:
 
 **Install only trusted plugins.** Browser entries run in your page. Server entries run inside the session daemon with its filesystem, environment, and process permissions. They are not sandboxed; blocking or faulty server code can affect every session on that daemon. Timeouts help with cooperative work but cannot stop blocking code.
 
-If a plugin is missing or fails, first check **Settings → PI WEB plugins** on the affected machine. Confirm it is installed, enabled, compatible, and active. Check the browser console for browser failures and `pi-web logs` on the target for server failures. A restart-required or stale state usually needs a session-daemon restart followed by a browser reload.
+If a plugin is missing or fails, first check **Settings → PI STUDIO plugins** on the affected machine. Confirm it is installed, enabled, compatible, and active. Check the browser console for browser failures and `pi-studio logs` on the target for server failures. A restart-required or stale state usually needs a session-daemon restart followed by a browser reload.
 
 When the UI cannot recover, run these commands on the affected machine:
 
 ```sh
-pi-web plugins disable <plugin-id> --restart
-pi-web plugins safe-start show
-pi-web plugins safe-start set bundled-only --restart
-pi-web plugins safe-start set none --restart
-pi-web plugins safe-start clear --restart
+pi-studio plugins disable <plugin-id> --restart
+pi-studio plugins safe-start show
+pi-studio plugins safe-start set bundled-only --restart
+pi-studio plugins safe-start set none --restart
+pi-studio plugins safe-start clear --restart
 ```
 
 - **Disable** keeps a named optional plugin from loading on the next daemon start.
@@ -399,4 +403,4 @@ pi-web plugins safe-start clear --restart
 - **None** imports no server plugins. Diagnosis and project-folder workspaces remain available, but Terminal and terminal-backed workflows do not.
 - **Clear** restores ordinary startup after you repair or remove the problem package.
 
-Safe start remains set until cleared. `--restart` restarts only when PI WEB recognizes a safe installed-service action; otherwise it prints manual instructions. These commands edit configuration without loading plugin code. Use `--config /path/to/config.json` for a non-default configuration, and inspect active work before any restart.
+Safe start remains set until cleared. `--restart` restarts only when PI STUDIO recognizes a safe installed-service action; otherwise it prints manual instructions. These commands edit configuration without loading plugin code. Use `--config /path/to/config.json` for a non-default configuration, and inspect active work before any restart.

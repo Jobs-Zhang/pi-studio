@@ -15,9 +15,9 @@ afterEach(() => {
 });
 
 it("loads saved Markdown Preview through the bundled Files plugin without crossing Lit directive runtimes", async () => {
-  const files = await import(pathToFileURL(resolve("dist/pi-web-plugins/files/browser/pi-web-plugin.js")).href);
+  const files = await import(pathToFileURL(resolve("dist/pi-studio-plugins/files/browser/pi-studio-plugin.js")).href);
   files.defineFilesCustomElements();
-  const viewer = document.createElement("pi-web-files-viewer");
+  const viewer = document.createElement("pi-studio-files-viewer");
   const text = "# Notes\n\n> ```diagram\n> source\n> ```\n\n[Safe](https://example.test)\n\n<script>bad()</script>";
   Object.assign(viewer, {
     machineId: "local",
@@ -38,7 +38,7 @@ it("loads saved Markdown Preview through the bundled Files plugin without crossi
     size: text.length, modifiedAt: "2026-10-06T00:00:00.000Z", content: text, truncated: false, binary: false,
   };
   await viewer.updateComplete;
-  const boundary = viewer.shadowRoot.querySelector("pi-web-content-rendering-boundary");
+  const boundary = viewer.shadowRoot.querySelector("pi-studio-content-rendering-boundary");
   expect(boundary).toBeInstanceOf(ContentRenderingBoundary);
   await boundary.updateComplete;
   const preview = viewer.shadowRoot.querySelector(".markdown-preview");
@@ -46,7 +46,7 @@ it("loads saved Markdown Preview through the bundled Files plugin without crossi
   expect(preview.querySelector("script")).toBeNull();
   expect(preview.querySelector("a").getAttribute("rel")).toBe("noopener noreferrer");
   expect(viewer.shadowRoot.querySelector('[role="status"]')).toBeNull();
-  const host = preview.querySelector("blockquote pi-web-content-renderer");
+  const host = preview.querySelector("blockquote pi-studio-content-renderer");
   expect(host).toBeInstanceOf(ContentRendererHost);
   await host.updateComplete;
   expect(host.shadowRoot.querySelector("b").textContent).toBe("source");

@@ -1,4 +1,4 @@
-import type { RunningComponentId } from "../piWebVersionReport.js";
+import type { RunningComponentId } from "../piStudioVersionReport.js";
 import type { NativeServiceBackend, NativeServiceId, NativeServiceManagerRef } from "./servicePlan.js";
 
 /** A service under lifecycle control: its stable id plus its manager-specific unit, label, and log names. */
@@ -10,7 +10,7 @@ export type ServiceLifecycleAction = "start" | "stop" | "restart";
 
 export const serviceStartOrder: readonly NativeServiceId[] = ["sessiond", "web", "uiDev"];
 export const serviceStopOrder: readonly NativeServiceId[] = ["web", "uiDev", "sessiond"];
-// Restart web/UI before sessiond: when `pi-web restart` runs in a pi-web
+// Restart web/UI before sessiond: when `pi-studio restart` runs in a pi-studio
 // terminal (owned by sessiond), restarting sessiond kills the command, so any
 // services handled after it would never be restarted.
 export const serviceRestartOrder: readonly NativeServiceId[] = ["web", "uiDev", "sessiond"];

@@ -1,6 +1,6 @@
 import { createRequire } from "node:module";
 
-export const NODE_PTY_GLOBAL_REINSTALL_COMMAND = "npm install -g @jmfederico/pi-web --allow-scripts=node-pty";
+export const NODE_PTY_GLOBAL_REINSTALL_COMMAND = "npm install -g @pi-studio/pi-studio --allow-scripts=node-pty";
 
 const doctorLabel = "node-pty native module loadable";
 const requireFromHere = createRequire(import.meta.url);
@@ -37,9 +37,9 @@ export function formatNodePtyNativeModuleCheck(check: NodePtyNativeModuleCheck):
       `✗ ${doctorLabel}`,
       `  Could not load node-pty: ${check.message}`,
       "  npm may have skipped node-pty's required install script.",
-      "  For a global npm installation, reinstall PI WEB with:",
+      "  For a global npm installation, reinstall PI STUDIO with:",
       `    ${NODE_PTY_GLOBAL_REINSTALL_COMMAND}`,
-      "  Then run `pi-web doctor` again.",
+      "  Then run `pi-studio doctor` again.",
     ],
   };
 }

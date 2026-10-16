@@ -2,7 +2,7 @@
 
 ## Install on the selected machine
 
-This directory is a standalone local Pi package, not a default PI WEB feature. Copy it to a durable location, run `npm install` and `npm run build` there, and install that absolute directory through **Settings → Pi packages** on the machine that will run reviews. Do not also link another copy into the PI WEB plugins directory.
+This directory is a standalone local Pi package, not a default PI STUDIO feature. Copy it to a durable location, run `npm install` and `npm run build` there, and install that absolute directory through **Settings → Pi packages** on the machine that will run reviews. Do not also link another copy into the PI STUDIO plugins directory.
 
 For manual configuration, preserve existing entries and add the package directory to `packages` in the **Pi profile used by that machine's session daemon**:
 
@@ -10,11 +10,11 @@ For manual configuration, preserve existing entries and add the package director
 { "packages": ["/absolute/path/to/session-bridge-plugin"] }
 ```
 
-Alternatively, `pi install /absolute/path/to/session-bridge-plugin` updates the CLI's active Pi profile; use it only if that is sessiond's profile. A project-local installation (`pi install -l ...` from the workspace) requires normal project trust. Leave `src/companion.ts` enabled in native resource filters. PI WEB discovers `piWeb.plugins`; Pi separately loads `pi.extensions`. Enabling only the backend is insufficient.
+Alternatively, `pi install /absolute/path/to/session-bridge-plugin` updates the CLI's active Pi profile; use it only if that is sessiond's profile. A project-local installation (`pi install -l ...` from the workspace) requires normal project trust. Leave `src/companion.ts` enabled in native resource filters. PI STUDIO discovers `piStudio.plugins`; Pi separately loads `pi.extensions`. Enabling only the backend is insufficient.
 
-Activate a newly installed backend with a manual target session-daemon restart when safe, then reload the browser. Restarting sessiond interrupts hosted sessions: never do it from a session it owns. For remote machines, install/build/enable on that machine and select it in PI WEB. No hosting-instance installation or restart is part of this example's build or tests.
+Activate a newly installed backend with a manual target session-daemon restart when safe, then reload the browser. Restarting sessiond interrupts hosted sessions: never do it from a session it owns. For remote machines, install/build/enable on that machine and select it in PI STUDIO. No hosting-instance installation or restart is part of this example's build or tests.
 
-The example requires the plugin platform release floor declared in `package.json`. For an unreleased PI WEB checkout, build and pack PI WEB first, then install its tarball into this copied example in place of the registry dependency before building. The package remains `private` to prevent accidental npm publication; a built directory can be installed separately, and `npm pack` can archive it. A publisher can choose a package name, remove `private`, and publish the built package explicitly.
+The example requires the plugin platform release floor declared in `package.json`. For an unreleased PI STUDIO checkout, build and pack PI STUDIO first, then install its tarball into this copied example in place of the registry dependency before building. The package remains `private` to prevent accidental npm publication; a built directory can be installed separately, and `npm pack` can archive it. A publisher can choose a package name, remove `private`, and publish the built package explicitly.
 
 ## Review and browse
 
@@ -47,8 +47,8 @@ Findings are limited to 48,000 JavaScript string characters (the prompt asks for
 - `src/browser/index.ts` uses only selected-machine `context.peer`. UI state is keyed by machine/project/workspace; late replies cannot populate another scope. Browser modules and their shared protocol stay within `browserRoot`, including on nested deployments.
 - `src/server.ts` resolves the two public session capabilities in `start()`, creates a session in host-resolved workspace authority, then connects separately. An admitted run belongs to the plugin lifetime, not the short browser request. Disposal closes capture through lifetime cancellation; it does not own the hosted session.
 - `src/companion.ts` uses native `pi.sendUserMessage`, `before_agent_start`, message/tool hooks, and `agent_settled`. A generated request id appears in the kickoff prompt and reply events; the backend subscribes before emitting. Receipt and final completion are distinct. `agent_end` alone is not completion because retries and compaction can follow it.
-- The companion has no standalone SDK runtime and does not write storage files. Outside PI WEB it loads harmlessly but has no review panel/backend to request or save work.
+- The companion has no standalone SDK runtime and does not write storage files. Outside PI STUDIO it loads harmlessly but has no review panel/backend to request or save work.
 
 This is trusted-author tooling, **not a read-only sandbox**. “Do not modify files” is a model instruction; normal Pi tools, project instructions, and installed extensions still have their usual permissions. Do not use it where prompt-only protection is insufficient. Other installed extensions can affect model behavior and can emit events on the same native bus. The protocol correlates cooperative events; it is not authentication against malicious extensions.
 
-See the [PI WEB plugin guide](https://pi-web.dev/plugins) for discovery, capability and peer limits, trust, and lifecycle contracts. Source is strict TypeScript; the example build uses `skipLibCheck` for native Pi dependency declarations. The repository's installed-package smoke separately checks standalone browser/backend declarations with library checking enabled.
+See the [PI STUDIO plugin guide](https://pi-studio.dev/plugins) for discovery, capability and peer limits, trust, and lifecycle contracts. Source is strict TypeScript; the example build uses `skipLibCheck` for native Pi dependency declarations. The repository's installed-package smoke separately checks standalone browser/backend declarations with library checking enabled.

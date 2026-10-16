@@ -7,7 +7,7 @@ log() {
 }
 
 die() {
-  log "pi-web Docker installer: $*"
+  log "pi-studio Docker installer: $*"
   exit 1
 }
 
@@ -15,18 +15,18 @@ usage() {
   cat <<'EOF'
 Usage: docker/install.sh [options]
 
-Install or update the local-build PI WEB Docker runtime. The installer refreshes
+Install or update the local-build PI STUDIO Docker runtime. The installer refreshes
 Docker assets in the install directory, writes host-specific .env values,
 rebuilds the image without using cache, and recreates the split sessiond/web
 services without deleting persistent data.
 
 Options:
-  --install-dir DIR       Install directory (default: $XDG_DATA_HOME/pi-web-docker
-                          or ~/.local/share/pi-web-docker)
+  --install-dir DIR       Install directory (default: $XDG_DATA_HOME/pi-studio-docker
+                          or ~/.local/share/pi-studio-docker)
   --data-dir DIR          Persistent data directory (default: INSTALL_DIR/data)
   --bind-address ADDR     Host bind address (default: 127.0.0.1)
   --port PORT             Host port (default: 8504)
-  --pi-web-version VER    npm @jmfederico/pi-web version pin (default: latest)
+  --pi-studio-version VER    npm @pi-studio/pi-studio version pin (default: latest)
   --opensuse-image IMAGE  openSUSE base image (default: opensuse/tumbleweed)
   --nodejs-major MAJOR    Node.js major version package to install (default: 22)
   --nodejs-repo REPO      Node.js zypper repository URL, auto, or disabled
@@ -39,7 +39,7 @@ Options:
   -h, --help              Show this help
 
 Where it runs:
-  On the host, the installer detects the Docker host setup. Inside a PI WEB
+  On the host, the installer detects the Docker host setup. Inside a PI STUDIO
   container it reuses the host facts recorded in .env, because a container
   cannot observe its host: from inside a Linux container, a Docker Desktop for
   Mac host looks like native Linux Docker. Rerun the installer on the host
@@ -49,7 +49,7 @@ Where it runs:
 Progressive host setup:
   The installer supports native Linux Docker Engine and Docker Desktop for Mac.
   Unknown Docker hosts fail closed before services are recreated. Set
-  PI_WEB_DOCKER_EXTRA_HOST_PATHS to a whitespace-separated list of additional
+  PI_STUDIO_DOCKER_EXTRA_HOST_PATHS to a whitespace-separated list of additional
   existing absolute directories to bind-mount at the same path in the containers.
 
 Container environment:
@@ -61,7 +61,7 @@ Container environment:
 Environment variables with the same names used in .env may also be set before
 running the installer, for example:
 
-  PI_WEB_VERSION=1.202606.4 docker/install.sh
+  PI_STUDIO_VERSION=1.202606.4 docker/install.sh
 EOF
 }
 
@@ -69,61 +69,61 @@ while [ "$#" -gt 0 ]; do
   case "$1" in
     --install-dir)
       [ "$#" -ge 2 ] || die "--install-dir requires a value"
-      PI_WEB_DOCKER_HOME=$2
+      PI_STUDIO_DOCKER_HOME=$2
       shift 2
       ;;
     --data-dir)
       [ "$#" -ge 2 ] || die "--data-dir requires a value"
-      PI_WEB_DOCKER_DATA_DIR=$2
+      PI_STUDIO_DOCKER_DATA_DIR=$2
       shift 2
       ;;
     --bind-address)
       [ "$#" -ge 2 ] || die "--bind-address requires a value"
-      PI_WEB_BIND_ADDR=$2
+      PI_STUDIO_BIND_ADDR=$2
       shift 2
       ;;
     --port)
       [ "$#" -ge 2 ] || die "--port requires a value"
-      PI_WEB_PORT=$2
+      PI_STUDIO_PORT=$2
       shift 2
       ;;
-    --pi-web-version)
-      [ "$#" -ge 2 ] || die "--pi-web-version requires a value"
-      PI_WEB_VERSION=$2
+    --pi-studio-version)
+      [ "$#" -ge 2 ] || die "--pi-studio-version requires a value"
+      PI_STUDIO_VERSION=$2
       shift 2
       ;;
     --opensuse-image)
       [ "$#" -ge 2 ] || die "--opensuse-image requires a value"
-      PI_WEB_OPENSUSE_IMAGE=$2
+      PI_STUDIO_OPENSUSE_IMAGE=$2
       shift 2
       ;;
     --nodejs-major)
       [ "$#" -ge 2 ] || die "--nodejs-major requires a value"
-      PI_WEB_NODEJS_MAJOR=$2
+      PI_STUDIO_NODEJS_MAJOR=$2
       shift 2
       ;;
     --nodejs-repo)
       [ "$#" -ge 2 ] || die "--nodejs-repo requires a value"
-      PI_WEB_NODEJS_REPO=$2
+      PI_STUDIO_NODEJS_REPO=$2
       shift 2
       ;;
     --extra-zypper-packages)
       [ "$#" -ge 2 ] || die "--extra-zypper-packages requires a value"
-      PI_WEB_EXTRA_ZYPPER_PACKAGES=$2
+      PI_STUDIO_EXTRA_ZYPPER_PACKAGES=$2
       shift 2
       ;;
     --asset-dir)
       [ "$#" -ge 2 ] || die "--asset-dir requires a value"
-      PI_WEB_DOCKER_ASSET_DIR=$2
+      PI_STUDIO_DOCKER_ASSET_DIR=$2
       shift 2
       ;;
     --asset-ref)
       [ "$#" -ge 2 ] || die "--asset-ref requires a value"
-      PI_WEB_DOCKER_REF=$2
+      PI_STUDIO_DOCKER_REF=$2
       shift 2
       ;;
     --skip-compose)
-      PI_WEB_DOCKER_SKIP_COMPOSE=1
+      PI_STUDIO_DOCKER_SKIP_COMPOSE=1
       shift
       ;;
     -h|--help)
@@ -284,7 +284,7 @@ write_asset() {
 }
 
 compose_cmd() {
-  pi_web_docker_compose "$@"
+  pi_studio_docker_compose "$@"
 }
 
 run_runtime_compose() {
@@ -301,22 +301,22 @@ fi
 
 default_install_dir=
 if [ -n "$default_data_home" ]; then
-  default_install_dir=$default_data_home/pi-web-docker
+  default_install_dir=$default_data_home/pi-studio-docker
 fi
-install_dir_input=${PI_WEB_DOCKER_HOME:-$default_install_dir}
-[ -n "$install_dir_input" ] || die "HOME, XDG_DATA_HOME, or PI_WEB_DOCKER_HOME must be set"
+install_dir_input=${PI_STUDIO_DOCKER_HOME:-$default_install_dir}
+[ -n "$install_dir_input" ] || die "HOME, XDG_DATA_HOME, or PI_STUDIO_DOCKER_HOME must be set"
 install_dir=$(absolute_dir "$install_dir_input") || die "could not create install directory"
 env_file=$install_dir/.env
 
-asset_ref=$(value_from_env_or_existing_or_default PI_WEB_DOCKER_REF main)
-asset_base=${PI_WEB_DOCKER_ASSET_BASE:-https://raw.githubusercontent.com/jmfederico/pi-web/$asset_ref/docker}
+asset_ref=$(value_from_env_or_existing_or_default PI_STUDIO_DOCKER_REF main)
+asset_base=${PI_STUDIO_DOCKER_ASSET_BASE:-https://raw.githubusercontent.com/pi-studio/pi-studio/$asset_ref/docker}
 use_local_asset_dir=1
-if [ "${PI_WEB_DOCKER_REFRESH_ASSETS:-0}" = 1 ] || [ "${PI_WEB_DOCKER_REF+x}" = x ] || [ "${PI_WEB_DOCKER_ASSET_BASE+x}" = x ]; then
+if [ "${PI_STUDIO_DOCKER_REFRESH_ASSETS:-0}" = 1 ] || [ "${PI_STUDIO_DOCKER_REF+x}" = x ] || [ "${PI_STUDIO_DOCKER_ASSET_BASE+x}" = x ]; then
   use_local_asset_dir=0
 fi
 
-if [ "${PI_WEB_DOCKER_ASSET_DIR+x}" = x ]; then
-  asset_dir=$(absolute_existing_dir "$PI_WEB_DOCKER_ASSET_DIR") || die "asset directory does not exist: $PI_WEB_DOCKER_ASSET_DIR"
+if [ "${PI_STUDIO_DOCKER_ASSET_DIR+x}" = x ]; then
+  asset_dir=$(absolute_existing_dir "$PI_STUDIO_DOCKER_ASSET_DIR") || die "asset directory does not exist: $PI_STUDIO_DOCKER_ASSET_DIR"
   asset_base=
   log "Using Docker assets from $asset_dir"
 elif [ "$use_local_asset_dir" = 1 ] && local_asset_dir=$(find_local_asset_dir 2>/dev/null) && [ "$local_asset_dir" != "$install_dir" ]; then
@@ -338,7 +338,7 @@ if [ -n "$asset_dir" ]; then
   profile_helper=$asset_dir/internal/host-profile.sh
   [ -f "$profile_helper" ] || die "missing Docker asset: $profile_helper"
 else
-  profile_helper_temp=${TMPDIR:-/tmp}/pi-web-host-profile.$$
+  profile_helper_temp=${TMPDIR:-/tmp}/pi-studio-host-profile.$$
   fetch_url "$asset_base/internal/host-profile.sh" "$profile_helper_temp"
   profile_helper=$profile_helper_temp
 fi
@@ -347,16 +347,16 @@ fi
 # shellcheck disable=SC1091
 . "$profile_helper"
 
-persisted_host_profile=$(existing_env_value PI_WEB_DOCKER_HOST_PROFILE || true)
+persisted_host_profile=$(existing_env_value PI_STUDIO_DOCKER_HOST_PROFILE || true)
 persisted_hostexec_mode=$(existing_env_value HOSTEXEC_MODE || true)
-persisted_socket_source=$(existing_env_value PI_WEB_DOCKER_SOCKET_SOURCE || true)
+persisted_socket_source=$(existing_env_value PI_STUDIO_DOCKER_SOCKET_SOURCE || true)
 
-if pi_web_docker_host_in_container && [ -z "$persisted_host_profile" ]; then
-  die "this installer is running inside a PI WEB container but $env_file has no recorded Docker host setup; run the installer on the Docker host first"
+if pi_studio_docker_host_in_container && [ -z "$persisted_host_profile" ]; then
+  die "this installer is running inside a PI STUDIO container but $env_file has no recorded Docker host setup; run the installer on the Docker host first"
 fi
 
-if ! pi_web_docker_host_resolve_profile "$persisted_host_profile" "$persisted_hostexec_mode" "$persisted_socket_source"; then
-  pi_web_docker_host_print_detection_failure
+if ! pi_studio_docker_host_resolve_profile "$persisted_host_profile" "$persisted_hostexec_mode" "$persisted_socket_source"; then
+  pi_studio_docker_host_print_detection_failure
   die "refusing to install on an unsupported or unknown Docker host setup"
 fi
 
@@ -364,7 +364,7 @@ write_asset Dockerfile 0644
 write_asset compose.yml 0644
 write_asset .dockerignore 0644
 write_asset install.sh 0755
-write_asset pi-web-docker 0755
+write_asset pi-studio-docker 0755
 write_asset internal/bin/hostexec 0755
 write_asset internal/image/install-opensuse-base 0755
 write_asset internal/host-profile.sh 0644
@@ -375,122 +375,122 @@ if [ ! -e "$custom_image_hooks_dir/.gitkeep" ]; then
   : >"$custom_image_hooks_dir/.gitkeep" || die "could not initialize custom image hooks directory: $custom_image_hooks_dir"
 fi
 
-if [ "${PI_WEB_DOCKER_HOST_PROFILE_REUSED:-0}" = 1 ]; then
+if [ "${PI_STUDIO_DOCKER_HOST_PROFILE_REUSED:-0}" = 1 ]; then
   # Container identity and the Docker group are host facts too: a container sees
   # its own account and its own view of the mounted socket, so keep what the
   # host installer recorded.
-  pi_web_uid=$(value_from_env_or_existing_or_default PI_WEB_UID "$(id -u)")
-  pi_web_gid=$(value_from_env_or_existing_or_default PI_WEB_GID "$(id -g)")
-  docker_gid=$(value_from_env_or_existing_or_default DOCKER_GID "$(pi_web_docker_host_detect_docker_gid)")
+  pi_studio_uid=$(value_from_env_or_existing_or_default PI_STUDIO_UID "$(id -u)")
+  pi_studio_gid=$(value_from_env_or_existing_or_default PI_STUDIO_GID "$(id -g)")
+  docker_gid=$(value_from_env_or_existing_or_default DOCKER_GID "$(pi_studio_docker_host_detect_docker_gid)")
 else
-  pi_web_uid=$(value_from_env_or_default PI_WEB_UID "$(id -u)")
-  pi_web_gid=$(value_from_env_or_default PI_WEB_GID "$(id -g)")
-  docker_gid=$(value_from_env_or_default DOCKER_GID "$(pi_web_docker_host_detect_docker_gid)")
+  pi_studio_uid=$(value_from_env_or_default PI_STUDIO_UID "$(id -u)")
+  pi_studio_gid=$(value_from_env_or_default PI_STUDIO_GID "$(id -g)")
+  docker_gid=$(value_from_env_or_default DOCKER_GID "$(pi_studio_docker_host_detect_docker_gid)")
 fi
-pi_web_host_profile=$PI_WEB_DETECTED_DOCKER_HOST_PROFILE
-hostexec_mode=$PI_WEB_DETECTED_HOSTEXEC_MODE
-docker_socket_source=$PI_WEB_DETECTED_DOCKER_SOCKET_SOURCE
+pi_studio_host_profile=$PI_STUDIO_DETECTED_DOCKER_HOST_PROFILE
+hostexec_mode=$PI_STUDIO_DETECTED_HOSTEXEC_MODE
+docker_socket_source=$PI_STUDIO_DETECTED_DOCKER_SOCKET_SOURCE
 
-raw_data_dir=$(value_from_env_or_existing_or_default PI_WEB_DOCKER_DATA_DIR "$install_dir/data")
+raw_data_dir=$(value_from_env_or_existing_or_default PI_STUDIO_DOCKER_DATA_DIR "$install_dir/data")
 data_dir=$(absolute_dir "$(path_from_base "$install_dir" "$raw_data_dir")") || die "could not create data directory"
 
-pi_web_bind_addr=$(value_from_env_or_existing_or_default PI_WEB_BIND_ADDR 127.0.0.1)
-pi_web_port=$(value_from_env_or_existing_or_default PI_WEB_PORT 8504)
-pi_web_version=$(value_from_env_or_existing_or_default PI_WEB_VERSION latest)
-pi_web_opensuse_image=$(value_from_env_or_existing_or_default PI_WEB_OPENSUSE_IMAGE opensuse/tumbleweed)
-pi_web_nodejs_major=$(value_from_env_or_existing_or_default PI_WEB_NODEJS_MAJOR 22)
-pi_web_nodejs_repo=$(value_from_env_or_existing_or_default PI_WEB_NODEJS_REPO auto)
-pi_web_extra_zypper_packages=$(value_from_env_or_existing_or_default PI_WEB_EXTRA_ZYPPER_PACKAGES "")
-pi_web_image=$(value_from_env_or_existing_or_default PI_WEB_IMAGE pi-web:local)
-compose_project_name=$(value_from_env_or_existing_or_default COMPOSE_PROJECT_NAME pi-web)
+pi_studio_bind_addr=$(value_from_env_or_existing_or_default PI_STUDIO_BIND_ADDR 127.0.0.1)
+pi_studio_port=$(value_from_env_or_existing_or_default PI_STUDIO_PORT 8504)
+pi_studio_version=$(value_from_env_or_existing_or_default PI_STUDIO_VERSION latest)
+pi_studio_opensuse_image=$(value_from_env_or_existing_or_default PI_STUDIO_OPENSUSE_IMAGE opensuse/tumbleweed)
+pi_studio_nodejs_major=$(value_from_env_or_existing_or_default PI_STUDIO_NODEJS_MAJOR 22)
+pi_studio_nodejs_repo=$(value_from_env_or_existing_or_default PI_STUDIO_NODEJS_REPO auto)
+pi_studio_extra_zypper_packages=$(value_from_env_or_existing_or_default PI_STUDIO_EXTRA_ZYPPER_PACKAGES "")
+pi_studio_image=$(value_from_env_or_existing_or_default PI_STUDIO_IMAGE pi-studio:local)
+compose_project_name=$(value_from_env_or_existing_or_default COMPOSE_PROJECT_NAME pi-studio)
 hostexec_image=$(value_from_env_or_existing_or_default HOSTEXEC_IMAGE alpine:3.22)
-pi_web_max_upload_bytes=$(value_from_env_or_existing_or_default PI_WEB_MAX_UPLOAD_BYTES 67108864)
-pi_web_extra_host_paths=$(value_from_env_or_existing_or_default PI_WEB_DOCKER_EXTRA_HOST_PATHS "")
+pi_studio_max_upload_bytes=$(value_from_env_or_existing_or_default PI_STUDIO_MAX_UPLOAD_BYTES 67108864)
+pi_studio_extra_host_paths=$(value_from_env_or_existing_or_default PI_STUDIO_DOCKER_EXTRA_HOST_PATHS "")
 
-require_non_empty PI_WEB_UID "$pi_web_uid"
-require_non_empty PI_WEB_GID "$pi_web_gid"
+require_non_empty PI_STUDIO_UID "$pi_studio_uid"
+require_non_empty PI_STUDIO_GID "$pi_studio_gid"
 require_non_empty DOCKER_GID "$docker_gid"
-require_non_empty PI_WEB_DOCKER_HOST_PROFILE "$pi_web_host_profile"
-require_non_empty PI_WEB_DOCKER_SOCKET_SOURCE "$docker_socket_source"
+require_non_empty PI_STUDIO_DOCKER_HOST_PROFILE "$pi_studio_host_profile"
+require_non_empty PI_STUDIO_DOCKER_SOCKET_SOURCE "$docker_socket_source"
 require_non_empty HOSTEXEC_MODE "$hostexec_mode"
-require_non_empty PI_WEB_DOCKER_DATA_DIR "$data_dir"
-require_non_empty PI_WEB_DOCKER_INSTALL_DIR "$install_dir"
-require_non_empty PI_WEB_DOCKER_REF "$asset_ref"
-require_non_empty PI_WEB_BIND_ADDR "$pi_web_bind_addr"
-require_non_empty PI_WEB_PORT "$pi_web_port"
-require_non_empty PI_WEB_VERSION "$pi_web_version"
-require_non_empty PI_WEB_OPENSUSE_IMAGE "$pi_web_opensuse_image"
-require_non_empty PI_WEB_NODEJS_MAJOR "$pi_web_nodejs_major"
-require_non_empty PI_WEB_NODEJS_REPO "$pi_web_nodejs_repo"
-require_non_empty PI_WEB_IMAGE "$pi_web_image"
+require_non_empty PI_STUDIO_DOCKER_DATA_DIR "$data_dir"
+require_non_empty PI_STUDIO_DOCKER_INSTALL_DIR "$install_dir"
+require_non_empty PI_STUDIO_DOCKER_REF "$asset_ref"
+require_non_empty PI_STUDIO_BIND_ADDR "$pi_studio_bind_addr"
+require_non_empty PI_STUDIO_PORT "$pi_studio_port"
+require_non_empty PI_STUDIO_VERSION "$pi_studio_version"
+require_non_empty PI_STUDIO_OPENSUSE_IMAGE "$pi_studio_opensuse_image"
+require_non_empty PI_STUDIO_NODEJS_MAJOR "$pi_studio_nodejs_major"
+require_non_empty PI_STUDIO_NODEJS_REPO "$pi_studio_nodejs_repo"
+require_non_empty PI_STUDIO_IMAGE "$pi_studio_image"
 require_non_empty COMPOSE_PROJECT_NAME "$compose_project_name"
 require_non_empty HOSTEXEC_IMAGE "$hostexec_image"
-require_non_empty PI_WEB_MAX_UPLOAD_BYTES "$pi_web_max_upload_bytes"
+require_non_empty PI_STUDIO_MAX_UPLOAD_BYTES "$pi_studio_max_upload_bytes"
 
-pi_web_extra_zypper_packages_env=$(dotenv_quote "$pi_web_extra_zypper_packages")
-pi_web_extra_host_paths_env=$(dotenv_quote "$pi_web_extra_host_paths")
+pi_studio_extra_zypper_packages_env=$(dotenv_quote "$pi_studio_extra_zypper_packages")
+pi_studio_extra_host_paths_env=$(dotenv_quote "$pi_studio_extra_host_paths")
 compose_override_file=$install_dir/compose.override.yml
-if ! pi_web_docker_host_write_compose_override "$compose_override_file" "$pi_web_host_profile" "$pi_web_extra_host_paths" "$install_dir"; then
+if ! pi_studio_docker_host_write_compose_override "$compose_override_file" "$pi_studio_host_profile" "$pi_studio_extra_host_paths" "$install_dir"; then
   die "could not write host-specific Compose override"
 fi
 
 container_env_file=$data_dir/container.env
-if ! pi_web_docker_write_container_env_template "$container_env_file"; then
+if ! pi_studio_docker_write_container_env_template "$container_env_file"; then
   die "could not create container environment file: $container_env_file"
 fi
 
 umask 077
 temp_env=$env_file.$$
 cat >"$temp_env" <<EOF
-# Generated by the PI WEB Docker installer.
+# Generated by the PI STUDIO Docker installer.
 # Re-run install.sh to refresh Docker assets and update the local image.
-# Persistent data lives in PI_WEB_DOCKER_DATA_DIR and is not deleted by updates.
+# Persistent data lives in PI_STUDIO_DOCKER_DATA_DIR and is not deleted by updates.
 
 # Host identity used for the runtime containers and image user account.
-PI_WEB_UID=$pi_web_uid
-PI_WEB_GID=$pi_web_gid
+PI_STUDIO_UID=$pi_studio_uid
+PI_STUDIO_GID=$pi_studio_gid
 DOCKER_GID=$docker_gid
 
 # Docker host facts, detected on the host and reused by in-container reruns.
-PI_WEB_DOCKER_HOST_PROFILE=$pi_web_host_profile
-PI_WEB_DOCKER_SOCKET_SOURCE=$docker_socket_source
+PI_STUDIO_DOCKER_HOST_PROFILE=$pi_studio_host_profile
+PI_STUDIO_DOCKER_SOCKET_SOURCE=$docker_socket_source
 HOSTEXEC_MODE=$hostexec_mode
-PI_WEB_DOCKER_EXTRA_HOST_PATHS=$pi_web_extra_host_paths_env
+PI_STUDIO_DOCKER_EXTRA_HOST_PATHS=$pi_studio_extra_host_paths_env
 
 # Persistent data, Docker control root, and localhost-only default exposure.
-PI_WEB_DOCKER_DATA_DIR=$data_dir
-PI_WEB_DOCKER_INSTALL_DIR=$install_dir
-PI_WEB_DOCKER_REF=$asset_ref
-PI_WEB_BIND_ADDR=$pi_web_bind_addr
-PI_WEB_PORT=$pi_web_port
+PI_STUDIO_DOCKER_DATA_DIR=$data_dir
+PI_STUDIO_DOCKER_INSTALL_DIR=$install_dir
+PI_STUDIO_DOCKER_REF=$asset_ref
+PI_STUDIO_BIND_ADDR=$pi_studio_bind_addr
+PI_STUDIO_PORT=$pi_studio_port
 
-# npm package selection. Pi resolves from PI WEB's npm peer dependency.
-PI_WEB_VERSION=$pi_web_version
+# npm package selection. Pi resolves from PI STUDIO's npm peer dependency.
+PI_STUDIO_VERSION=$pi_studio_version
 
 # openSUSE/Node.js image build inputs.
-PI_WEB_OPENSUSE_IMAGE=$pi_web_opensuse_image
-PI_WEB_NODEJS_MAJOR=$pi_web_nodejs_major
-PI_WEB_NODEJS_REPO=$pi_web_nodejs_repo
-PI_WEB_EXTRA_ZYPPER_PACKAGES=$pi_web_extra_zypper_packages_env
+PI_STUDIO_OPENSUSE_IMAGE=$pi_studio_opensuse_image
+PI_STUDIO_NODEJS_MAJOR=$pi_studio_nodejs_major
+PI_STUDIO_NODEJS_REPO=$pi_studio_nodejs_repo
+PI_STUDIO_EXTRA_ZYPPER_PACKAGES=$pi_studio_extra_zypper_packages_env
 
 # Runtime image names, Compose project, and limits.
-PI_WEB_IMAGE=$pi_web_image
+PI_STUDIO_IMAGE=$pi_studio_image
 COMPOSE_PROJECT_NAME=$compose_project_name
 HOSTEXEC_IMAGE=$hostexec_image
-PI_WEB_MAX_UPLOAD_BYTES=$pi_web_max_upload_bytes
+PI_STUDIO_MAX_UPLOAD_BYTES=$pi_studio_max_upload_bytes
 EOF
 mv "$temp_env" "$env_file"
 
 log "Wrote Docker assets to $install_dir"
 log "Wrote runtime environment to $env_file"
 log "Wrote host Compose override to $compose_override_file"
-if [ "${PI_WEB_DOCKER_HOST_PROFILE_REUSED:-0}" = 1 ]; then
-  log "Reused the recorded PI WEB Docker host profile: $pi_web_host_profile"
+if [ "${PI_STUDIO_DOCKER_HOST_PROFILE_REUSED:-0}" = 1 ]; then
+  log "Reused the recorded PI STUDIO Docker host profile: $pi_studio_host_profile"
   log "Rerun the installer on the Docker host to pick up host changes."
 else
-  log "Selected PI WEB Docker host profile: $pi_web_host_profile"
+  log "Selected PI STUDIO Docker host profile: $pi_studio_host_profile"
 fi
-case "$pi_web_host_profile" in
+case "$pi_studio_host_profile" in
   linux-native-docker)
     log "Enabled Linux host mounts and hostexec namespace bridge."
     ;;
@@ -498,12 +498,12 @@ case "$pi_web_host_profile" in
     log "Enabled Docker Desktop for Mac project mounts. hostexec is disabled because containers cannot enter native macOS namespaces."
     ;;
 esac
-log "Persistent PI WEB Docker data: $data_dir"
+log "Persistent PI STUDIO Docker data: $data_dir"
 log "Container environment (safe to edit): $container_env_file"
 log "Custom image hooks: $custom_image_hooks_dir"
 
-if [ "${PI_WEB_DOCKER_SKIP_COMPOSE:-0}" = 1 ]; then
-  log "Skipping Docker build/recreate because PI_WEB_DOCKER_SKIP_COMPOSE=1"
+if [ "${PI_STUDIO_DOCKER_SKIP_COMPOSE:-0}" = 1 ]; then
+  log "Skipping Docker build/recreate because PI_STUDIO_DOCKER_SKIP_COMPOSE=1"
   exit 0
 fi
 
@@ -518,26 +518,26 @@ fi
 cache_bust=${CACHE_BUST:-install-$(date -u +%Y%m%dT%H%M%SZ)}
 
 log ""
-log "WARNING: updating recreates the PI WEB Docker session daemon."
+log "WARNING: updating recreates the PI STUDIO Docker session daemon."
 log "Active Pi agent runtimes inside this Docker install can stop; update while sessions are idle."
 log "Persistent data under $data_dir is kept. The installer does not run 'docker compose down -v'."
 log ""
-log "Building $pi_web_image with --pull --no-cache (CACHE_BUST=$cache_bust) ..."
+log "Building $pi_studio_image with --pull --no-cache (CACHE_BUST=$cache_bust) ..."
 (
   cd "$install_dir"
   CACHE_BUST=$cache_bust run_runtime_compose build --pull --no-cache
 )
 
-log "Recreating split PI WEB Docker services ..."
+log "Recreating split PI STUDIO Docker services ..."
 (
   cd "$install_dir"
   run_runtime_compose up -d --force-recreate --remove-orphans
 )
 
 log ""
-log "PI WEB Docker runtime is ready: http://$pi_web_bind_addr:$pi_web_port"
+log "PI STUDIO Docker runtime is ready: http://$pi_studio_bind_addr:$pi_studio_port"
 log "Install directory: $install_dir"
-log "To update later, run: $install_dir/pi-web-docker update"
+log "To update later, run: $install_dir/pi-studio-docker update"
 (
   cd "$install_dir"
   run_runtime_compose ps

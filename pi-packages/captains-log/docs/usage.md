@@ -8,10 +8,10 @@ To keep the previous pirate's context after a daemon restart, open the most rece
 
 ## Results and connections
 
-Use **Open source session** beneath a translation to return to its original conversation in chat, even when another conversation is selected. This action uses the record's machine/project/workspace scope and source session ID. If the source is no longer available, PI WEB shows its normal unavailable-destination message; it does not create a replacement conversation.
+Use **Open source session** beneath a translation to return to its original conversation in chat, even when another conversation is selected. This action uses the record's machine/project/workspace scope and source session ID. If the source is no longer available, PI STUDIO shows its normal unavailable-destination message; it does not create a replacement conversation.
 
 - The translation is rendered as Markdown, including headings, lists, emphasis, links, tables, and code blocks. Embedded HTML stays literal, unsafe links are inert, and images are not loaded automatically. **Previous translations** holds earlier results; **Diagnostics** holds session/request IDs and the message trail. Both start collapsed. Existing review-era logs remain on disk but are not shown as translations.
-- The panel inherits PI WEB's workspace styles and themes. The action-palette **Open pirate translator** opens it without spending model tokens.
+- The panel inherits PI STUDIO's workspace styles and themes. The action-palette **Open pirate translator** opens it without spending model tokens.
 - Browser requests and backend progress use a bidirectional peer channel, with no polling. Opening or reconnecting loads a snapshot. Progress is not token-by-token model streaming; the completed translation arrives when the pirate finishes.
 - Closing the panel or browser does not cancel admitted work. Reconnect to recover the result. Requests with uncertain delivery are never automatically resent. Automatic pirate creation happens only before sending a translation, when the previous pirate is confirmed unhosted—not after a timeout or arbitrary connection failure.
 
@@ -25,8 +25,8 @@ Translations and metadata are stored under the host-provided plugin data directo
 
 ## Installation and activation
 
-Install from **Settings → Pi packages → Available packages** on the target machine, then explicitly enable **Captain's Log** in **Settings → PI WEB plugins**. The package ships compiled. Manual installation can use `pi install /absolute/path/to/dist/pi-packages/captains-log` with the target machine's Pi profile.
+Install from **Settings → Pi packages → Available packages** on the target machine, then explicitly enable **Captain's Log** in **Settings → PI STUDIO plugins**. The package ships compiled. Manual installation can use `pi install /absolute/path/to/dist/pi-packages/captains-log` with the target machine's Pi profile.
 
 Restart the target session daemon manually when safe, **from outside its hosted sessions**, then reload the browser. A web/API restart alone cannot activate the backend. Existing sessions need `/reload` to load an updated native companion. Project-scoped packages require normal project trust.
 
-Disabling the PI WEB plugin controls its panel/backend, not its native extension. Remove the Pi package to remove both resource declarations; saved conversations and plugin data are retained. The older Workspace Reviews example has a separate plugin ID and must be disabled or removed separately.
+Disabling the PI STUDIO plugin controls its panel/backend, not its native extension. Remove the Pi package to remove both resource declarations; saved conversations and plugin data are retained. The older Workspace Reviews example has a separate plugin ID and must be disabled or removed separately.

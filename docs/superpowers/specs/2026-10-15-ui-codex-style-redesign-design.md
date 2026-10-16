@@ -5,7 +5,7 @@
 
 ## 背景与目标
 
-当前 `pi-web-light` 主题为暖米色底（`#f7f1e6`）+ 卡片堆叠式侧栏，视觉偏旧。参考 Codex 桌面端的浅色设计，对整个 UI 的背景色体系与侧栏导航结构进行重构，目标是更干净、中性的冷灰视觉，并解决侧栏四段平铺（Machines / Projects / Workspaces / Sessions）层级割裂的问题。
+当前 `pi-studio-light` 主题为暖米色底（`#f7f1e6`）+ 卡片堆叠式侧栏，视觉偏旧。参考 Codex 桌面端的浅色设计，对整个 UI 的背景色体系与侧栏导航结构进行重构，目标是更干净、中性的冷灰视觉，并解决侧栏四段平铺（Machines / Projects / Workspaces / Sessions）层级割裂的问题。
 
 确认的范围结论：
 
@@ -19,8 +19,8 @@
 
 确认过的效果图（HTML，可直接浏览器打开查看交互态）：
 
-- 浅色定稿：`~/tools/playwright/targets/pi-web/mockup-codex-v4.html`（渲染图 `runs/mockup-v4.png`）
-- 深色 C 方案：`~/tools/playwright/targets/pi-web/mockup-dark-c.html`（渲染图 `runs/mockup-dark-c3.png`）
+- 浅色定稿：`~/tools/playwright/targets/pi-studio/mockup-codex-v4.html`（渲染图 `runs/mockup-v4.png`）
+- 深色 C 方案：`~/tools/playwright/targets/pi-studio/mockup-dark-c.html`（渲染图 `runs/mockup-dark-c3.png`）
 
 ## 视觉设计
 
@@ -72,9 +72,9 @@
 新结构（深浅色共用）：
 
 ```
-顶栏：│ PI WEB [🖥 本机 hp ▾] [Actions] │  ← 机器下拉沿用现有位置：顶栏品牌右侧，
+顶栏：│ PI STUDIO [🖥 本机 hp ▾] [Actions] │  ← 机器下拉沿用现有位置：顶栏品牌右侧，
 ├─────────────────────────┤     切换后树只显示当前机器内容，机器不进树层级
-│ ▾ 📁 pi-web          ●  │  ← 项目节点：折叠时右侧显示会话数量
+│ ▾ 📁 pi-studio          ●  │  ← 项目节点：折叠时右侧显示会话数量
 │   ▾ ⑂ main [主工作区] ● │  ← 工作区节点：徽章区分 主工作区 / worktree
 │   │ 💬 UI 背景色设计  ● │  ← 会话节点：缩进 + 左侧竖线
 │   │ 💬 修复重连       ○ │
@@ -89,7 +89,7 @@
 行为规则：
 
 - 节点 ▸/▾ 展开折叠；折叠的项目/工作区节点右侧显示会话总数；活跃状态点（●）沿层级向上冒泡显示。
-- 机器下拉选择框保持现有位置（顶栏「PI WEB」品牌右侧），不进入侧栏。
+- 机器下拉选择框保持现有位置（顶栏「PI STUDIO」品牌右侧），不进入侧栏。
 - 原 WORKSPACES 独立段落取消，工作区并入树（功能不删，仅改呈现）。
 - 原 Sessions 平铺段落取消，会话全部挂到树上。
 - 选中态为圆角浅灰块（浅色 `#e4e6e9` / 深色 `#2b3038`）。
@@ -104,7 +104,7 @@
 
 ## 实现要点
 
-1. **主题 token**：改 `src/client/src/plugins/themes/index.ts` 的 `piWebLightTokens`（完整新值）与 `piWebDarkTokens`（仅背景族冷灰化）。`classicTokens` 不动。theme pair 机制（auto 跟随系统）不变。
+1. **主题 token**：改 `src/client/src/plugins/themes/index.ts` 的 `piStudioLightTokens`（完整新值）与 `piStudioDarkTokens`（仅背景族冷灰化）。`classicTokens` 不动。theme pair 机制（auto 跟随系统）不变。
 2. **AppShell 布局**：主内容区/右侧面板改为悬浮卡片样式（浅色），相关结构样式收敛到主题 token 驱动的类上，避免深浅色各写一套结构。
 3. **侧栏树组件**：现有 `AppNavigationPanel` 四段平铺改为单棵树；数据来自现有 navigationState（machines/projects/workspaces/sessions），改为树模型组装。机器下拉保持顶栏现有位置与数据源。
 4. **不改动**：composer 控件布局、classic 主题、终端渲染、插件 API（ThemeTokens 结构不变）。

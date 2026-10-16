@@ -1,5 +1,5 @@
 ---
-"@jmfederico/pi-web": patch
+"@pi-studio/pi-studio": patch
 ---
 
 Rename sessions from the session list with a `Rename` row action or a double click on the title.

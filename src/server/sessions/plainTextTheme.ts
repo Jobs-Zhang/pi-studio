@@ -70,7 +70,7 @@ function preserveText(text: string): string {
 
 class PlainTextTheme extends Theme {
   constructor() {
-    super(SUPERCLASS_FOREGROUND_COLORS, SUPERCLASS_BACKGROUND_COLORS, "256color", { name: "pi-web-plain-text" });
+    super(SUPERCLASS_FOREGROUND_COLORS, SUPERCLASS_BACKGROUND_COLORS, "256color", { name: "pi-studio-plain-text" });
   }
 
   override fg(color: Parameters<Theme["fg"]>[0], text: string): string {

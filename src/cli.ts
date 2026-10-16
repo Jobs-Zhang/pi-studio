@@ -5,19 +5,19 @@ import { mkdir, rm, writeFile } from "node:fs/promises";
 import { homedir, userInfo } from "node:os";
 import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { defaultPiWebConfigPath, defaultPiWebDataDir, examplePiWebConfig } from "./config.js";
-import { piWebDockerCommand, type PiWebDockerMode } from "./docker/piWebDockerCommandPlan.js";
+import { defaultPiStudioConfigPath, defaultPiStudioDataDir, examplePiStudioConfig } from "./config.js";
+import { piStudioDockerCommand, type PiStudioDockerMode } from "./docker/piStudioDockerCommandPlan.js";
 import { ownEnvironmentValue } from "./environment.js";
-import { runPiWebUpdate } from "./piWebUpdate.js";
+import { runPiStudioUpdate } from "./piStudioUpdate.js";
 import { runPluginRecoveryCli, type SessionDaemonRestartPlan } from "./pluginRecoveryCli.js";
 import {
   packageVersion,
-  printPiWebVersionReport,
+  printPiStudioVersionReport,
   probeRunningComponentReady,
   runningComponentsReady,
-  type PiWebVersionReportOptions,
+  type PiStudioVersionReportOptions,
   type RunningComponentId,
-} from "./piWebVersionReport.js";
+} from "./piStudioVersionReport.js";
 import { checkNodePtyDarwinSpawnHelper, formatNodePtyDarwinSpawnHelperCheck } from "./server/diagnostics/nodePtySpawnHelper.js";
 import { checkNodePtyNativeModule, formatNodePtyNativeModuleCheck } from "./server/diagnostics/nodePtyNativeModule.js";
 import {
@@ -76,11 +76,11 @@ import {
 } from "./nativeServices/serviceProbe.js";
 import { renderLaunchdPlist, renderSystemdUnit } from "./nativeServices/serviceRendering.js";
 
-const PI_WEB_PACKAGE_NAME = "@jmfederico/pi-web";
+const PI_STUDIO_PACKAGE_NAME = "@pi-studio/pi-studio";
 
 const systemdServiceDir = join(homedir(), ".config", "systemd", "user");
 const launchdServiceDir = join(homedir(), "Library", "LaunchAgents");
-const logDir = join(defaultPiWebDataDir(), "logs");
+const logDir = join(defaultPiStudioDataDir(), "logs");
 
 type InstallMode = "production" | "dev";
 type ServiceId = NativeServiceId;
@@ -142,9 +142,9 @@ function requireServiceBackend(command: string): ServiceBackend {
 
 function manualRunAdvice(): string {
   return [
-    "Run PI WEB manually from a checkout:",
+    "Run PI STUDIO manually from a checkout:",
     "  npm run start:sessiond",
-    "  PI_WEB_PORT=8504 npm start",
+    "  PI_STUDIO_PORT=8504 npm start",
     "",
     "For development in one terminal:",
     "  npm run dev",
@@ -234,7 +234,7 @@ function parseInstallOptions(args: string[]): InstallOptions {
     } else if (arg === "--dev") {
       options.mode = "dev";
     } else if (arg === "--user-systemd") {
-      // Accepted for backwards-compatible readability; PI WEB chooses the native user service backend automatically.
+      // Accepted for backwards-compatible readability; PI STUDIO chooses the native user service backend automatically.
     } else {
       throw new Error(`Unknown install option: ${arg}`);
     }
@@ -297,13 +297,13 @@ function describeServiceShell(): string {
   if (shell.source === "fallback") {
     return shell.detectedExecutable === null
       ? "could not detect a supported login shell; using bash"
-      : `detected ${shell.detectedExecutable}; using bash because PI WEB currently supports bash, zsh, and fish`;
+      : `detected ${shell.detectedExecutable}; using bash because PI STUDIO currently supports bash, zsh, and fish`;
   }
   return shell.detectedExecutable === null ? shell.name : `${shell.name} (${shell.detectedExecutable})`;
 }
 
 function configEnvironment(options: InstallOptions, configPath: string): Record<string, string> {
-  return options.config === undefined ? {} : { PI_WEB_CONFIG: configPath };
+  return options.config === undefined ? {} : { PI_STUDIO_CONFIG: configPath };
 }
 
 function serviceRefList(ids: ServiceId[]): ServiceRef[] {
@@ -333,12 +333,12 @@ function devRootPath(): string {
 function validateDevCheckout(root: string): void {
   const packageJsonPath = join(root, "package.json");
   if (!existsSync(packageJsonPath)) {
-    throw new Error(`Development mode must be installed from a PI WEB checkout. Missing package.json: ${packageJsonPath}`);
+    throw new Error(`Development mode must be installed from a PI STUDIO checkout. Missing package.json: ${packageJsonPath}`);
   }
 
   const parsed: unknown = JSON.parse(readFileSync(packageJsonPath, "utf8"));
-  if (!isRecord(parsed) || parsed["name"] !== PI_WEB_PACKAGE_NAME) {
-    throw new Error(`Development mode must be installed from a PI WEB checkout. ${packageJsonPath} is not ${PI_WEB_PACKAGE_NAME}.`);
+  if (!isRecord(parsed) || parsed["name"] !== PI_STUDIO_PACKAGE_NAME) {
+    throw new Error(`Development mode must be installed from a PI STUDIO checkout. ${packageJsonPath} is not ${PI_STUDIO_PACKAGE_NAME}.`);
   }
 }
 
@@ -347,13 +347,13 @@ function launchdLogPath(ref: ServiceRef): string {
 }
 
 function installConfigPath(options: InstallOptions): string {
-  return options.config === undefined ? defaultPiWebConfigPath() : resolve(options.config);
+  return options.config === undefined ? defaultPiStudioConfigPath() : resolve(options.config);
 }
 
 async function writeInitialConfig(options: InstallOptions, configPath: string): Promise<void> {
   await mkdir(dirname(configPath), { recursive: true });
   if (!existsSync(configPath)) {
-    await writeFile(configPath, examplePiWebConfig({ host: options.host, port: Number(options.port) }));
+    await writeFile(configPath, examplePiStudioConfig({ host: options.host, port: Number(options.port) }));
   }
 }
 
@@ -596,20 +596,20 @@ function printServiceStatus(status: ServiceRuntimeStatus): void {
 
 function printServiceStatusReport(backend: ServiceBackend): boolean {
   const refs = statusServiceRefs(backend);
-  console.log(`PI WEB services: ${serviceInstallMode(backend)} (${backend.label})`);
+  console.log(`PI STUDIO services: ${serviceInstallMode(backend)} (${backend.label})`);
   if (refs.length === 0) {
-    console.log("✗ no PI WEB service files found");
-    console.log("  Run `pi-web install` or `pi-web install --dev`.");
+    console.log("✗ no PI STUDIO service files found");
+    console.log("  Run `pi-studio install` or `pi-studio install --dev`.");
     return false;
   }
 
   const statuses = refs.map((ref) => runtimeStatus(backend, ref));
   for (const status of statuses) printServiceStatus(status);
-  console.log("\nUse `pi-web logs` for service logs.");
+  console.log("\nUse `pi-studio logs` for service logs.");
   return statuses.every((status) => status.health === "running");
 }
 
-function configuredServiceCommand(name: "PI_WEB_SERVER_EXEC" | "PI_WEB_SESSIOND_EXEC"): string | undefined {
+function configuredServiceCommand(name: "PI_STUDIO_SERVER_EXEC" | "PI_STUDIO_SESSIOND_EXEC"): string | undefined {
   const value = process.env[name];
   return value === undefined || value.trim() === "" ? undefined : value;
 }
@@ -625,13 +625,13 @@ function productionNativeServicePlanInput(
     environment,
     executables: {
       sessiond: {
-        configuredCommand: configuredServiceCommand("PI_WEB_SESSIOND_EXEC"),
-        namedCommand: "pi-web-sessiond",
+        configuredCommand: configuredServiceCommand("PI_STUDIO_SESSIOND_EXEC"),
+        namedCommand: "pi-studio-sessiond",
         bundledEntrypointPath: packageEntrypointPath("sessiond"),
       },
       web: {
-        configuredCommand: configuredServiceCommand("PI_WEB_SERVER_EXEC"),
-        namedCommand: "pi-web-server",
+        configuredCommand: configuredServiceCommand("PI_STUDIO_SERVER_EXEC"),
+        namedCommand: "pi-studio-server",
         bundledEntrypointPath: packageEntrypointPath("server"),
       },
     },
@@ -692,18 +692,18 @@ function printNativeServiceInstallFailure(failure: NativeServiceInstallFailure):
 }
 
 async function install(args: string[]): Promise<void> {
-  const backend = requireServiceBackend("pi-web install");
+  const backend = requireServiceBackend("pi-studio install");
   const options = parseInstallOptions(args);
   const devRoot = options.mode === "dev" ? devRootPath() : undefined;
   if (devRoot !== undefined) validateDevCheckout(devRoot);
   const configPath = installConfigPath(options);
   const candidate = nativeServiceInstallCandidate(options, backend, configPath, devRoot);
 
-  console.log(`Running PI WEB ${options.mode} install preflight checks...`);
+  console.log(`Running PI STUDIO ${options.mode} install preflight checks...`);
   console.log(`Service backend: ${backend.label}`);
   console.log(`Service shell: ${describeServiceShell()}`);
   if (!printNodePtyNativeModuleCheck()) {
-    throw new Error("Install preflight checks failed without changing config or services. Fix the failure above, then run `pi-web doctor` for more detail.");
+    throw new Error("Install preflight checks failed without changing config or services. Fix the failure above, then run `pi-studio doctor` for more detail.");
   }
   const result = await installNativeServiceCandidate(candidate, {
     probe: createNativeServiceAuthoritativeProbe(),
@@ -714,13 +714,13 @@ async function install(args: string[]): Promise<void> {
   if (!result.ok) {
     printNativeServiceInstallFailure(result.failure);
     if (nativeServiceInstallFailureNeedsPathAdvice(result.failure)) printPathSetupAdvice();
-    throw new Error("Install preflight checks failed without changing config or services. Fix the failure above, then run `pi-web doctor` for more detail.");
+    throw new Error("Install preflight checks failed without changing config or services. Fix the failure above, then run `pi-studio doctor` for more detail.");
   }
   for (const service of result.plan.services.filter((item) => item.strategy.kind === "configured-override")) {
     console.log(`! ${service.description} uses a configured command override; preflight did not execute that arbitrary command.`);
   }
 
-  console.log(`\nPI WEB ${options.mode} services are installed and starting.`);
+  console.log(`\nPI STUDIO ${options.mode} services are installed and starting.`);
   console.log(`Config: ${configPath}`);
   if (options.mode === "dev") {
     console.log("Open: http://127.0.0.1:8505");
@@ -740,19 +740,19 @@ async function install(args: string[]): Promise<void> {
   }
 
   console.log("\nUseful commands:");
-  console.log("  pi-web status");
-  console.log("  pi-web logs");
-  console.log("  pi-web restart");
+  console.log("  pi-studio status");
+  console.log("  pi-studio logs");
+  console.log("  pi-studio restart");
 }
 
 async function uninstall(): Promise<void> {
-  const backend = requireServiceBackend("pi-web uninstall");
+  const backend = requireServiceBackend("pi-studio uninstall");
   await uninstallNativeServices(backend);
-  console.log(`PI WEB ${backend.label} removed. Production and development service files were removed; config and data were left in place.`);
+  console.log(`PI STUDIO ${backend.label} removed. Production and development service files were removed; config and data were left in place.`);
 }
 
 async function serviceAction(action: "stop" | "status"): Promise<void> {
-  const backend = requireServiceBackend(`pi-web ${action}`);
+  const backend = requireServiceBackend(`pi-studio ${action}`);
   if (action === "status") {
     if (!printServiceStatusReport(backend)) process.exitCode = 1;
     return;
@@ -773,7 +773,7 @@ async function performLifecycleServiceAction(
       const target = backend.kind === "systemd" ? ref.systemdName : currentLaunchdServiceTarget(ref);
       console.log(`✗ ${serviceDisplayName(ref)} did not become ready (${target}).`);
     }
-    console.log("  Check `pi-web status` and `pi-web logs` for details.");
+    console.log("  Check `pi-studio status` and `pi-studio logs` for details.");
     process.exitCode = 1;
   }
 }
@@ -794,19 +794,19 @@ export function sessionDaemonRestartPlan(options: SessionDaemonRestartPlanOption
   if (options.explicitConfigPath === true && options.configPath !== undefined) {
     return {
       kind: "manual",
-      guidance: `Restart the session daemon process configured with PI_WEB_CONFIG=${JSON.stringify(options.configPath)}.`,
+      guidance: `Restart the session daemon process configured with PI_STUDIO_CONFIG=${JSON.stringify(options.configPath)}.`,
     };
   }
   const dockerMode = activeDockerMode(env);
   const runCommand = options.runCommand ?? ((command, args) => { run(command, args, { check: true }); });
   if (dockerMode !== undefined) {
-    const command = piWebDockerCommand(dockerMode, "restart-sessiond");
+    const command = piStudioDockerCommand(dockerMode, "restart-sessiond");
     return {
       kind: "automatic",
       command,
-      guidance: "Run the Docker control command from the PI WEB Docker host.",
+      guidance: "Run the Docker control command from the PI STUDIO Docker host.",
       perform: () => {
-        runCommand("pi-web-docker", [...(dockerMode === "dev" ? ["--dev"] : []), "restart-sessiond"]);
+        runCommand("pi-studio-docker", [...(dockerMode === "dev" ? ["--dev"] : []), "restart-sessiond"]);
       },
     };
   }
@@ -838,9 +838,9 @@ export function sessionDaemonRestartPlan(options: SessionDaemonRestartPlanOption
   };
 }
 
-function activeDockerMode(env: NodeJS.ProcessEnv): PiWebDockerMode | undefined {
-  if (!truthyEnvValue(ownEnvironmentValue(env, "PI_WEB_DOCKER_RUNTIME"))) return undefined;
-  if (ownEnvironmentValue(env, "PI_WEB_DOCKER_MODE") === "dev") return "dev";
+function activeDockerMode(env: NodeJS.ProcessEnv): PiStudioDockerMode | undefined {
+  if (!truthyEnvValue(ownEnvironmentValue(env, "PI_STUDIO_DOCKER_RUNTIME"))) return undefined;
+  if (ownEnvironmentValue(env, "PI_STUDIO_DOCKER_MODE") === "dev") return "dev";
   return "runtime";
 }
 
@@ -849,7 +849,7 @@ function truthyEnvValue(value: string | undefined): boolean {
 }
 
 function logs(): void {
-  const backend = requireServiceBackend("pi-web logs");
+  const backend = requireServiceBackend("pi-studio logs");
   const refs = installedServiceRefs(backend);
   if (backend.kind === "systemd") {
     run("journalctl", ["--user", ...refs.flatMap((ref) => ["-u", ref.systemdName]), "-f"]);
@@ -936,7 +936,7 @@ function printOptionalDoctorChecks(): void {
   }
   if (missingOptionalTool) {
     console.log("  Install ripgrep, or make rg visible to the service shell, for faster all-file @ suggestions.");
-    console.log("  PI WEB falls back to a bounded filesystem scan when rg is unavailable.");
+    console.log("  PI STUDIO falls back to a bounded filesystem scan when rg is unavailable.");
   }
 }
 
@@ -969,19 +969,19 @@ export function managedServiceProbeEnvironment(
   const selection = selectManagedNativeServiceConfig(
     backend,
     definitions,
-    ownEnvironmentValue(callerEnvironment, "PI_WEB_CONFIG"),
+    ownEnvironmentValue(callerEnvironment, "PI_STUDIO_CONFIG"),
   );
   if (!selection.ok) return selection;
   if (selection.value.source === "installed") {
     return {
       ok: true,
-      value: { ...callerEnvironment, PI_WEB_CONFIG: selection.value.configPath },
+      value: { ...callerEnvironment, PI_STUDIO_CONFIG: selection.value.configPath },
     };
   }
   if (selection.value.source === "default" && definitions.length > 0) {
     // An own empty value preserves default resolution while masking any
-    // prototype-inherited PI_WEB_CONFIG from downstream environment lookups.
-    return { ok: true, value: { ...callerEnvironment, PI_WEB_CONFIG: "" } };
+    // prototype-inherited PI_STUDIO_CONFIG from downstream environment lookups.
+    return { ok: true, value: { ...callerEnvironment, PI_STUDIO_CONFIG: "" } };
   }
   return { ok: true, value: callerEnvironment };
 }
@@ -999,7 +999,7 @@ function installedServiceProbeEnvironment(
 ): InstalledNativeServiceInspection<NodeJS.ProcessEnv> {
   // The explicit caller override wins without requiring installed definitions
   // to be readable or canonical.
-  const callerConfigPath = ownEnvironmentValue(callerEnvironment, "PI_WEB_CONFIG");
+  const callerConfigPath = ownEnvironmentValue(callerEnvironment, "PI_STUDIO_CONFIG");
   if (callerConfigPath !== undefined && callerConfigPath !== "") {
     return { ok: true, value: callerEnvironment };
   }
@@ -1012,8 +1012,8 @@ function installedServiceProbeEnvironment(
 
 function managedServiceProbeFailure(backend: ServiceBackend, message: string): string {
   return [
-    `Could not select managed PI_WEB_CONFIG from installed ${backend.label}: ${message}`,
-    "Repair the reported service-manager override or definition, then re-run `pi-web install` (or `pi-web install --dev`); a nonempty PI_WEB_CONFIG explicitly overrides managed config selection for this command.",
+    `Could not select managed PI_STUDIO_CONFIG from installed ${backend.label}: ${message}`,
+    "Repair the reported service-manager override or definition, then re-run `pi-studio install` (or `pi-studio install --dev`); a nonempty PI_STUDIO_CONFIG explicitly overrides managed config selection for this command.",
   ].join("\n");
 }
 
@@ -1023,7 +1023,7 @@ export interface ReadinessDoctorCommandContext {
   backend: ServiceBackend | undefined;
   installedIds: ReadonlySet<ServiceId>;
   environment: NodeJS.ProcessEnv;
-  versionReportOptions: PiWebVersionReportOptions;
+  versionReportOptions: PiStudioVersionReportOptions;
   managedInspectionFailed: boolean;
 }
 
@@ -1063,7 +1063,7 @@ export async function runReadinessCliCommand(
 
   const environment = dependencies.environment;
   if (command === "start" || command === "restart") {
-    const backend = dependencies.requireBackend(`pi-web ${command}`);
+    const backend = dependencies.requireBackend(`pi-studio ${command}`);
     const installedIds = dependencies.installedServiceIds(backend);
     const probeEnvironment = installedServiceProbeEnvironment(
       backend,
@@ -1081,7 +1081,7 @@ export async function runReadinessCliCommand(
   const installedIds = backend === undefined
     ? new Set<ServiceId>()
     : dependencies.installedServiceIds(backend);
-  let versionReportOptions: PiWebVersionReportOptions = { configEnv: environment };
+  let versionReportOptions: PiStudioVersionReportOptions = { configEnv: environment };
   let managedInspectionFailed = false;
   if (backend !== undefined && activeDockerMode(environment) === undefined) {
     const probeEnvironment = installedServiceProbeEnvironment(
@@ -1107,13 +1107,13 @@ export async function runReadinessCliCommand(
   });
 }
 
-export function parseVersionOptions(args: readonly string[]): PiWebVersionReportOptions {
+export function parseVersionOptions(args: readonly string[]): PiStudioVersionReportOptions {
   if (args.length === 0) return {};
   if (args.length === 1 && args[0] === "--check") return { check: true };
-  throw new Error("Usage: pi-web version [--check]");
+  throw new Error("Usage: pi-studio version [--check]");
 }
 
-function readinessCliCommandDependencies(versionOptions: PiWebVersionReportOptions = {}): ReadinessCliCommandDependencies {
+function readinessCliCommandDependencies(versionOptions: PiStudioVersionReportOptions = {}): ReadinessCliCommandDependencies {
   return {
     environment: process.env,
     currentBackend: currentServiceBackend,
@@ -1127,7 +1127,7 @@ function readinessCliCommandDependencies(versionOptions: PiWebVersionReportOptio
     runLifecycle: performLifecycleServiceAction,
     runDoctor: doctor,
     printVersion: async () => {
-      const report = await printPiWebVersionReport(versionOptions);
+      const report = await printPiStudioVersionReport(versionOptions);
       if (report.release?.status === "error") process.exitCode = 1;
     },
   };
@@ -1234,10 +1234,10 @@ function printPathSetupAdvice(shell: NativeServiceShell = detectServiceShell()):
     console.log("  Do not rely only on ~/.bashrc or prompt hooks for tools needed by services or agents.");
   } else if (shell.name === "zsh") {
     console.log("  Detected zsh. Put PATH setup for node/version managers/tools in ~/.zprofile, not only ~/.zshrc.");
-    console.log("  Avoid relying on prompt hooks; PI WEB services run non-interactive login shells.");
+    console.log("  Avoid relying on prompt hooks; PI STUDIO services run non-interactive login shells.");
   } else {
     console.log("  Detected fish. Prefer universal PATH setup such as `fish_add_path -U ...` for tools needed by services or agents.");
-    console.log("  Avoid relying on prompt hooks; PI WEB services run non-interactive login shells.");
+    console.log("  Avoid relying on prompt hooks; PI STUDIO services run non-interactive login shells.");
   }
 }
 
@@ -1280,12 +1280,12 @@ async function doctor(context: ReadinessDoctorCommandContext): Promise<void> {
   }
   console.log("");
 
-  const runningVersionInfo = await printPiWebVersionReport(versionReportOptions);
+  const runningVersionInfo = await printPiStudioVersionReport(versionReportOptions);
   const expectedComponents = expectedRunningComponents(installedIds, environment);
   const runningComponentsOk = runningComponentsReady(runningVersionInfo, expectedComponents);
   if (!runningComponentsOk) {
-    console.log("\n✗ Installed PI WEB services are unavailable or stale (see \"Running services\" above).");
-    console.log("  Run `pi-web restart`, then check `pi-web status`.");
+    console.log("\n✗ Installed PI STUDIO services are unavailable or stale (see \"Running services\" above).");
+    console.log("  Run `pi-studio restart`, then check `pi-studio status`.");
   }
 
   console.log("\nGeneral login-shell readiness (separate from native-service requirements):");
@@ -1358,24 +1358,24 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function help(): void {
-  console.log(`PI WEB
+  console.log(`PI STUDIO
 
 Usage:
-  pi-web install [--dev] [--host 127.0.0.1] [--port 8504] [--config ~/.config/pi-web/config.json]
-  pi-web uninstall
-  pi-web start|stop|restart|status|logs
-  pi-web plugins disable <plugin-id> [--config <path>] [--restart]
-  pi-web plugins safe-start show|clear|set <bundled-only|none> [--config <path>] [--restart]
-  pi-web doctor
-  pi-web update [--yes]
-  pi-web version [--check]
+  pi-studio install [--dev] [--host 127.0.0.1] [--port 8504] [--config ~/.config/pi-studio/config.json]
+  pi-studio uninstall
+  pi-studio start|stop|restart|status|logs
+  pi-studio plugins disable <plugin-id> [--config <path>] [--restart]
+  pi-studio plugins safe-start show|clear|set <bundled-only|none> [--config <path>] [--restart]
+  pi-studio doctor
+  pi-studio update [--yes]
+  pi-studio version [--check]
 
 Recommended install:
-  npm install -g @jmfederico/pi-web --allow-scripts=node-pty
-  pi-web install
+  npm install -g @pi-studio/pi-studio --allow-scripts=node-pty
+  pi-studio install
 
 Development service install from a checkout:
-  pi-web install --dev
+  pi-studio install --dev
 `);
 }
 
@@ -1383,7 +1383,7 @@ async function main(): Promise<void> {
   const [command = "help", ...args] = process.argv.slice(2);
   if (command === "install") await install(args);
   else if (command === "uninstall") await uninstall();
-  else if (command === "update") await runPiWebUpdate(args);
+  else if (command === "update") await runPiStudioUpdate(args);
   else if (command === "start" || command === "restart" || command === "doctor" || command === "version") {
     await runReadinessCliCommand(command, readinessCliCommandDependencies(command === "version" ? parseVersionOptions(args) : {}));
   } else if (command === "stop" || command === "status") await serviceAction(command);

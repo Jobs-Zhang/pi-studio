@@ -2,7 +2,7 @@ import type { WriteWorkspaceFileOptions, WriteWorkspaceFileResponse } from "../.
 import { parseWriteWorkspaceFileResponse } from "./parsers";
 import { workspaceFileWriteUrl } from "./urls";
 
-export const DEFAULT_WORKSPACE_UPLOADS_FOLDER = ".pi-web/uploads";
+export const DEFAULT_WORKSPACE_UPLOADS_FOLDER = ".pi-studio/uploads";
 
 export interface WorkspaceUploadFileInput {
   path: string;

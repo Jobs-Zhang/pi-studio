@@ -1,20 +1,20 @@
 "use strict";
 
 /**
- * PI Desktop — optimized for fast startup.
+ * PI Studio — optimized for fast startup.
  *
  * The startup page can reach a gateway either directly over HTTP(S) or through
  * a local SSH tunnel owned by this process (see tunnel.cjs). Recent connections
- * live in ~/.pi-desktop/config.json; remembered SSH passwords are encrypted
+ * live in ~/.pi-studio-desktop/config.json; remembered SSH passwords are encrypted
  * with Electron safeStorage and never exposed to the renderer.
  */
 
 // Askpass bootstrap: when ssh asks for a password it runs this executable with
-// PI_WEB_ASKPASS=1. Print the password and exit before Electron starts. The
+// PI_STUDIO_ASKPASS=1. Print the password and exit before Electron starts. The
 // write is synchronous so the output cannot be lost to process.exit().
-if (process.env.PI_WEB_ASKPASS === "1") {
+if (process.env.PI_STUDIO_ASKPASS === "1") {
   try {
-    require("node:fs").writeSync(1, `${process.env.PI_WEB_TUNNEL_PASSWORD ?? ""}\n`);
+    require("node:fs").writeSync(1, `${process.env.PI_STUDIO_TUNNEL_PASSWORD ?? ""}\n`);
   } catch {}
   process.exit(0);
 }
@@ -31,7 +31,7 @@ const { createTunnel, detectSshClient } = require("./tunnel.cjs");
 const ICON_ICO_PATH = path.join(__dirname, "icon.ico");
 const ICON_PNG_PATH = path.join(__dirname, "icon.png");
 const ICON_PATH = process.platform === "win32" && fs.existsSync(ICON_ICO_PATH) ? ICON_ICO_PATH : ICON_PNG_PATH;
-const CONFIG_DIR = path.join(require("node:os").homedir(), ".pi-desktop");
+const CONFIG_DIR = path.join(require("node:os").homedir(), ".pi-studio-desktop");
 const CONFIG_FILE = path.join(CONFIG_DIR, "config.json");
 const SSH_CONFIG_FILE = path.join(require("node:os").homedir(), ".ssh", "config");
 
@@ -45,7 +45,7 @@ try {
 function targetUrl() {
   const flag = process.argv.find((a) => a.startsWith("--url="));
   if (flag) { const v = flag.slice(6); if (v) return v; }
-  const fromEnv = process.env.PI_WEB_DESKTOP_URL;
+  const fromEnv = process.env.PI_STUDIO_DESKTOP_URL;
   if (fromEnv) return fromEnv;
   return "";
 }
@@ -169,7 +169,7 @@ async function closeActiveTunnel() {
 async function probeGateway(value) {
   const url = new URL(value);
   if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password || url.search || url.hash) throw new Error('请输入不含凭据和查询参数的 HTTP(S) 网关地址');
-  const probe = new URL(`${url.pathname.replace(/\/$/, '')}/api/pi-web/status`, url.origin);
+  const probe = new URL(`${url.pathname.replace(/\/$/, '')}/api/pi-studio/status`, url.origin);
   const response = await fetch(probe, { signal: AbortSignal.timeout(6000), redirect: 'manual' });
   if (![200, 401, 403].includes(response.status)) throw new Error(`网关返回 HTTP ${response.status}`);
   if (response.status === 200) {
@@ -180,7 +180,7 @@ async function probeGateway(value) {
 
 async function connectDirect(entry) {
   const url = normalizeDirectUrl(entry.url);
-  if (url === undefined) return { ok: false, error: "请输入 PI WEB 网关地址" };
+  if (url === undefined) return { ok: false, error: "请输入 PI STUDIO 网关地址" };
   let parsed;
   try {
     parsed = new URL(url);
@@ -383,7 +383,7 @@ function createWindow(url) {
     height: 800,
     minWidth: 600,
     minHeight: 500,
-    title: "PI Desktop",
+    title: "PI Studio",
     backgroundColor: "#fafbfc",
     show: false, // Show when ready for smoother startup
     icon: appIcon || undefined,
@@ -437,7 +437,7 @@ async function openRecentFromTray(index) {
     return;
   }
   showWindow();
-  dialog.showErrorBox("PI Desktop", result.error ?? "连接失败");
+  dialog.showErrorBox("PI Studio", result.error ?? "连接失败");
 }
 
 function buildTrayMenu() {
@@ -463,7 +463,7 @@ function buildTrayMenu() {
 function createTray() {
   if (!appIcon) return null;
   tray = new Tray(appIcon);
-  tray.setToolTip("PI Desktop");
+  tray.setToolTip("PI Studio");
   tray.setContextMenu(buildTrayMenu());
   tray.on("click", toggleWindow);
   return tray;
@@ -471,7 +471,7 @@ function createTray() {
 
 // Windows needs the AppUserModelID before ready, and the NSIS installer writes
 // the same ID into the Start Menu shortcut so toast notifications can show.
-if (process.platform === "win32") app.setAppUserModelId("dev.pi.desktop");
+if (process.platform === "win32") app.setAppUserModelId("dev.pi.studio.desktop");
 
 // Single instance lock
 if (!app.requestSingleInstanceLock()) {
@@ -486,7 +486,7 @@ if (!app.requestSingleInstanceLock()) {
     app.on("activate", () => { if (!mainWindow) mainWindow = createWindow(targetUrl()); });
     app.on("window-all-closed", () => { if (process.platform !== "darwin") app.quit(); });
   }).catch((err) => {
-    console.error("PI Desktop failed to start", err);
+    console.error("PI Studio failed to start", err);
     app.exit(1);
   });
 

@@ -26,7 +26,7 @@ export class PluginSelectionHost {
       subscribe: (listener: (snapshot: PluginSelectionSnapshot) => void | Promise<void>) => {
         if (lifetimeSignal.aborted) return () => undefined;
         const reportFailure = (error: unknown) => {
-          console.warn(`PI WEB plugin ${pluginId} selection subscriber failed`, error);
+          console.warn(`PI STUDIO plugin ${pluginId} selection subscriber failed`, error);
         };
         const notify = (snapshot: PluginSelectionSnapshot) => {
           try {

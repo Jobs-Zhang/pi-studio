@@ -1,6 +1,6 @@
 import type { PromptAttachmentDelivery } from "../../shared/apiTypes";
 
-const storageKey = "pi-web:attachment-delivery";
+const storageKey = "pi-studio:attachment-delivery";
 
 function browserStorage(): Storage | undefined {
   try {

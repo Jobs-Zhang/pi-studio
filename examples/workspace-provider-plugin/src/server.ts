@@ -1,17 +1,17 @@
 import { access } from "node:fs/promises";
 import { join } from "node:path";
 import type {
-  PiWebServerPlugin,
+  PiStudioServerPlugin,
   ProjectInput,
   ProviderClaim,
   ProviderWorkspace,
   ServerPluginPeerRequestContext,
   WorkspaceProvider,
-} from "@jmfederico/pi-web/server-plugin-api";
+} from "@pi-studio/pi-studio/server-plugin-api";
 
-const markerPath = ".pi-web/example-workspace-provider";
+const markerPath = ".pi-studio/example-workspace-provider";
 
-const plugin: PiWebServerPlugin = {
+const plugin: PiStudioServerPlugin = {
   apiVersion: 3,
   name: "Example Workspace Provider",
   activate({ pluginId, logger }) {

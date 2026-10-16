@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 import { LitElement, css, html, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import type { CommandOption } from "../api";
@@ -8,7 +9,7 @@ import { scrollWhenSelected } from "./scrollWhenSelected";
 
 @customElement("command-picker")
 export class CommandPicker extends LitElement {
-  @property() override title = "Select";
+  @property() override title = t("commandPicker.select");
   @property({ type: Boolean }) searchable = false;
   @property({ attribute: false }) options: CommandOption[] = [];
   @property({ attribute: false }) selectedValue?: string;
@@ -33,10 +34,10 @@ export class CommandPicker extends LitElement {
       >
         <header>
           <strong>${this.title}</strong>
-          <button aria-label="Close" @click=${() => this.onCancel?.()}>×</button>
+          <button aria-label=${t("common.close")} @click=${() => this.onCancel?.()}>×</button>
         </header>
-        ${this.searchable ? html`<input placeholder="Search" .value=${this.query} @input=${(event: Event) => { this.handleSearchInput(event); }}>` : null}
-        ${this.onSetDefault ? defaultPinHelp : nothing}
+        ${this.searchable ? html`<input placeholder=${t("modelPicker.search")} .value=${this.query} @input=${(event: Event) => { this.handleSearchInput(event); }}>` : null}
+        ${this.onSetDefault ? defaultPinHelp() : nothing}
         <div class="options" tabindex="0">
           ${options.map((option, index) => {
             const pick = html`<button
@@ -51,7 +52,7 @@ export class CommandPicker extends LitElement {
             </button>`;
             return this.onSetDefault ? html`<div class="default-row">${pick}${defaultPin(option.label, option.value === this.defaultValue, this.defaultsLoading || this.defaultPending, () => { void this.setDefault(option.value); })}</div>` : pick;
           })}
-          ${options.length === 0 ? html`<div class="empty">No matching options</div>` : null}
+          ${options.length === 0 ? html`<div class="empty">${t("modelPicker.noMatches")}</div>` : null}
         </div>
       </modal-surface>
     `;

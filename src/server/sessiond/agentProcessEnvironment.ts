@@ -4,10 +4,10 @@
  * Sessions run inside the session daemon process, so everything agents can
  * spawn — the bash tool, terminals, subsessions — inherits the daemon's
  * environment by default. That inheritance is deliberate: the daemon's
- * `PI_WEB_*` wiring stays visible so agent-facing tooling keeps working, and
- * a second PI WEB instance started from inside a session resolves the same
+ * `PI_STUDIO_*` wiring stays visible so agent-facing tooling keeps working, and
+ * a second PI STUDIO instance started from inside a session resolves the same
  * state and fails loudly at startup (see `sessiondStateOwnership`) instead of
- * silently corrupting the live daemon's data. `PI_WEB_SESSION=1` and the
+ * silently corrupting the live daemon's data. `PI_STUDIO_SESSION=1` and the
  * session environment facts tell agents they are nested and which precautions
  * apply.
  *
@@ -18,9 +18,9 @@
  *
  * - Ordinary variables (`PATH`, `HOME`, `XDG_CONFIG_HOME`, proxy keys, …)
  *   stay.
- * - `PI_WEB_*` keys stay — including `PI_WEB_DOCKER_*` deployment descriptors
- *   the agent-facing `pi-web-docker` CLI reads, and the deprecated
- *   `PI_WEB_AGENT_*` aliases: the canonical `PI_CODING_AGENT_*` vars are
+ * - `PI_STUDIO_*` keys stay — including `PI_STUDIO_DOCKER_*` deployment descriptors
+ *   the agent-facing `pi-studio-docker` CLI reads, and the deprecated
+ *   `PI_STUDIO_AGENT_*` aliases: the canonical `PI_CODING_AGENT_*` vars are
  *   exported with the fully resolved values, so both names resolve
  *   identically for anything started from here.
  * - `HOSTEXEC_*` stays: agents use `hostexec`.
@@ -37,7 +37,7 @@
 
 /**
  * Keys that configure the daemon or app runtime in ways that silently break
- * the tools agents run. Daemon configuration belongs in `PI_WEB_`-prefixed
+ * the tools agents run. Daemon configuration belongs in `PI_STUDIO_`-prefixed
  * keys, which stay visible; a key only belongs here when it cannot carry the
  * prefix (deployment conventions like `NODE_ENV`).
  */

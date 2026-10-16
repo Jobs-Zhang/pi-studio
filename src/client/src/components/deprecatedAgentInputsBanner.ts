@@ -1,11 +1,11 @@
 import { html, type TemplateResult } from "lit";
-import type { Machine, MachineRuntime, PiWebDeprecatedAgentInput } from "../api";
+import type { Machine, MachineRuntime, PiStudioDeprecatedAgentInput } from "../api";
 
 /** One machine's deprecated agent-configuration report, attributed for the banner. */
 export interface DeprecatedAgentInputsWarning {
   readonly machineId: string;
   readonly machineName: string;
-  readonly inputs: readonly PiWebDeprecatedAgentInput[];
+  readonly inputs: readonly PiStudioDeprecatedAgentInput[];
 }
 
 /**
@@ -34,7 +34,7 @@ export function deprecatedAgentInputsWarningText(warning: DeprecatedAgentInputsW
   return `${warning.machineName}: ${inputs}. Support for deprecated agent configuration inputs will be removed in a future release.`;
 }
 
-function describeDeprecatedAgentInput(input: PiWebDeprecatedAgentInput): string {
+function describeDeprecatedAgentInput(input: PiStudioDeprecatedAgentInput): string {
   const label = input.source === "config" ? `config key ${input.name}` : `environment variable ${input.name}`;
   if (input.replacement === undefined) return `${label} is deprecated and ignored; remove it, there is no replacement`;
   return `${label} is deprecated; set ${input.replacement} instead`;

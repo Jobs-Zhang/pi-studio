@@ -1,9 +1,9 @@
 /**
- * Sessiond-startup auto-install reconciliation for Pi packages PI WEB ships
+ * Sessiond-startup auto-install reconciliation for Pi packages PI STUDIO ships
  * "out of the box" (see the `relay-pi-package-autoinstall` relay).
  *
  * Some Pi-package plugins (currently just `@jmfederico/pi-relay`, the Relays
- * plugin) are shipped inside PI WEB's own npm tarball but must be installed
+ * plugin) are shipped inside PI STUDIO's own npm tarball but must be installed
  * as a real Pi package for pi's own package resolution to pick them up,
  * rather than being bundled-discovered by directory scan. To keep today's
  * zero-extra-steps experience, sessiond reconciles this at startup for the
@@ -21,14 +21,14 @@
  * await this before the daemon starts serving requests.
  */
 import {
-  defaultPiWebPackageRoot,
+  defaultPiStudioPackageRoot,
   KNOWN_AUTO_INSTALLABLE_PI_PACKAGES,
   resolveShippedPiPackagePath,
   type KnownAutoInstallablePiPackage,
 } from "../knownAutoInstallPiPackages.js";
 import { resolveDeclaredPiPackageName } from "../piPackageIdentity.js";
 import { PiPackageDismissalStore } from "../storage/piPackageDismissalStore.js";
-import type { PiPackageProvider } from "../piWebPluginCatalog.js";
+import type { PiPackageProvider } from "../piStudioPluginCatalog.js";
 
 export interface PiPackageAutoInstallLogger {
   warn(details: Record<string, unknown>, message: string): void;
@@ -59,7 +59,7 @@ export interface ReconcileAutoInstallablePiPackagesOptions {
   installer: PiPackageAutoInstaller;
   dismissalChecker?: PiPackageAutoInstallDismissalChecker;
   identityResolver?: PiPackageAutoInstallIdentityResolver;
-  /** Running `@jmfederico/pi-web` package root; shipped package paths resolve relative to this. Defaults to this module's own package root. */
+  /** Running `@pi-studio/pi-studio` package root; shipped package paths resolve relative to this. Defaults to this module's own package root. */
   packageRoot?: string;
   /** Known auto-installable packages to reconcile. Defaults to the production registry; overridable for tests. */
   knownPackages?: readonly KnownAutoInstallablePiPackage[];
@@ -84,7 +84,7 @@ export async function reconcileAutoInstallablePiPackages(options: ReconcileAutoI
     installer,
     dismissalChecker = new PiPackageDismissalStore(),
     identityResolver = defaultIdentityResolver,
-    packageRoot = defaultPiWebPackageRoot(),
+    packageRoot = defaultPiStudioPackageRoot(),
     knownPackages = KNOWN_AUTO_INSTALLABLE_PI_PACKAGES,
     logger,
   } = options;

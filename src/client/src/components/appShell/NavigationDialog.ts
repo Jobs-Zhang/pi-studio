@@ -1,3 +1,4 @@
+import { t } from "../../i18n";
 import { LitElement, css, html, nothing, type PropertyValues } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { paletteStyles } from "../paletteStyles";
@@ -40,25 +41,25 @@ export class NavigationDialog extends LitElement {
   override render() {
     const tabs = this.filteredTabs();
     return html`
-      <modal-surface .label=${"Navigation"} .initialFocus=${"input"} .onClose=${this.onClose} @keydown=${this.navigateDestinations}>
+      <modal-surface .label=${t("shell.navigation")} .initialFocus=${"input"} .onClose=${this.onClose} @keydown=${this.navigateDestinations}>
         <header>
-          <input aria-label="Search navigation" aria-describedby="navigation-selection" placeholder="Search navigation..." .value=${this.query} @input=${(event: Event) => {
+          <input aria-label=${t("navigationDialog.search")} aria-describedby="navigation-selection" placeholder=${t("navigationDialog.searchPlaceholder")} .value=${this.query} @input=${(event: Event) => {
             if (event.target instanceof HTMLInputElement) {
               this.query = event.target.value;
               this.selectedIndex = 0;
             }
           }}>
-          <button aria-label="Close" title="Close" @click=${this.onClose}>×</button>
+          <button aria-label=${t("common.close")} title=${t("common.close")} @click=${this.onClose}>×</button>
         </header>
         <span id="navigation-selection" class="sr-only" role="status" aria-live="polite" aria-atomic="true">${tabs.length === 0 ? "No destinations found." : `${tabs[this.selectedIndex]?.label ?? ""}, ${String(this.selectedIndex + 1)} of ${String(tabs.length)}`}</span>
-        <h2>Navigation</h2>
-        <p>Pin destinations to the tab bars. Removing the last pin shows all tabs.</p>
-        <nav class="options" aria-label="Destinations">
-          ${tabs.length === 0 ? html`<div class="empty">No destinations found.</div>` : nothing}
+        <h2>${t("shell.navigation")}</h2>
+        <p>${t("navigationDialog.intro")}</p>
+        <nav class="options" aria-label=${t("navigationDialog.destinations")}>
+          ${tabs.length === 0 ? html`<div class="empty">${t("navigationDialog.noDestinations")}</div>` : nothing}
           ${tabs.map((tab, index) => html`
             <div class="destination">
               <button class=${`destination-button ${index === this.selectedIndex ? "selected" : ""}`} aria-current=${tab.id === this.selectedTab ? "page" : nothing} aria-pressed=${String(tab.id === this.selectedTab)} ${scrollWhenSelected(index === this.selectedIndex, tab.id)} @focus=${() => { this.selectedIndex = index; }} @click=${() => { this.select(tab); }}>${tab.label}</button>
-              <button type="button" class="pin-button" aria-label=${`Pin ${tab.label}`} title=${isNavigationPinned(tab.id, this.preferences.pinnedIds) ? `Unpin ${tab.label}` : `Pin ${tab.label}`} aria-pressed=${String(isNavigationPinned(tab.id, this.preferences.pinnedIds))} @click=${() => {
+              <button type="button" class="pin-button" aria-label=${t("navigationDialog.pin", { name: tab.label })} title=${isNavigationPinned(tab.id, this.preferences.pinnedIds) ? t("navigationDialog.unpin", { name: tab.label }) : t("navigationDialog.pin", { name: tab.label })} aria-pressed=${String(isNavigationPinned(tab.id, this.preferences.pinnedIds))} @click=${() => {
                 this.onPreferencesChange?.({ ...this.preferences, pinnedIds: toggleNavigationPin(tab.id, this.preferences.pinnedIds, this.pinUniverse ?? this.tabs.map((item) => item.id)) });
               }}>
                 <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill=${isNavigationPinned(tab.id, this.preferences.pinnedIds) ? "currentColor" : "none"} stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -69,16 +70,16 @@ export class NavigationDialog extends LitElement {
           `)}
         </nav>
         <footer>
-          <button @click=${() => { this.onPreferencesChange?.({ ...this.preferences, pinnedIds: [] }); }}>Show all tabs</button>
-          <div class="mobile-navigation" role="group" aria-label="Mobile navigation">
-            <span>Mobile navigation</span>
+          <button @click=${() => { this.onPreferencesChange?.({ ...this.preferences, pinnedIds: [] }); }}>${t("navigationDialog.showAll")}</button>
+          <div class="mobile-navigation" role="group" aria-label=${t("navigationDialog.mobileNav")}>
+            <span>${t("navigationDialog.mobileNav")}</span>
             <div class="toggle-options">
               <button type="button" aria-pressed=${String(!this.preferences.mobileCollapsed)} @click=${() => {
                 this.onPreferencesChange?.({ ...this.preferences, mobileCollapsed: false });
-              }}>Expanded</button>
+              }}>${t("navigationDialog.expanded")}</button>
               <button type="button" aria-pressed=${String(this.preferences.mobileCollapsed)} @click=${() => {
                 this.onPreferencesChange?.({ ...this.preferences, mobileCollapsed: true });
-              }}>Collapsed</button>
+              }}>${t("navigationDialog.collapsed")}</button>
             </div>
           </div>
         </footer>

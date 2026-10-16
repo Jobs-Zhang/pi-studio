@@ -1,7 +1,7 @@
 {
   "name": "@jmfederico/pi-captains-log",
   "version": "0.1.0",
-  "description": "Opt-in Captain's Log: translate the selected session's last reply into pirate through a native Pi companion and PI WEB panel",
+  "description": "Opt-in Captain's Log: translate the selected session's last reply into pirate through a native Pi companion and PI STUDIO panel",
   "private": true,
   "type": "module",
   "keywords": ["pi-package"],
@@ -11,7 +11,7 @@
     "marked": "^18.0.6"
   },
   "devDependencies": {
-    "@jmfederico/pi-web": "^1.202609.1",
+    "@pi-studio/pi-studio": "^1.202609.1",
     "@earendil-works/pi-coding-agent": "^1.0.0",
     "@types/node": "^24.13.3",
     "typescript": "^6.0.3",
@@ -19,10 +19,10 @@
   },
   "peerDependencies": {
     "@earendil-works/pi-coding-agent": "^1.0.0",
-    "@jmfederico/pi-web": "^1.202609.1"
+    "@pi-studio/pi-studio": "^1.202609.1"
   },
   "pi": { "extensions": ["./dist/companion.js"] },
-  "piWeb": {
+  "piStudio": {
     "plugins": [{
       "id": "captains-log",
       "defaultEnabled": false,

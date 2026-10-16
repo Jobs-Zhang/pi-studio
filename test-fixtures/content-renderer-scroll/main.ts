@@ -1,12 +1,12 @@
 import { html } from "lit";
-import { FilesCodeViewer } from "../../pi-web-plugins/files/FilesCodeViewer";
-import { WorkspaceFileViewer } from "../../pi-web-plugins/files/FilesViewer";
-import { MermaidPreview } from "../../pi-web-plugins/mermaid/MermaidPreview";
+import { FilesCodeViewer } from "../../pi-studio-plugins/files/FilesCodeViewer";
+import { WorkspaceFileViewer } from "../../pi-studio-plugins/files/FilesViewer";
+import { MermaidPreview } from "../../pi-studio-plugins/mermaid/MermaidPreview";
 import { FormattedText } from "../../src/client/src/components/FormattedText";
 import { createContentRenderingService } from "../../src/client/src/formatting/contentRendering";
 
 customElements.define("scroll-files-viewer", WorkspaceFileViewer);
-customElements.define("pi-web-files-code-viewer", FilesCodeViewer);
+customElements.define("pi-studio-files-code-viewer", FilesCodeViewer);
 customElements.define("scroll-mermaid-preview", MermaidPreview);
 const params = new URLSearchParams(location.search);
 // Optional local demo, never modified by this harness. Default is deterministic
@@ -14,7 +14,7 @@ const params = new URLSearchParams(location.search);
 const text = params.has("demo")
   ? await (await fetch("/dev-plugins/mermaid-complex-demo.mmd")).text()
   : `flowchart TD\n${Array.from({ length: 45 }, (_, i) => `N${i}[${i === 44 ? "DIAGRAM END" : `Step ${i}`}]${i === 0 ? "" : `\nN${i - 1} --> N${i}`}`).join("\n")}`;
-const engine = () => fetch("/dist/pi-web-plugins/mermaid/browser/mermaid-engine.js").then((response) => {
+const engine = () => fetch("/dist/pi-studio-plugins/mermaid/browser/mermaid-engine.js").then((response) => {
   if (!response.ok) throw new Error("Build plugins before running this fixture");
   return response.text();
 });

@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "pi-web-android"
+rootProject.name = "pi-studio-android"
 include(":app")

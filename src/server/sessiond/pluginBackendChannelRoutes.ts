@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { WebSocket, type RawData } from "ws";
 import type { JsonValue } from "../../shared/apiTypes.js";
-import { isPiWebPluginId } from "../../shared/pluginIds.js";
+import { isPiStudioPluginId } from "../../shared/pluginIds.js";
 import {
   PAIRED_PLUGIN_BACKEND_CHANNEL_ROUTE_PATH,
   parsePluginBackendChannelClientEnvelope,
@@ -131,7 +131,7 @@ class PluginBackendChannelSocketController {
     });
 
     try {
-      if (!isPiWebPluginId(this.params.pluginId)) throw new Error(`Invalid PI WEB plugin id: ${this.params.pluginId}`);
+      if (!isPiStudioPluginId(this.params.pluginId)) throw new Error(`Invalid PI STUDIO plugin id: ${this.params.pluginId}`);
       this.params.operation = requirePluginBackendOperation(this.params.operation);
       if (this.params.projectId === "") throw new Error("Project id is required");
       if (this.params.workspaceId === "") throw new Error("Workspace id is required");

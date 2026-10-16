@@ -1,4 +1,4 @@
-# Task Plan: PI WEB Desktop Notifications + Electron Shell
+# Task Plan: PI STUDIO Desktop Notifications + Electron Shell
 
 **Goal**: Complete the desktop notifications feature and deliver a working Windows desktop application.
 
@@ -12,7 +12,7 @@
 
 ### Tasks:
 1. [x] Stash current changes or check out `main` temporarily
-2. [x] Run terminal plugin tests: `npx vitest run pi-web-plugins/terminal/server/server-plugin.test.ts`
+2. [x] Run terminal plugin tests: `npx vitest run pi-studio-plugins/terminal/server/server-plugin.test.ts`
 3. [x] Run twice to confirm consistency
 4. [x] Document results in findings.md
 5. [x] Restore working state
@@ -53,7 +53,7 @@
 3. [x] Test packaged application
 4. [x] Document installation instructions
 
-**Artifact**: `desktop/dist/PI WEB Desktop Portable.exe` (84MB, PE32 valid)
+**Artifact**: `desktop/dist/PI STUDIO Desktop Portable.exe` (84MB, PE32 valid)
 **Note**: NSIS installer requires full Wine desktop; skipped for WSL build.
 
 ## Phase 5: Documentation
@@ -83,7 +83,7 @@
 - `npm run typecheck` — clean
 - `npx eslint <9 changed files>` — clean
 - `npx vitest run ...` — 1184 tests, all passing
-- Portable exe built: `desktop/dist/PI WEB Desktop Portable.exe` (84MB, valid PE32)
+- Portable exe built: `desktop/dist/PI STUDIO Desktop Portable.exe` (84MB, valid PE32)
 - Icon updated to 512px for proper Windows display
 - `signAndEditExecutable: false` used (no code signing cert)
 

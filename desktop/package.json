@@ -1,9 +1,9 @@
 {
-  "name": "pi-desktop",
+  "name": "pi-studio-desktop",
   "version": "0.1.0",
   "private": true,
   "author": "Federico Jaramillo Martinez",
-  "description": "Desktop client for PI WEB - Connect to your AI coding workspace",
+  "description": "Desktop client for PI STUDIO - Connect to your AI coding workspace",
   "license": "MIT",
   "main": "main.cjs",
   "scripts": {

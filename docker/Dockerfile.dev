@@ -9,9 +9,9 @@ FROM ${OPENSUSE_IMAGE} AS dev
 
 ARG NODEJS_MAJOR=22
 ARG NODEJS_REPO=auto
-ARG PI_WEB_EXTRA_ZYPPER_PACKAGES=""
-ARG PI_WEB_UID=1000
-ARG PI_WEB_GID=1000
+ARG PI_STUDIO_EXTRA_ZYPPER_PACKAGES=""
+ARG PI_STUDIO_UID=1000
+ARG PI_STUDIO_GID=1000
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
@@ -20,17 +20,17 @@ ENV PATH=/workspace/node_modules/.bin:$PATH \
   NPM_CONFIG_CACHE=/data/npm-cache \
   HOME=/data/home \
   XDG_CONFIG_HOME=/data/config \
-  PI_WEB_DATA_DIR=/data/pi-web \
-  PI_WEB_SESSIOND_SOCKET=/data/pi-web/sessiond.sock \
+  PI_STUDIO_DATA_DIR=/data/pi-studio \
+  PI_STUDIO_SESSIOND_SOCKET=/data/pi-studio/sessiond.sock \
   PI_CODING_AGENT_DIR=/data/pi-agent \
   HOSTEXEC_IMAGE=alpine:3.22 \
   LANG=C.UTF-8 \
   SHELL=/bin/bash \
   TERM=xterm-256color
 
-COPY docker/internal/image/install-opensuse-base /usr/local/sbin/install-pi-web-opensuse-base
-RUN chmod 0755 /usr/local/sbin/install-pi-web-opensuse-base \
-  && install-pi-web-opensuse-base
+COPY docker/internal/image/install-opensuse-base /usr/local/sbin/install-pi-studio-opensuse-base
+RUN chmod 0755 /usr/local/sbin/install-pi-studio-opensuse-base \
+  && install-pi-studio-opensuse-base
 
 WORKDIR /workspace
 
@@ -40,34 +40,34 @@ COPY scripts/install-git-hooks.mjs scripts/install-git-hooks.mjs
 # checkout bind mount at runtime. A cached generation is added after custom
 # image hooks so it identifies the final dependency tree.
 RUN npm ci \
-  && install -d -m 0755 /opt/pi-web-dev-dependencies \
-  && cp package.json package-lock.json /opt/pi-web-dev-dependencies/ \
+  && install -d -m 0755 /opt/pi-studio-dev-dependencies \
+  && cp package.json package-lock.json /opt/pi-studio-dev-dependencies/ \
   && chmod -R a+rwX /workspace/node_modules \
-  && mv /workspace/node_modules /opt/pi-web-dev-dependencies/node_modules \
-  && ln -s /opt/pi-web-dev-dependencies/node_modules /workspace/node_modules \
+  && mv /workspace/node_modules /opt/pi-studio-dev-dependencies/node_modules \
+  && ln -s /opt/pi-studio-dev-dependencies/node_modules /workspace/node_modules \
   && ln -sf /workspace/node_modules/.bin/pi /usr/local/bin/pi \
   && npm cache clean --force \
   && chmod -R a+rwX /data \
   && chmod 0777 /workspace
 
-COPY --chmod=0755 docker/internal/dev/sync-node-modules /usr/local/sbin/pi-web-dev-sync-node-modules
+COPY --chmod=0755 docker/internal/dev/sync-node-modules /usr/local/sbin/pi-studio-dev-sync-node-modules
 
 COPY --from=docker-cli /usr/local/bin/docker /usr/local/bin/docker
 COPY --from=docker-cli /usr/local/libexec/docker/cli-plugins /usr/local/libexec/docker/cli-plugins
 COPY docker/internal/bin/hostexec /usr/local/bin/hostexec
-COPY docker/pi-web-docker /usr/local/bin/pi-web-docker
-RUN chmod 0755 /usr/local/bin/hostexec /usr/local/bin/pi-web-docker
+COPY docker/pi-studio-docker /usr/local/bin/pi-studio-docker
+RUN chmod 0755 /usr/local/bin/hostexec /usr/local/bin/pi-studio-docker
 
-COPY docker/custom-image.d/ /tmp/pi-web-custom-image.d/
+COPY docker/custom-image.d/ /tmp/pi-studio-custom-image.d/
 # Image hooks use the temporary /workspace/node_modules symlink. Leave an empty
 # directory afterward so Compose can mount and populate the dependency volume.
 RUN bash -euxo pipefail -c '\
   shopt -s nullglob; \
-  for script in /tmp/pi-web-custom-image.d/*.sh; do \
-    echo "Running PI WEB custom image hook: ${script}"; \
+  for script in /tmp/pi-studio-custom-image.d/*.sh; do \
+    echo "Running PI STUDIO custom image hook: ${script}"; \
     bash "${script}"; \
   done; \
-  rm -rf /tmp/pi-web-custom-image.d; \
+  rm -rf /tmp/pi-studio-custom-image.d; \
   test -L /workspace/node_modules; \
   rm /workspace/node_modules; \
   install -d -m 0777 /workspace/node_modules; \
@@ -76,7 +76,7 @@ RUN bash -euxo pipefail -c '\
 '
 # Cache the generation with the completed seed. Changes to any preceding layer,
 # including custom image hooks, rerun this step and refresh the named volume.
-RUN node -e 'process.stdout.write(`${require("node:crypto").randomUUID()}\n`)' > /opt/pi-web-dev-dependencies/generation
+RUN node -e 'process.stdout.write(`${require("node:crypto").randomUUID()}\n`)' > /opt/pi-studio-dev-dependencies/generation
 
 EXPOSE 8504 8505
 
