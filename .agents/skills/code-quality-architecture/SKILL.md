@@ -11,6 +11,10 @@ This project has no automated test suite, so design for behavior that can be exe
 
 Respect the project's existing conventions and the framework/library idioms already in use. If a dependency expects a particular pattern, such as inheritance, decorators, lifecycle hooks, or a registration API, use that pattern deliberately and keep the surrounding project code as simple and composable as possible.
 
+## 产品与性能约束
+
+轻量同时指使用体感、产品设计和实现：围绕核心编程流程，保持界面低噪声、操作直接、交互流畅，不堆砌功能、入口或配置项。新增能力与依赖须有实际收益，避免为假设需求增加复杂性；性能优化以实测为依据，不牺牲正确性、安全性和数据完整性。
+
 ## Values we optimize for
 
 ### Proportionate

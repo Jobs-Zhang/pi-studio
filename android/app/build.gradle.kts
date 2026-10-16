@@ -14,6 +14,7 @@ val stagedConnectPageDir = layout.buildDirectory.dir("generated/connectPage")
 val stageConnectPage by tasks.registering(Copy::class) {
     description = "Stages the shared desktop connect page into app assets."
     from(rootProject.layout.projectDirectory.file("../desktop/connect.html"))
+    from(rootProject.layout.projectDirectory.file("../LICENSE"))
     into(stagedConnectPageDir)
 }
 

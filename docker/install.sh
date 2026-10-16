@@ -309,7 +309,7 @@ install_dir=$(absolute_dir "$install_dir_input") || die "could not create instal
 env_file=$install_dir/.env
 
 asset_ref=$(value_from_env_or_existing_or_default PI_STUDIO_DOCKER_REF main)
-asset_base=${PI_STUDIO_DOCKER_ASSET_BASE:-https://raw.githubusercontent.com/pi-studio/pi-studio/$asset_ref/docker}
+asset_base=${PI_STUDIO_DOCKER_ASSET_BASE:-https://raw.githubusercontent.com/Jobs-Zhang/pi-studio/$asset_ref/docker}
 use_local_asset_dir=1
 if [ "${PI_STUDIO_DOCKER_REFRESH_ASSETS:-0}" = 1 ] || [ "${PI_STUDIO_DOCKER_REF+x}" = x ] || [ "${PI_STUDIO_DOCKER_ASSET_BASE+x}" = x ]; then
   use_local_asset_dir=0

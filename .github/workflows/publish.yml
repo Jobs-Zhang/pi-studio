@@ -12,6 +12,8 @@ permissions:
 jobs:
   publish:
     name: Publish to npm
+    # 确认 npm 命名空间及发布权限后，由维护者显式启用。
+    if: vars.ENABLE_NPM_PUBLISH == 'true'
     runs-on: ubuntu-latest
     environment: npm
     steps:
@@ -48,7 +50,8 @@ jobs:
     name: Deploy stable docs to pi-studio.dev
     # Stable docs only move on GitHub Releases; the dev variant at pi-studio.dev/dev/
     # deploys from main via docs-dev.yml. Skipped on manual workflow_dispatch runs.
-    if: github.event_name == 'release'
+    # 确认域名与 Cloudflare 账号归属后，由维护者显式启用。
+    if: github.event_name == 'release' && vars.ENABLE_DOCS_DEPLOY == 'true'
     needs: publish
     runs-on: ubuntu-latest
     steps:

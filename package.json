@@ -1,9 +1,18 @@
 {
   "name": "@pi-studio/pi-studio",
   "version": "1.202610.1",
-  "description": "Web UI for persistent Pi Coding Agent sessions in real workspaces.",
+  "description": "PI STUDIO: a lightweight, multi-platform coding workspace for Pi Coding Agent, with Web, Windows Desktop, and Android clients.",
   "license": "MIT",
-  "author": "Federico Jaramillo Martinez",
+  "author": {
+    "name": "Jobs Zhang",
+    "url": "https://github.com/Jobs-Zhang"
+  },
+  "contributors": [
+    {
+      "name": "Federico Jaramillo Martinez",
+      "url": "https://github.com/jmfederico"
+    }
+  ],
   "type": "module",
   "exports": {
     "./plugin-api": {
@@ -132,10 +141,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/pi-studio/pi-studio.git"
+    "url": "git+https://github.com/Jobs-Zhang/pi-studio.git"
   },
   "bugs": {
-    "url": "https://github.com/pi-studio/pi-studio/issues"
+    "url": "https://github.com/Jobs-Zhang/pi-studio/issues"
   },
   "homepage": "https://pi-studio.dev/",
   "packageManager": "npm@11.11.0",
@@ -166,7 +175,7 @@
     "extensions": [
       "./extensions"
     ],
-    "image": "https://raw.githubusercontent.com/pi-studio/pi-studio/main/docs/assets/pi-studio-banner.png"
+    "image": "https://raw.githubusercontent.com/Jobs-Zhang/pi-studio/main/docs/assets/pi-studio-banner.png"
   },
   "allowScripts": {
     "node-pty@1.1.0": true,

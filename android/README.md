@@ -1,61 +1,50 @@
-# PI Studio for Android
+# PI STUDIO Android 客户端
 
-[PI STUDIO](https://pi-studio.dev) 的 Android 客户端 —— 手机上打开你的 AI 编码工作台。
+通过 WebView 访问 PI STUDIO Gateway，支持直连、密码认证的 SSH 隧道和最近连接。业务 UI 由 Gateway 提供，服务端启动见[项目 README](../README.md#run-from-source)。
 
-## 功能
+## 环境与交付状态
 
-- 🔗 **直连** — 输入可达的 PI STUDIO 网关地址即可连接
-- 🖥 **SSH 隧道** — 手机不在内网时，用 SSH 账号密码把网关映射到本机回环端口
-- 📌 **最近使用** — 直连与 SSH 连接都会记录，点击即重连
-- 🔒 **记住密码** — 密码用 Android Keystore 加密后保存在本机，明文不落盘
+- Android 8.0（API 26）或更高，以及客户端可达的 Gateway。
+- 目前只提供本地构建的 Debug APK；正式签名与发布渠道尚未配置，不将 Debug APK 当作正式发行版。
+- 本地安装可能需要允许对应应用安装未知来源软件。
 
-## 连接方式
+## 构建
 
-- **直连**：网关地址（如 `http://192.168.1.100:8504`）在手机上可达时直接使用。
-- **SSH**：填写 SSH 地址（`user@host` 或 IP）、端口、登录用户、密码，再填「远程网关」（PI STUDIO 在 SSH 主机上可被访问的地址，默认 `http://127.0.0.1:8504`）。隧道建立在手机本机，连接页随后打开 `http://127.0.0.1:<随机端口>`。
+需要 JDK 17+、Android SDK 的 `platform-tools`、`platforms;android-35` 和 `build-tools;35.0.0`。
 
-Android 上不读取 `~/.ssh/config`，也不支持密钥文件与 ssh agent：**只支持账号密码认证**。
-
-## 环境要求
-
-- Android 8.0（API 26）或更高
-- 可达的 PI STUDIO 网关
-
-## 下载
-
-构建产物为调试版 APK（`app-debug.apk`），安装时需要在系统设置中允许「安装未知来源应用」。
-
-## 从源码构建
-
-前置：JDK 17+、Android SDK（`platform-tools`、`platforms;android-35`、`build-tools;35.0.0`）。
+在仓库根目录执行：
 
 ```bash
 cd android
-export ANDROID_HOME=~/Android/sdk
+export ANDROID_HOME="/path/to/android-sdk"
 ./gradlew assembleDebug
+"$ANDROID_HOME/platform-tools/adb" install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
-输出：`app/build/outputs/apk/debug/app-debug.apk`，用 `adb install -r` 或直接传到手机上安装。
+输出：`app/build/outputs/apk/debug/app-debug.apk`。构建通过后仍需在模拟器或设备上实测连接、返回导航和隧道关闭，不编写自动化测试。
 
-## 代码结构
+## 连接与安全
+
+- **直连**：输入手机可访问的 Gateway 地址，例如 `https://gateway.example.com`。
+- **SSH**：填写 SSH 主机、端口、用户、密码和从该 SSH 主机可访问的远程网关地址。隧道在手机上转发到随机本地回环端口，再由 WebView 访问。
+- 不读取 `~/.ssh/config`，不支持密钥文件或 SSH agent。
+- 勾选记住密码后，通过 Android Keystore 加密保存，明文不落盘。
+- 返回连接页或退出应用会关闭隧道；不要依赖客户端作为常驻 SSH 转发服务。
+
+## 代码边界
+
+源码目录为 `app/src/main/java/dev/pi/studio/`：
 
 | 文件 | 职责 |
 | --- | --- |
-| `app/src/main/java/dev/pi/web/MainActivity.kt` | WebView 壳：加载连接页、返回键、系统栏 insets |
-| `.../ConnectionService.kt` | 历史、能力协商、隧道生命周期（对应 `desktop/main.cjs` 的 IPC 处理器） |
-| `.../ConnectBridge.kt` | 把 `window.piStudioDesktop` 契约暴露给连接页 |
-| `.../SshTunnel.kt` | JSch 隧道：认证 + `direct-tcpip` 本地转发 |
-| `.../ConnectionStore.kt`、`.../PasswordCipher.kt` | 最近使用的持久化；密码的 Keystore 加密 |
-| `.../ConnectionModels.kt`、`.../ConnectPayloads.kt` | 与 `desktop/history.cjs`、`desktop/main.cjs` 对齐的数据结构与纯函数 |
+| `MainActivity.kt` | WebView、连接页、返回导航与系统栏 |
+| `ConnectionService.kt`、`ConnectBridge.kt` | 连接生命周期、能力协商与页面桥接 |
+| `SshTunnel.kt` | JSch 认证与本地转发 |
+| `ConnectionStore.kt`、`PasswordCipher.kt` | 最近连接持久化与密码加密 |
+| `ConnectionModels.kt`、`ConnectPayloads.kt` | 与 Desktop 对齐的连接数据结构 |
 
-连接页与桌面端**共用同一份源码**：构建时把 `desktop/connect.html` 暂存进 assets，平台差异通过 `capabilities` 协商（Android 端声明 `sshConfig=false`、`identityFile=false`、无键盘快捷键）。
+构建时将 `desktop/connect.html` 和根目录 `LICENSE` 放入 assets。连接页通过 `capabilities` 适配平台，不另建 Android 专用副本。
 
-## 与桌面端的差异
+## 许可证
 
-- 隧道由 JSch 库实现，不依赖设备上的 OpenSSH 客户端。
-- 只支持密码认证（无 `~/.ssh/config`、无密钥文件）。
-- 隧道跟随应用前台生命周期：返回连接页或退出应用即关闭。
-
-## License
-
-MIT
+采用 [MIT 许可证](../LICENSE)。连接页可离线查看“来源与开源许可”，APK 同时包含 `assets/LICENSE`。

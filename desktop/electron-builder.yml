@@ -11,6 +11,9 @@ files:
   - history.cjs
   - icon.png
   - icon.ico
+extraResources:
+  - from: ../LICENSE
+    to: LICENSE
 win:
   # Only code signing is skipped; resource editing must stay enabled or the
   # exe keeps Electron's default icon and version metadata.

@@ -2,7 +2,7 @@ import { accessSync, constants, existsSync, statSync, type Stats } from "node:fs
 import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 
-export const PI_STUDIO_SPAWN_HELPER_ISSUE_URL = "https://github.com/pi-studio/pi-studio/issues/4";
+export const PI_STUDIO_SPAWN_HELPER_ISSUE_URL = "https://github.com/jmfederico/pi-web/issues/4";
 export const NODE_PTY_SPAWN_HELPER_UPSTREAM_ISSUE_URL = "https://github.com/microsoft/node-pty/issues/850";
 
 const doctorLabel = "node-pty macOS spawn-helper executable";

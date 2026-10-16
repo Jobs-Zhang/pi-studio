@@ -1,114 +1,74 @@
-# Agent Notes
+# Development Guidelines
 
-## Project identity
+## Product and Engineering Principles
 
-PI Studio is the multi-platform product built from PI STUDIO. It provides one shared coding workspace experience across:
+PI STUDIO is a coding workspace for Web, Windows Desktop, and Android. Its shared model is machine → project → workspace → session. Keep behavior consistent across clients while using platform-appropriate layouts and integrations.
 
-- Web browser
-- Windows Desktop
-- Android app
+- **Lightweight and performant first.** Lightweight applies to user experience, product design, and implementation: low-noise interfaces, direct workflows, responsive interaction, and low runtime overhead.
+- Focus on core coding workflows. Do not accumulate features, entry points, or configuration options, or introduce complex technology, heavy dependencies, unnecessary abstractions, or infrastructure for speculative needs.
+- New capabilities, dependencies, and background work must provide a clear benefit that justifies their cognitive and runtime costs.
+- Base performance improvements on measurement. Do not trade correctness, security, or data integrity for speed.
+- Do not write or introduce automated tests, test fixtures, or test frameworks. Verify behavior through real functional checks; static analysis is supplementary.
 
-The product model is: machine → project → workspace → session. Keep behavior consistent across clients while allowing each shell to use platform-appropriate layout and integration.
+## Architecture and Runtime Ownership
 
-## Runtime ownership
-
-The project runs locally with split systemd user services:
-
-- `pi-studio-sessiond.service` runs `npm run start:sessiond` in non-autoreload, non-auto-restart mode.
-- `pi-studio-ui-dev.service` runs the web/API and Vite UI in development mode with `npm run dev:web` and `npm run dev:client`.
-
-The session runtime owner is long-lived and separate from the autoreloading UI/API process. Browser disconnects and UI/API restarts must not stop active Pi sessions.
-
-Changes affecting `src/server/sessiond.ts`, session runtime ownership, the session daemon protocol, or code loaded only by the session daemon require a manual session-daemon restart. UI/API changes normally use the autoreload path and do not require restarting sessiond.
-
-## Branch and repository focus
-
-The active development branch is `feat/desktop-and-app`. Do not use `main` as the integration base while this work is in flight, and do not create new work branches from `main` for this scope.
-
-This branch keeps the following product work together:
-
-- Shared web UI and API
-- Windows Desktop packaging and shell integration
-- Android WebView client and platform integration
-- Remote machines, SSH connections, and SSH tunnels
-
-The legacy repository and package names may remain in code during migration. Do not perform broad renames or package migrations unless explicitly requested.
+- The session daemon owns long-lived sessions and terminals, separately from the Web/API process. Browser disconnects and Web/API restarts must not stop sessions.
+- Changes to `src/server/sessiond.ts`, the daemon protocol, or daemon-only modules require a session-daemon restart. Ordinary UI/API changes do not.
+- Restarting sessiond interrupts active sessions and terminals. Make that impact clear before a restart; when both processes need restarting, restart Web/API before sessiond.
+- `main` integrates Web/API, clients, remote machines, and SSH support.
+- Packages under `pi-packages/` ship with the project. Their names identify installation state; review callers and saved installation records before renaming them.
 
 ## Clients
 
 ### Android
 
-The Android client lives in `android/` and uses Kotlin, the Gradle wrapper, and the shared Desktop connection page.
-
-- SDK: `~/Android/sdk`
-- Build: `cd android && ./gradlew assembleDebug`
-- APK: `android/app/build/outputs/apk/debug/app-debug.apk`
-- Export `ANDROID_HOME=$HOME/Android/sdk` when needed.
-- `adb` is at `$ANDROID_HOME/platform-tools/adb`.
-- The emulator AVD is `piweb`.
-- WebView inspection uses `adb forward tcp:9333 localabstract:webview_devtools_remote_<pid>` and page-level WebSocket CDP. Playwright browser-level `connectOverCDP` does not work with this WebView.
+- Source: `android/`, using Kotlin and the Gradle wrapper.
+- Configure `ANDROID_HOME` for the installed Android SDK.
+- Build: `cd android && ./gradlew assembleDebug`.
+- Output: `android/app/build/outputs/apk/debug/app-debug.apk`; this is a debug build, not a signed release.
+- The connection page is shared with Desktop through `desktop/connect.html`; platform differences use capability negotiation.
+- Inspect WebView using `adb forward tcp:9333 localabstract:webview_devtools_remote_<pid>` and page-level WebSocket CDP, not Playwright's browser-level `connectOverCDP`.
 
 ### Windows Desktop
 
-The Desktop client lives in `desktop/`. `desktop/electron-builder.yml` is the single packaging configuration source. `desktop/dist/` is never committed.
-
-- Build: `cd desktop && npm run build`
-- Installer: `desktop/dist/PI Studio Setup.exe`
-- The installer, not the portable executable, is the supported Windows deliverable.
-- The Desktop shell owns connection setup, direct HTTP(S) connections, recent connections, SSH configuration, and SSH tunnels. The connected Gateway normally provides the web application UI.
-- Do not assume the UI is bundled into the Desktop shell. The shell and Gateway are separate delivery boundaries.
+- Source: `desktop/`; `desktop/electron-builder.yml` is the single packaging configuration source.
+- Build: `cd desktop && npm run build`.
+- Installer: `desktop/dist/PI Studio Setup.exe`. Do not commit `desktop/dist/`.
+- The installer is the supported deliverable. A portable executable does not replace shortcut registration required for notifications.
+- The shell owns connection setup, recent connections, SSH configuration, and tunnels. The connected Gateway normally serves the application UI; do not assume it is bundled with the shell.
 - Preserve multi-size `icon.ico` usage for Windows resources, shortcuts, tray, and taskbar icons.
 
-## UI and product conventions
+## UI Conventions
 
-- Keep the overall interface concise and low-noise, with Codex Desktop as the visual reference.
-- Use simple monochrome line icons instead of colorful emoji for navigation.
-- The navigation hierarchy is project → workspace → session.
-- Expanding a project should expose its main workspace and sessions without changing the current conversation.
-- Browsing projects or workspaces must not automatically select the first or previously selected session.
-- Only an explicitly selected session receives selected-row background styling. Parent project and workspace rows must not become selected merely because they contain the active session.
-- Clicking a project or workspace name, icon, or expander toggles expansion. Expanding one directory must not collapse other expanded directories.
-- Session titles stay on one line with ellipsis; secondary metadata appears as smaller text below.
-- Session action buttons stay compact and aligned to the right. Trailing menus should be transparent and share the row hover/selection surface rather than showing a detached white block.
-- Preserve existing status indicators, menus, trust controls, cleanup, archive, restore, rename, multi-select, keyboard navigation, and machine switching.
-- Keep classic theme behavior intact while supporting the current light, dark, and automatic themes.
-- Keep composer model selection, thinking depth, and attachment controls independent and unchanged unless explicitly requested.
+- Use Codex Desktop as the visual reference. Keep the interface concise and low-noise, with monochrome line icons for navigation.
+- The hierarchy is project → workspace → session. Expanding directories must not change the conversation or collapse other directories.
+- Project and workspace names, icons, and expanders toggle expansion. Browsing must not automatically select a session.
+- Only an explicitly selected session receives selected-row styling; its parent project and workspace do not.
+- Keep session titles on one line with ellipsis and secondary metadata below. Keep actions compact and right-aligned; trailing menus share the row surface.
+- Preserve status indicators, trust controls, archive/restore, cleanup, rename, multi-select, keyboard navigation, and machine switching.
+- Preserve Classic, light, dark, and automatic themes. Keep model selection, thinking depth, and attachment controls independent unless the task explicitly changes them.
 
-## Configuration and URL boundaries
+## Configuration and URL Boundaries
 
-- `$PI_STUDIO_DATA_DIR` contains PI Studio-managed state such as projects and machines; it is not the user-editable configuration API.
-- Global user and machine configuration belongs in `$PI_STUDIO_CONFIG` or `~/.config/pi-studio/config.json`.
-- Project-local core configuration belongs in `<project>/.pi-studio/config.json`.
-- Plugin-owned project configuration may use separate files such as `.pi-studio/tasks.json`.
-- Client application paths must be application-relative without a leading slash, for example `api/...` and `pi-studio-plugins/...`.
-- Encode dynamic path segments with `encodeURIComponent` and query values with `URLSearchParams` where appropriate.
-- Use the existing URL helpers at browser boundaries: `request()`, `resolveAppUrl()`, `resolveAppWebSocketUrl()`, and `resolvePluginModuleUrl()`.
-- Do not introduce raw leading `/api` or `/pi-studio-plugins` references in production client code.
+- `$PI_STUDIO_DATA_DIR` stores managed state such as projects and machines; it is not the user configuration API.
+- Global configuration uses `$PI_STUDIO_CONFIG` or `~/.config/pi-studio/config.json`, respecting `XDG_CONFIG_HOME`.
+- Project configuration uses `<project>/.pi-studio/config.json`. Plugins may own separate files such as `.pi-studio/tasks.json`.
+- Client application paths are relative without a leading slash, such as `api/...` and `pi-studio-plugins/...`.
+- Encode dynamic path segments with `encodeURIComponent` and query values with `URLSearchParams`.
+- Use `request()`, `resolveAppUrl()`, `resolveAppWebSocketUrl()`, and `resolvePluginModuleUrl()` at browser boundaries. Do not introduce raw `/api` or `/pi-studio-plugins` paths in production client code.
 
-## Verification policy
+## Verification and Delivery
 
-This project does not add automated test files or test-only fixtures. Do not introduce or restore unit, component, integration, or end-to-end test suites.
+- Exercise affected workflows in a real Web service, browser, Electron client, Android emulator/device, or built artifact, including normal and critical failure paths.
+- For performance changes, record reproducible steps and before/after measurements.
+- Manually review behavior, boundaries, security, data integrity, and maintenance cost.
+- Run `npm run verify` (typecheck, lint, and knip) and `git diff --check`.
+- Build, packaging, and static-check success does not establish functional correctness. Report skipped, failed, and blocked verification explicitly.
+- See [development and delivery checks](docs/development-checks.md) for delivery requirements.
 
-Verify behavior through:
+## Documentation and Releases
 
-1. Real functional checks using the local web service, browser, Electron client, Android emulator/device, or built artifacts.
-2. Manual code review focused on behavior, boundaries, security, data integrity, and maintainability.
-3. `npm run verify`, which runs typecheck, lint, and knip.
-4. `git diff --check`.
-
-Never report failed, incomplete, or skipped verification as passing. State what was not run and why.
-
-## Git and release discipline
-
-- Keep user-visible changes in a Changeset under `.changeset/`.
-- Do not manually edit `CHANGELOG.md`; release tooling generates it.
-- Include design documents with the related implementation rather than committing them alone.
-- Use Conventional Commit style when committing.
-- Do not merge or rebase `develop` into a working branch. Finish work on the working branch, then merge that branch into the target branch.
-- Do not create Git worktrees unless the user explicitly requests one.
-
-## Operational safety
-
-Use the Linux toolchain in this environment. Do not read or echo secret files, password environment variables, access tokens, or private keys.
-
-Production and staging data are read-only unless the user explicitly authorizes writes. Avoid restarting the session daemon unless the user explicitly requests or authorizes it; it owns active sessions.
+- Keep `README.md` concise; place detailed guidance in the relevant documentation. Keep `AGENTS.md` and `README.md` in English and free of machine-specific setup or personal operating policies.
+- Add user-visible changes to `.changeset/`. Do not edit generated `CHANGELOG.md` manually.
+- Use Conventional Commits. Commit design documents with the related implementation, not on their own.
+- npm publishing and website deployment are not configured for this project yet. Do not describe reserved endpoints as available release channels or enable publishing workflows without confirmed release configuration.

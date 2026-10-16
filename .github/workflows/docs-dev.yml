@@ -24,6 +24,8 @@ concurrency:
 jobs:
   deploy:
     name: Deploy to pi-studio.dev/dev
+    # 确认域名与 Cloudflare 账号归属后，由维护者显式启用。
+    if: vars.ENABLE_DOCS_DEPLOY == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

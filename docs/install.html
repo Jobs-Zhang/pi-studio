@@ -55,7 +55,7 @@
             <a href="faq">FAQ</a>
           </div>
           <div class="nav-actions">
-            <a class="github-link" href="https://github.com/pi-studio/pi-studio" aria-label="PI STUDIO on GitHub">
+            <a class="github-link" href="https://github.com/Jobs-Zhang/pi-studio" aria-label="PI STUDIO on GitHub">
               <svg class="github-icon" viewBox="0 0 16 16" aria-hidden="true">
                 <path
                   fill="currentColor"
@@ -79,8 +79,7 @@
           <p class="eyebrow"><span class="pulse"></span> Installation guide</p>
           <h1>Get PI STUDIO running where your agents work.</h1>
           <p>
-            The recommended setup runs PI STUDIO as per-user services. PI STUDIO chooses the native user-service backend for
-            your operating system.
+            当前推荐从源码运行。npm 发布、独立官网和客户端正式下载渠道尚未配置；下方包安装与更新命令保留为发布后的参考，不代表现在可用。
           </p>
         </div>
       </section>
@@ -89,6 +88,7 @@
         <div class="container doc-layout">
           <aside class="toc" aria-label="Install page contents">
             <strong>On this page</strong>
+            <a href="#source-start">源码启动（当前推荐）</a>
             <a href="#requirements">Requirements</a>
             <a href="#user-services">User service install</a>
             <a href="#one-line">One-line install</a>
@@ -103,6 +103,23 @@
           </aside>
 
           <div class="doc-content">
+            <section id="source-start">
+              <h2>源码启动（当前推荐）</h2>
+              <p>需要 Node.js 22.19+（推荐 24）、npm、Git，以及配置好模型和凭据的 Pi Coding Agent 1.x 环境。私有仓库需先取得访问权限。</p>
+              <div class="code-card">
+                <div class="copy-row">
+                  <strong>源码启动</strong>
+                  <button class="copy-button" data-copy="#source-install">复制</button>
+                </div>
+                <pre id="source-install"><code>git clone https://github.com/Jobs-Zhang/pi-studio.git
+cd pi-studio
+npm ci
+npm run dev</code></pre>
+              </div>
+              <p>默认 Vite UI 端口为 <code>8505</code>，Web/API 端口为 <code>8504</code>。从其他设备访问时使用服务机器的实际地址，并限制网络访问。</p>
+              <div class="callout warning">停止 <code>npm run dev</code> 会停止该开发进程组，包括 sessiond，从而中断会话与终端。已有实例运行时不要重复启动；独立实例需使用不同的数据目录、socket 和端口。</div>
+              <p>长期开发可在三个终端分别运行 <code>npm run start:sessiond</code>、<code>npm run dev:web</code>、<code>npm run dev:client</code>，让 sessiond 独立于 UI/API 运行。重启 sessiond 前先结束重要任务；需要同时重启时先 Web/API，后 sessiond。</p>
+            </section>
             <section id="requirements">
               <h2>Requirements</h2>
               <ul>
@@ -122,7 +139,7 @@
             </section>
 
             <section id="user-services">
-              <h2>Recommended: run PI STUDIO as user services</h2>
+              <h2>用户服务安装（npm 发布后）</h2>
               <p>
                 This creates two per-user services: one long-lived session daemon and one web/API service. The CLI chooses
                 the native user-service backend automatically. It is the easiest way to keep sessions available after SSH
@@ -147,20 +164,20 @@
             </section>
 
             <section id="one-line">
-              <h2>One-line install</h2>
+              <h2>一键安装（npm 发布且仓库公开后）</h2>
               <p>If you prefer a curl pipe for the native user-service install, use the repository installer. This path still requires Node.js, npm, and Pi Coding Agent on the host.</p>
               <div class="code-card">
                 <div class="copy-row">
                   <strong>One-liner</strong>
                   <button class="copy-button" data-copy="#one-line-install">Copy</button>
                 </div>
-                <pre id="one-line-install"><code><span class="prompt">$</span> curl -fsSL https://raw.githubusercontent.com/pi-studio/pi-studio/main/install.sh | sh</code></pre>
+                <pre id="one-line-install"><code><span class="prompt">$</span> curl -fsSL https://raw.githubusercontent.com/Jobs-Zhang/pi-studio/main/install.sh | sh</code></pre>
               </div>
             </section>
 
             <section id="pi-package">
               <h2>Install through Pi</h2>
-              <p>PI STUDIO is also published as a Pi package. This exposes a <code>/pi-studio</code> command inside Pi.</p>
+              <p>以下 npm 来源安装需等待包发布；安装后通过 Pi 扩展暴露 <code>/pi-studio</code> 命令。</p>
               <p>You do not need a separate global npm install; manage the services with <code>/pi-studio</code> inside Pi.</p>
               <div class="code-card">
                 <div class="copy-row">
@@ -181,8 +198,7 @@
             <section id="manual-run">
               <h2>WSL / manual run</h2>
               <p>
-                On WSL without systemd, containers without a user service manager, or other unsupported environments,
-                install the package and run the daemon and web server yourself.
+                无 systemd 的 WSL 或其他无用户服务管理器的环境，当前使用上方源码启动流程。以下独立命令用于 npm 包发布并安装后的手动运行。
               </p>
               <div class="code-card">
                 <div class="copy-row">
@@ -325,7 +341,7 @@ server {
             </section>
 
             <section id="manage-services">
-              <h2>Manage services</h2>
+              <h2>服务管理（已安装 CLI 与服务时）</h2>
               <p><code>pi-studio version</code> compares the installed package version with the versions reported by the running Web/UI and session daemon services.</p>
               <div class="code-card">
                 <div class="copy-row">
@@ -344,7 +360,7 @@ server {
             </section>
 
             <section id="updates">
-              <h2>Update PI STUDIO</h2>
+              <h2>更新（发布与安装渠道配置后）</h2>
               <p>Run <code>pi-studio version --check</code> to compare installed and running versions and check the latest available npm release. Ordinary <code>pi-studio version</code> and <code>pi-studio --version</code> do not check for new releases.</p>
               <p>Run <code>pi-studio update</code> to update a supported installation. The Updates panel runs the same command on the selected machine; it does not use a separate updater.</p>
               <p>The command explains the update and asks for confirmation. Restarting the session daemon interrupts active sessions and terminals. Use <code>--yes</code> only when you explicitly accept that interruption, including in non-interactive scripts.</p>
@@ -444,7 +460,7 @@ server {
           <a href="config">Config</a>
           <a href="plugins">Plugins</a>
           <a href="faq">FAQ</a>
-          <a href="https://github.com/pi-studio/pi-studio">GitHub</a>
+          <a href="https://github.com/Jobs-Zhang/pi-studio">GitHub</a>
           <span class="version-switcher" role="group" aria-label="Documentation version">
             <a class="version-switcher-option" data-version-option="stable" href="https://pi-studio.dev/install" aria-current="true">Stable</a>
             <a class="version-switcher-option" data-version-option="dev" href="https://pi-studio.dev/dev/install">Dev</a>

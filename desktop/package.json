@@ -2,7 +2,16 @@
   "name": "pi-studio-desktop",
   "version": "0.1.0",
   "private": true,
-  "author": "Federico Jaramillo Martinez",
+  "author": {
+    "name": "Jobs Zhang",
+    "url": "https://github.com/Jobs-Zhang"
+  },
+  "contributors": [
+    {
+      "name": "Federico Jaramillo Martinez",
+      "url": "https://github.com/jmfederico"
+    }
+  ],
   "description": "Desktop client for PI STUDIO - Connect to your AI coding workspace",
   "license": "MIT",
   "main": "main.cjs",

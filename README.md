@@ -1,185 +1,87 @@
 # PI STUDIO
 
-[![CI](https://github.com/pi-studio/pi-studio/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/pi-studio/pi-studio/actions/workflows/ci.yml)
-[![npm version](https://img.shields.io/npm/v/@pi-studio/pi-studio)](https://www.npmjs.com/package/@pi-studio/pi-studio)
-[![Node.js](https://img.shields.io/node/v/@pi-studio/pi-studio)](package.json)
+[![CI](https://github.com/Jobs-Zhang/pi-studio/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Jobs-Zhang/pi-studio/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-**PI STUDIO is a web UI for [Pi Coding Agent](https://github.com/earendil-works/pi/tree/main/packages/coding-agent) that keeps agent sessions running in real workspaces on your machine or server.**
+PI STUDIO is a lightweight, multi-platform coding workspace for [Pi Coding Agent](https://github.com/earendil-works/pi/tree/main/packages/coding-agent). Manage projects, AI sessions, files, and terminals across Web, Windows Desktop, and Android, on your own machines or remote servers.
 
-Run agents where your code, tools, credentials, and build caches live. Supervise them from any browser.
+Lightweight and performant first: concise interfaces, direct workflows, and responsive interaction. Features serve core coding needs without feature overload or unnecessary technical complexity.
 
-Website and docs: <https://pi-studio.dev/>
+## Capabilities
 
-![PI STUDIO](docs/assets/pi-studio-banner.png)
+- Organize work as machine → project → workspace → session, with Git worktree support.
+- Keep sessions running in a separate daemon across browser disconnects and Web/API restarts.
+- Manage conversations, files, terminals, and plugins, including on trusted remote machines.
+- Connect from Windows or Android using direct connections or SSH tunnels, with a shared connection page.
 
-![PI STUDIO desktop screenshot](docs/assets/pi-studio-desktop.png)
+![PI STUDIO workspace](docs/assets/pi-studio-desktop.png)
 
-## Why PI STUDIO?
+## Project Status
 
-Agentic development works better when the work environment is persistent.
+The project currently supports running from source and building clients yourself. npm publishing, a standalone website, and official client downloads are not configured. Reserved configuration and installation instructions do not imply an available release channel.
 
-PI STUDIO lets you:
+- **Web:** run from source.
+- **Windows:** build the `PI Studio Setup.exe` installer.
+- **Android:** build a debug APK; signed release distribution is not configured.
 
-- keep Pi Coding Agent sessions alive after browser disconnects;
-- run agents inside real repositories and git worktrees;
-- supervise multiple sessions in parallel;
-- switch between laptop, phone, tablet, and desktop;
-- use a server, workstation, or remote dev box as your agent runtime;
-- manage projects, workspaces, files, terminals, sessions, and remote machines from one web UI.
+## Run from Source
 
-Your browser is the control surface. The work stays where it can keep running.
-
-## Quick start
-
-Requirements:
-
-- Node.js 22.19.0 or newer
-- npm
-- Pi Coding Agent 1.x, configured for your user
-- git and the development tools your agents need
-
-Install and start PI STUDIO as per-user services:
+Requires Node.js 22.19+ (24 recommended), npm, Git, and a Pi Coding Agent 1.x environment with models and credentials configured.
 
 ```bash
-npm install -g @pi-studio/pi-studio --allow-scripts=node-pty
-pi-studio install
-pi-studio doctor
-```
-
-On npm 12, the scoped flag lets `node-pty` prepare its required native module without enabling install scripts for other dependencies.
-
-Then open:
-
-```text
-http://127.0.0.1:8504
-```
-
-Useful commands:
-
-```bash
-pi-studio status
-pi-studio logs
-pi-studio restart
-pi-studio doctor
-pi-studio version
-pi-studio uninstall
-```
-
-<!-- Keep README guidance concise. Put install variants, troubleshooting,
-configuration, and operational details in docs/, then link from here. -->
-
-For more install options, including one-line install, Pi package install, WSL/manual usage, and remote access, see the [installation guide](https://pi-studio.dev/install).
-
-## Core model
-
-PI STUDIO organizes work like this:
-
-```text
-Machine     a local or remote PI STUDIO runtime endpoint
-Project     a folder on that machine
-Workspace   a provider-owned working folder; bundled Git discovers worktrees, otherwise the project folder
-Session     a Pi Coding Agent chat running inside a workspace
-```
-
-A typical flow:
-
-1. Add a project.
-2. Choose a workspace or git worktree.
-3. Start a session.
-4. Let the agent work.
-5. Come back later from any browser.
-
-## Remote-first development
-
-PI STUDIO is designed for remote AI-driven development.
-
-Instead of tying agent work to your laptop session, run PI STUDIO on a machine that stays available: a server, desktop, cloud VM, home lab machine, or remote dev box.
-
-Use a private network, SSH tunnel, trusted reverse proxy, or federated PI STUDIO machine setup when accessing it remotely.
-
-Read more: [Remote-first development](https://pi-studio.dev/remote-first)
-
-## Machines and fleets
-
-PI STUDIO can register other PI STUDIO runtimes as remote machines. One browser-facing PI STUDIO instance can proxy projects, files, git state, sessions, terminals, activity, Pi package management, and selected-machine settings from trusted remote machines.
-
-When a remote machine is selected, Settings tabs label their target. Pi packages, PI STUDIO plugin enablement, session daemon toggles, external file access, and upload defaults target the selected machine. Gateway/server settings such as host, port, allowed hosts, registered machines/tokens, and keyboard shortcuts stay local to the gateway/browser.
-
-Read more: [Fleet and machines guide](https://pi-studio.dev/machines)
-
-## PI STUDIO plugins
-
-Extend PI STUDIO with trusted plugins for panels, tools, and workspace workflows. Use **Settings → PI STUDIO plugins** to enable or disable them on the selected machine.
-
-Pi packages are a separate Pi package-manager concept. A Pi package may include a PI STUDIO plugin, but installing a package and enabling it are different operations. Server-backed changes require a session-daemon restart; see the plugin guide for lifecycle and recovery details.
-
-Read more: [PI STUDIO plugin guide](https://pi-studio.dev/plugins)
-
-## Configuration
-
-Global config lives at:
-
-```text
-$PI_STUDIO_CONFIG
-~/.config/pi-studio/config.json
-```
-
-Project-local PI STUDIO config lives at:
-
-```text
-<project>/.pi-studio/config.json
-```
-
-Common configuration includes host/port, path access, uploads, PI STUDIO plugin enablement, shortcuts, and session daemon options. In Settings, machine-affecting config targets the selected machine; gateway host/port/allowed-hosts, remote machine registration, tokens, and keyboard shortcuts stay local.
-
-Read more: [Configuration reference](https://pi-studio.dev/config)
-
-## Development
-
-Clone the repository and run:
-
-```bash
-npm install
+git clone https://github.com/Jobs-Zhang/pi-studio.git
+cd pi-studio
+npm ci
 npm run dev
 ```
 
-Open the Vite URL, usually:
+Repository access is required while the repository is private. Open the Vite URL printed in the terminal (default port `8505`). The Web/API defaults to port `8504`. Use the server's reachable address for access from other devices and restrict network access appropriately.
 
-```text
-http://localhost:8505
-```
-
-For the split development setup:
+`npm run dev` starts a development process group including sessiond. Stopping it interrupts that group's sessions and terminals. To keep sessiond separate from UI/API development, run each command in its own terminal:
 
 ```bash
-npm run dev:sessiond
+npm run start:sessiond
 npm run dev:web
 npm run dev:client
 ```
 
-Validate changes with:
+Do not start a second daemon against an existing instance's data directory. Independent instances need separate data directories, sockets, and ports; see [managed data directories](docs/config.md#managed-data-directory).
+
+## Basic Workflow
+
+1. Add a project on the selected machine.
+2. Choose a workspace or create a Git worktree.
+3. Create or explicitly select a session and send a task.
+4. Continue working from the browser or a connected client.
+
+Windows and Android are connection clients. The Gateway normally serves the application UI; these clients do not bundle a complete offline server.
+
+## Development and Verification
+
+This project does not write automated tests. Verify behavior through real functional checks, supported by manual review and static analysis.
 
 ```bash
 npm run verify
+git diff --check
 ```
 
-## Security model
-
-PI STUDIO assumes trusted users, trusted repositories, and trusted server paths.
-
-It is not a sandbox, permission system, or multi-tenant platform. Do not expose it directly to the public internet without a trusted network, firewall, VPN, SSH tunnel, or authenticated reverse proxy.
+See [development guidelines](AGENTS.md) and [development and delivery checks](docs/development-checks.md).
 
 ## Documentation
 
-- [Website](https://pi-studio.dev/)
-- [Install](https://pi-studio.dev/install)
-- [Remote-first development](https://pi-studio.dev/remote-first)
-- [Machines / fleet](https://pi-studio.dev/machines)
-- [Configuration](https://pi-studio.dev/config)
-- [Plugins](https://pi-studio.dev/plugins)
-- [FAQ](https://pi-studio.dev/faq)
+- [Windows client](desktop/README.md)
+- [Android client](android/README.md)
+- [Configuration](docs/config.md)
+- [Plugins and Pi packages](docs/plugins.md)
+- [Docker (experimental)](docker/README.md)
+- [Installation and deployment](docs/install.html): an HTML page best viewed through a static server; use the source setup above for the current development version.
 
-## License
+## Security Model
 
-MIT © 2026 Federico Jaramillo Martinez. See [LICENSE](LICENSE).
+PI STUDIO assumes trusted users, repositories, and server paths. It is not a sandbox or a multi-tenant platform. Do not expose it directly to the public internet; use a trusted network, VPN, SSH tunnel, or authenticated reverse proxy.
+
+## Acknowledgments and License
+
+Maintained by [Jobs Zhang](https://github.com/Jobs-Zhang). Thanks to Federico Jaramillo Martinez and the [PI WEB](https://github.com/jmfederico/pi-web) contributors for the upstream work.
+
+Licensed under MIT. The original author's copyright notice is retained; Jobs Zhang holds copyright in their modifications and additions. See [LICENSE](LICENSE) for the full terms.

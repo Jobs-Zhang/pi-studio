@@ -55,7 +55,7 @@
             <a href="faq">FAQ</a>
           </div>
           <div class="nav-actions">
-            <a class="github-link" href="https://github.com/pi-studio/pi-studio" aria-label="PI STUDIO on GitHub">
+            <a class="github-link" href="https://github.com/Jobs-Zhang/pi-studio" aria-label="PI STUDIO on GitHub">
               <svg class="github-icon" viewBox="0 0 16 16" aria-hidden="true">
                 <path
                   fill="currentColor"
@@ -277,7 +277,7 @@ prompt.setChip({
 <p>Browser plugins can contribute <code>contentRenderers</code> with an <code>id</code>, <code>languages</code> (Markdown fence labels), <code>fileExtensions</code> (without a dot), and a synchronous <code>render(input)</code> returning a Lit template. Selectors are case-insensitive and match by language OR file extension. <code>renderMode?: 'manual' | 'automatic'</code> defaults to <code>manual</code>: raw source and a <strong>Render</strong> button appear without calling the renderer. This is the initial policy, not a restriction on explicit user intent; unrelated prose updates retain activation. Authors may explicitly opt into <code>automatic</code> and are responsible for efficient activation and asynchronous work. The same renderer serves chat fences, Files Markdown preview fences, and standalone text files. Selection follows the effective machine’s plugin availability and portable/machine-specific precedence. When several renderers match, a chooser lets you compare alternatives for each diagram or file, with only the selected renderer mounted. Choices default to alphabetical source plugin ID order (not remote runtime prefixes), then local contribution ID, using locale-independent, case-sensitive code-unit comparison. The chooser labels identify the plugin and contribution. Chat remembers explicit renderer and Raw/Preview choices per code block in this browser tab for 15 minutes from the last explicit choice. Viewing or remounting never extends that deadline; expiry applies on revisit, without removing a visible preview. Entries are bounded to the 128 most recently chosen blocks and scoped by machine, session, message/entry, part, block and exact source. Changed source or an unavailable selected renderer invalidates the choice and restores the deterministic default and its policy. Automatic rendering alone creates no remembered override. DOM is not cached; previews render again on remount. Reloading or closing the tab clears this memory. Files Markdown previews do not use chat intent memory. For standalone files, the plugin policy supplies the initial default only when no browser-local Raw/Preview preference exists. Saved Preview authorizes all file rendering, including manual renderers inside Markdown fences; saved Raw suppresses previews. Per-block Raw and renderer choices remain available within Markdown Preview. URL mode still takes precedence. Defaults are not automatically saved as explicit choices. Built-in file previews retain their existing defaults. There is no plugin order field or sorting UI.</p>
 <p>Chat keeps <strong>Raw</strong>, <strong>Preview</strong>, and <strong>Copy source</strong> available in a toolbar on each supported diagram block. Standalone Files previews use the file header’s <strong>Raw</strong>/<strong>Preview</strong> controls beside <strong>Download</strong> and follow the saved file-view mode; diagrams within Markdown files retain per-block controls. Incomplete fences stay raw and copyable; closed fences preview before the message finishes. Appending prose does not restart an unchanged completed block. Preview failure shows the source instead. Unknown formats retain normal code rendering.</p>
 <p><code>input</code> contains <code>text</code>, an abort <code>signal</code>, and <code>fail(error)</code>. Render synchronously, own async work in a component, clean up on disconnect or abort, and report asynchronous failures with <code>fail</code>. Obsolete failures are ignored. Renderers receive untrusted text: escape or sanitize output, avoid executing source, and do not relax the surrounding Markdown policy. The host skips plugin rendering for truncated input and blocks over 100,000 UTF-16 code units; Files also retains its inline byte-size limit. Ordinary chat Markdown and Files Markdown retain their distinct sanitizers.</p>
-<p>A browser consumer such as Files declares the host capability <code>{ pluginId: "pi-studio", id: "content-rendering", version: 1, parse }</code> in <code>requires</code>, then resolves it in <code>start</code>. The exported <code>ContentRenderingCapability</code> type describes <code>listRenderers(request)</code>, <code>renderText(request)</code>, and <code>renderMarkdown({ machineId, text, truncated?, toSafeHtml, allowManualPreview? })</code>. <code>listRenderers</code> returns sorted eligible <code>{ id, label, renderMode }</code> choices without invoking renderers. <code>renderText</code> accepts an optional <code>rendererId</code> only with <code>controls: "external"</code>; absent or unavailable IDs select the first match. Embedded controls own their selection and ignore externally supplied IDs. Use <code>controls: "external"</code> when the consumer owns the renderer chooser, mode switching, and raw-source access (as Files does in its header beside Download); otherwise controls remain embedded. Consumers own their user-intent policy and may pass <code>allowManualPreview: true</code> to <code>renderText</code> or <code>renderMarkdown</code> to authorize manual previews (for example, an explicit Render click or Files’ saved or URL Preview preference). For Markdown this applies to eligible fences without overriding per-block Raw choices. Omitting it or passing false retains renderer defaults, including automatic previews. Chat never passes this override. External Raw controls must remove the preview. The public capability stores no remembered intent. Chat’s bounded per-block memory is private host policy, not a plugin option. Markdown requests have their own shape without file-path or language selectors; languages come from fences. Creating a <code>renderText</code> template does not invoke a renderer. Markdown diagrams each own an independent chooser. Switching renderers cancels the previous preview and clears its failure state. <code>renderMarkdown</code> requires the consumer’s trusted sanitizer; it is not permission to insert untrusted HTML. See the <a href="https://github.com/pi-studio/pi-studio/blob/main/pi-studio-plugins/files/pi-studio-plugin.ts">Files consumer</a> and <a href="https://github.com/pi-studio/pi-studio/tree/main/pi-studio-plugins/mermaid">Mermaid contribution</a> for complete implementations.</p>
+<p>A browser consumer such as Files declares the host capability <code>{ pluginId: "pi-studio", id: "content-rendering", version: 1, parse }</code> in <code>requires</code>, then resolves it in <code>start</code>. The exported <code>ContentRenderingCapability</code> type describes <code>listRenderers(request)</code>, <code>renderText(request)</code>, and <code>renderMarkdown({ machineId, text, truncated?, toSafeHtml, allowManualPreview? })</code>. <code>listRenderers</code> returns sorted eligible <code>{ id, label, renderMode }</code> choices without invoking renderers. <code>renderText</code> accepts an optional <code>rendererId</code> only with <code>controls: "external"</code>; absent or unavailable IDs select the first match. Embedded controls own their selection and ignore externally supplied IDs. Use <code>controls: "external"</code> when the consumer owns the renderer chooser, mode switching, and raw-source access (as Files does in its header beside Download); otherwise controls remain embedded. Consumers own their user-intent policy and may pass <code>allowManualPreview: true</code> to <code>renderText</code> or <code>renderMarkdown</code> to authorize manual previews (for example, an explicit Render click or Files’ saved or URL Preview preference). For Markdown this applies to eligible fences without overriding per-block Raw choices. Omitting it or passing false retains renderer defaults, including automatic previews. Chat never passes this override. External Raw controls must remove the preview. The public capability stores no remembered intent. Chat’s bounded per-block memory is private host policy, not a plugin option. Markdown requests have their own shape without file-path or language selectors; languages come from fences. Creating a <code>renderText</code> template does not invoke a renderer. Markdown diagrams each own an independent chooser. Switching renderers cancels the previous preview and clears its failure state. <code>renderMarkdown</code> requires the consumer’s trusted sanitizer; it is not permission to insert untrusted HTML. See the <a href="https://github.com/Jobs-Zhang/pi-studio/blob/main/pi-studio-plugins/files/pi-studio-plugin.ts">Files consumer</a> and <a href="https://github.com/Jobs-Zhang/pi-studio/tree/main/pi-studio-plugins/mermaid">Mermaid contribution</a> for complete implementations.</p>
 <span id="host-capabilities"></span><h3 id="conversations-and-companion-extensions">Conversations and companion extensions</h3>
 <p>A server plugin can create a normal, visible Pi conversation, with or without an initial prompt. A companion Pi extension can exchange messages with the backend and use Pi&#39;s own APIs to do agent work.</p>
 <p><strong>The conversation belongs to the user once it is published.</strong> Finishing the initial task, closing the browser, or disposing the initiating plugin does not discard it or stop later user work. Users can continue it like any other conversation.</p>
@@ -364,7 +364,7 @@ ln -s /path/to/plugin-folder ~/.pi-studio/plugins/my-plugin</code></pre></div>
 <li>Select a conversation, open <strong>Captain&#39;s Log</strong>, and choose <strong>Let the Captain tell it</strong>.</li>
 </ol>
 <p>The package is prebuilt; no compilation is required. It reads the source reply without modifying that conversation and uses a separate pirate conversation. Model credentials are required, and the source text goes to the pirate&#39;s model provider. Previous results are saved. After a daemon restart, open the previous pirate conversation in Sessions if you want to reuse its context.</p>
-<p>See the <a href="https://github.com/pi-studio/pi-studio/blob/main/pi-packages/captains-log/docs/usage.md">Captain&#39;s Log usage guide</a> for the demo&#39;s behavior and troubleshooting.</p>
+<p>See the <a href="https://github.com/Jobs-Zhang/pi-studio/blob/main/pi-packages/captains-log/docs/usage.md">Captain&#39;s Log usage guide</a> for the demo&#39;s behavior and troubleshooting.</p>
 </section>
 <section id="pi-extension-dialogs"><h2>Pi extension dialogs</h2>
 <p>Pi extensions can ask for confirmation, a selection, or text input. PI STUDIO shows these questions inline in the conversation, including during session startup or while a tool is waiting. They remain answerable after a browser reload, and the first answer wins across tabs.</p>
@@ -398,35 +398,35 @@ Test the behavior, including failures and cleanup.</code></pre></div>
 </thead>
 <tbody><tr>
 <td>Browser contributions and helpers</td>
-<td><a href="https://github.com/pi-studio/pi-studio/blob/main/src/plugin-api.ts"><code>plugin-api.ts</code></a>, published as <code>@pi-studio/pi-studio/plugin-api</code></td>
+<td><a href="https://github.com/Jobs-Zhang/pi-studio/blob/main/src/plugin-api.ts"><code>plugin-api.ts</code></a>, published as <code>@pi-studio/pi-studio/plugin-api</code></td>
 </tr>
 <tr>
 <td>Server lifecycle, peers, providers, and host capabilities</td>
-<td><a href="https://github.com/pi-studio/pi-studio/blob/main/src/server-plugin-api.ts"><code>server-plugin-api.ts</code></a>, published as <code>@pi-studio/pi-studio/server-plugin-api</code></td>
+<td><a href="https://github.com/Jobs-Zhang/pi-studio/blob/main/src/server-plugin-api.ts"><code>server-plugin-api.ts</code></a>, published as <code>@pi-studio/pi-studio/server-plugin-api</code></td>
 </tr>
 <tr>
 <td>A small browser plugin</td>
-<td><a href="https://github.com/pi-studio/pi-studio/tree/main/pi-studio-plugins/info">Info</a></td>
+<td><a href="https://github.com/Jobs-Zhang/pi-studio/tree/main/pi-studio-plugins/info">Info</a></td>
 </tr>
 <tr>
 <td>A standalone browser/server package</td>
-<td><a href="https://github.com/pi-studio/pi-studio/tree/main/examples/workspace-provider-plugin">Workspace-provider example</a></td>
+<td><a href="https://github.com/Jobs-Zhang/pi-studio/tree/main/examples/workspace-provider-plugin">Workspace-provider example</a></td>
 </tr>
 <tr>
 <td>A production workspace provider and paired UI</td>
-<td><a href="https://github.com/pi-studio/pi-studio/tree/main/pi-studio-plugins/git">Git</a></td>
+<td><a href="https://github.com/Jobs-Zhang/pi-studio/tree/main/pi-studio-plugins/git">Git</a></td>
 </tr>
 <tr>
 <td>Hosted sessions, live updates, and a Pi companion</td>
-<td><a href="https://github.com/pi-studio/pi-studio/tree/main/pi-packages/captains-log">Captain&#39;s Log</a></td>
+<td><a href="https://github.com/Jobs-Zhang/pi-studio/tree/main/pi-packages/captains-log">Captain&#39;s Log</a></td>
 </tr>
 <tr>
 <td>A simpler initial-prompt workflow</td>
-<td><a href="https://github.com/pi-studio/pi-studio/tree/main/examples/session-bridge-plugin">Workspace Reviews example</a></td>
+<td><a href="https://github.com/Jobs-Zhang/pi-studio/tree/main/examples/session-bridge-plugin">Workspace Reviews example</a></td>
 </tr>
 <tr>
 <td>Package discovery rules and diagnostics</td>
-<td><a href="https://github.com/pi-studio/pi-studio/blob/main/src/server/piStudioPluginCatalog.ts">Plugin catalog</a></td>
+<td><a href="https://github.com/Jobs-Zhang/pi-studio/blob/main/src/server/piStudioPluginCatalog.ts">Plugin catalog</a></td>
 </tr>
 </tbody></table>
 </div>
@@ -474,7 +474,7 @@ pi-studio plugins safe-start clear --restart</code></pre></div>
           <a href="install">Install</a>
           <a href="config">Config</a>
           <a href="faq">FAQ</a>
-          <a href="https://github.com/pi-studio/pi-studio">GitHub</a>
+          <a href="https://github.com/Jobs-Zhang/pi-studio">GitHub</a>
           <span class="version-switcher" role="group" aria-label="Documentation version">
             <a class="version-switcher-option" data-version-option="stable" href="https://pi-studio.dev/plugins" aria-current="true">Stable</a>
             <a class="version-switcher-option" data-version-option="dev" href="https://pi-studio.dev/dev/plugins">Dev</a>

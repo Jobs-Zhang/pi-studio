@@ -1,8 +1,19 @@
-# PI STUDIO configuration reference
+# PI STUDIO 配置参考
 
-PI STUDIO configuration covers the machine-local and project-local settings you usually need: the web/API bind address, trusted development-host settings, UI preferences, desired plugin enablement/settings, server-plugin recovery, file-explorer path access, manual upload defaults, upload limits, the Pi agent state directory, and session-daemon tools.
+按实际需求修改配置，不为预留功能增加不必要的选项。以下保留配置键、优先级与运行时边界的详细说明；表格版见仓库中的 [config.html](config.html)，不依赖外部官网。
 
-Use this reference for detailed configuration and operational behavior. For scannable settings tables with defaults, scopes, and restart requirements, see <https://pi-studio.dev/config>.
+## 配置速览
+
+| 类型 | 位置 | 用途 |
+| --- | --- | --- |
+| 全局配置 | `$PI_STUDIO_CONFIG`；未设置时为 `$XDG_CONFIG_HOME/pi-studio/config.json` 或 `~/.config/pi-studio/config.json` | 单台机器的服务与工作台设置 |
+| 项目配置 | `<project>/.pi-studio/config.json` | 支持的项目级文件访问、上传与附件设置 |
+| 托管状态 | `$PI_STUDIO_DATA_DIR`，默认 `~/.pi-studio` | 项目、机器注册表及归档，不是用户配置接口 |
+| Pi 状态 | `$PI_CODING_AGENT_DIR`，默认 `~/.pi/agent` | Pi 凭据、模型、设置、会话与扩展包 |
+
+全局运行时优先级为内置默认值 → 全局文件 → 环境变量。项目配置仅覆盖明确支持的键：上传与附件目录覆盖全局值，`pathAccess.allowedPaths` 合并去重，不覆盖服务端口等机器级设置。
+
+修改前核对目标机器与生效方式，尤其不要通过切换数据目录来修改用户设置。重启 sessiond 会中断活动会话和终端；需要同时重启时先 Web/API，后 sessiond。具体键的规则见 [Precedence and reloads](#precedence-and-reloads)。
 
 ## Config files
 
@@ -39,7 +50,7 @@ Defaults are saved in Pi’s global `settings.json` on the selected session’s 
 
 The deployment path is not a PI STUDIO config-file key or environment setting. The published client is portable: one build works at `/` and at canonical trailing-slash prefixes such as `/ai/` or `/test/ai/`.
 
-For a nested deployment, redirect the slashless prefix to the trailing-slash URL, strip the prefix before forwarding to PI STUDIO, and proxy authenticated HTTP and WebSocket traffic through the same location. Relative browser and PWA URLs then stay within that prefix. See the [reverse proxy installation guide](https://pi-studio.dev/install#reverse-proxy-prefix) for a complete Nginx example.
+For a nested deployment, redirect the slashless prefix to the trailing-slash URL, strip the prefix before forwarding to PI STUDIO, and proxy authenticated HTTP and WebSocket traffic through the same location. Relative browser and PWA URLs then stay within that prefix. See the [反向代理部署说明](install.html#reverse-proxy-prefix) for a complete Nginx example.
 
 ## Precedence and reloads
 
@@ -307,7 +318,7 @@ If the session daemon cannot report a valid active directory, profile-dependent 
 
 ### Pi extension provider baseline
 
-Model providers are shared across all sessions on a machine. PI STUDIO loads them when the session daemon starts, using Pi's built-in providers, environment credentials, the active agent directory's `models.json`, and globally installed Pi extensions/packages. PI STUDIO workspace plugins are separate; see the [plugin guide](https://pi-studio.dev/plugins).
+Model providers are shared across all sessions on a machine. PI STUDIO loads them when the session daemon starts, using Pi's built-in providers, environment credentials, the active agent directory's `models.json`, and globally installed Pi extensions/packages. PI STUDIO workspace plugins are separate; see the [插件说明](plugins.md).
 
 Provider connection settings stay fixed until the daemon restarts. Project extensions and `/reload` cannot add, replace, or remove providers. Other Pi extension features continue to load and reload normally.
 
@@ -321,7 +332,7 @@ Model lists are shared daemon-wide state. If extensions in two workspaces regist
 
 #### Provider decisions in the daemon log
 
-Provider decisions are recorded in daemon logs, not browser notifications. Entries omit provider configuration and credentials. See [provider extension troubleshooting](https://pi-studio.dev/faq#provider-extension-no-effect) for ignored changes.
+Provider decisions are recorded in daemon logs, not browser notifications. Entries omit provider configuration and credentials. See [提供方扩展排障](faq.html#provider-extension-no-effect) for ignored changes.
 
 This prevents accidental provider, configuration, or credential contamination between projects; it is not a security boundary because Pi extensions remain trusted daemon code.
 
@@ -393,7 +404,7 @@ Restart the session daemon after changing `askUser` or after upgrading PI STUDIO
 
 ### Extension dialogs
 
-Pi extensions can show confirmation, selection, and text-input dialogs inline in the session transcript, including while a session starts or a tool runs. Dialog support is always on; there is no enable flag. See [Pi extension dialogs in PI STUDIO](https://pi-studio.dev/plugins#pi-extension-dialogs) for details.
+Pi extensions can show confirmation, selection, and text-input dialogs inline in the session transcript, including while a session starts or a tool runs. Dialog support is always on; there is no enable flag. See [Pi 扩展对话框](plugins.md#pi-extension-dialogs) for details.
 
 `extensionDialogsTimeoutMs` is the unattended-dialog safety valve: how long the session daemon waits for an answer before settling the dialog with its kind's cancel value (`false` for confirm, `undefined` for select and input). It defaults to `300000` (5 minutes); set it to `0` to wait forever. An extension's own `timeout` option still applies, and the effective deadline is the sooner of the two.
 
