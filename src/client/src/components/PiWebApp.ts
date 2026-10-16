@@ -56,6 +56,8 @@ import { PanelResizeController, type PanelResizeConstraints, type ResizablePanel
 import { isCreatingSessionId, parseMainView, readRoute, resolveAppRoute, routeMatchesWorkspaceIdentity, writeRoute, type AppRoute, type ParsedAppRoute, type WorkspaceRouteIdentity } from "../route";
 import { readSettingsSection, writeSettingsSection, type SettingsSection } from "../settingsRoute";
 import { applyActiveShortcutPreferences } from "../shortcutPreferences";
+import { DesktopNotificationCenter, isSessionAlreadyOnScreen, machineUnavailableNotification, type DesktopNotificationActivation } from "../desktopNotifications";
+import { shortSessionId } from "../sessionLabels";
 import { loadNavigationPreferences, saveNavigationPreferences, pinnedNavigationTabs, type NavigationPreferences } from "../navigationPreferences";
 import "./appShell/NavigationDialog";
 import { canDeleteWorkspace, isWorkspaceDeletionPending, isWorkspaceDeletionRunPending, latestWorkspaceDeletionRuns, pendingWorkspaceDeletionIds, targetWorkspaceIdForRun, workspaceDeletionRunFilter, workspaceRemovalConfirmation } from "../workspaceDeletion";
@@ -244,6 +246,14 @@ export class PiWebApp extends LitElement {
   );
   private readonly keyboard = new KeyboardShortcutDispatcher();
   private readonly realtime = new RealtimeSocket();
+  private readonly desktopNotifications = new DesktopNotificationCenter({
+    onActivate: (activation) => { void this.activateDesktopNotification(activation); },
+    shouldSuppress: (notification) => isSessionAlreadyOnScreen(notification, {
+      machineId: selectedMachineId(this.state),
+      sessionId: this.state.selectedSession?.id,
+      windowPresenting: document.visibilityState === "visible" && document.hasFocus(),
+    }),
+  });
   private readonly serverNotices = new ServerNoticesController({
     onChange: (machineId) => {
       if (selectedMachineId(this.state) === machineId) this.requestUpdate();
@@ -514,6 +524,7 @@ export class PiWebApp extends LitElement {
     this.piWebStatusTimer = window.setInterval(() => { this.schedulePiWebStatusRefresh(); }, PI_WEB_STATUS_REFRESH_MS);
     this.scheduleSelectedSessionRefresh();
     void this.loadClientConfig();
+    void this.desktopNotifications.revalidate();
     void this.ensureGatewayPluginsLoaded();
     void this.loadProjectsAndRestoreRoute().finally(() => { this.schedulePiWebStatusRefresh(); });
   }
@@ -571,6 +582,7 @@ export class PiWebApp extends LitElement {
     this.handleActivityTransition(previous, this.state);
     this.handleWorkspaceChange(previous, this.state);
     this.handleMachineChange(previous, this.state);
+    this.handleMachineHealthNotifications(previous, this.state);
     if (machineActivitySubscriptionInputsChanged(previous, this.state)) this.syncMachineActivitySubscriptions();
     this.notifications.syncEnvironment(previous, this.state);
   }
@@ -1630,11 +1642,13 @@ export class PiWebApp extends LitElement {
   }
 
   private handleMachineActivityEvent(machineId: string, event: BrowserRealtimeEvent): void {
+    this.desktopNotifications.handleEvent(machineId, event, this.desktopNotificationContext(event));
     if (event.type === "sessions.unread") this.sessionUnread.applyEvent(machineId, event);
     else if (event.type === "machine.status") this.machineStatus.apply(machineId, event.status);
   }
 
   private handleRealtimeEvent(machineId: string, event: BrowserRealtimeEvent): void {
+    this.desktopNotifications.handleEvent(machineId, event, this.desktopNotificationContext(event));
     if (event.type === "sessions.unread") this.sessionUnread.applyEvent(machineId, event);
     else if (event.type === "notices.updated") this.serverNotices.applyEvent(machineId, event);
     else if (event.type === "machine.status") this.machineStatus.apply(machineId, event.status);
@@ -1661,6 +1675,67 @@ export class PiWebApp extends LitElement {
     this.sessionCleanupDialog = undefined;
     this.setState({ piWebStatus: undefined });
     void this.loadPluginsForSelectedMachine();
+  }
+
+  /**
+   * A registered machine that answered health checks and then stopped gets one
+   * notification per outage. Startup failures are excluded on purpose: a
+   * machine still being reached for the first time is not an outage the user
+   * needs to act on.
+   */
+  private handleMachineHealthNotifications(previous: AppState, next: AppState): void {
+    for (const [machineId, health] of Object.entries(next.machineStatuses)) {
+      if (health.ok || previous.machineStatuses[machineId]?.ok !== true) continue;
+      const name = next.machines.find((machine) => machine.id === machineId)?.name ?? machineId;
+      this.desktopNotifications.notify(machineUnavailableNotification(machineId, name));
+    }
+  }
+
+  private desktopNotificationContext(event: BrowserRealtimeEvent): { sessionLabel?: string } {
+    const sessionId = desktopNotificationSessionId(event);
+    if (sessionId === undefined) return {};
+    const label = this.sessionDisplayLabel(sessionId);
+    return label === undefined ? {} : { sessionLabel: label };
+  }
+
+  private sessionDisplayLabel(sessionId: string): string | undefined {
+    const session = this.state.sessions.find((candidate) => candidate.id === sessionId);
+    if (session === undefined) return undefined;
+    if (session.name !== undefined && session.name !== "") return session.name;
+    if (session.firstMessage !== "") return session.firstMessage;
+    return shortSessionId(sessionId);
+  }
+
+  private async activateDesktopNotification(activation: DesktopNotificationActivation): Promise<void> {
+    window.focus();
+    if (selectedMachineId(this.state) !== activation.machineId) {
+      const machine = this.state.machines.find((candidate) => candidate.id === activation.machineId);
+      if (machine === undefined) return;
+      await this.selectMachineWithMemory(machine);
+    }
+    if (activation.sessionId === undefined) return;
+    const session = this.state.sessions.find((candidate) => candidate.id === activation.sessionId);
+    if (session !== undefined) await this.selectSessionFromNavigation(session);
+  }
+
+  private notificationActions(): AppAction[] {
+    return [{
+      id: "app.notifications.toggle-desktop",
+      title: this.desktopNotifications.enabled ? "Disable Desktop Notifications" : "Enable Desktop Notifications",
+      description: "Show a system notification when an agent asks a question, waits for confirmation, or finishes a turn",
+      group: "Notifications",
+      enabled: this.desktopNotifications.permission !== "unsupported",
+      ...(this.desktopNotifications.permission === "unsupported" ? { disabledReason: "This environment does not support system notifications." } : {}),
+      run: () => { void this.toggleDesktopNotifications(); },
+    }];
+  }
+
+  private async toggleDesktopNotifications(): Promise<void> {
+    const permission = await this.desktopNotifications.setEnabled(!this.desktopNotifications.enabled);
+    if (permission === "denied") {
+      this.setState({ error: "System notifications stay off: the browser denied notification permission. On plain HTTP gateways this is a browser restriction — connect through HTTPS or an SSH tunnel and try again." });
+    }
+    this.requestUpdate();
   }
 
   private refreshSelectedWorkspaceTool(tool: QualifiedContributionId | undefined): void {
@@ -2419,7 +2494,7 @@ export class PiWebApp extends LitElement {
 
   private getDefaultActions(): AppAction[] {
     const pluginActions = this.plugins.getActions(this.createPluginRuntimeContext());
-    return [...pluginActions, ...this.workspaceSurfaceActions(), ...this.sessionActions(), ...this.navigationFocusActions(), ...this.panelLayoutActions()];
+    return [...pluginActions, ...this.workspaceSurfaceActions(), ...this.sessionActions(), ...this.navigationFocusActions(), ...this.panelLayoutActions(), ...this.notificationActions()];
   }
 
   private workspaceSurfaceActions(): AppAction[] {
@@ -3733,7 +3808,7 @@ export class PiWebApp extends LitElement {
         ${state.actionPaletteOpen ? html`<action-palette .actions=${this.getActions()} .onRun=${(action: AppAction) => { this.setState({ actionPaletteOpen: false }); this.runAction(action); }} .onCancel=${() => { this.setState({ actionPaletteOpen: false }); }}></action-palette>` : null}
         ${this.renderSessionTreeNavigator(state)}
         ${state.projectDialogOpen ? html`<project-dialog .machineId=${selectedMachineId(state)} .onSubmit=${(path: string, create: boolean, trust: ProjectTrustChoice | undefined) => this.projects.addProject(path, create, trust)} .onCancel=${() => { this.setState({ projectDialogOpen: false }); }}></project-dialog>` : null}
-        ${state.machineDialogOpen ? html`<machine-dialog .error=${state.error} .onSubmit=${(input: MachineDialogSubmit) => this.submitMachineDialog(input)} .onCancel=${() => { this.setState({ machineDialogOpen: false }); }}></machine-dialog>` : null}
+        ${state.machineDialogOpen ? html`<machine-dialog .error=${state.error} .onSubmit=${(input: MachineDialogSubmit) => this.submitMachineDialog(input)} .onLoadSshHosts=${() => this.machines.sshConfigHosts()} .onCancel=${() => { this.setState({ machineDialogOpen: false }); }}></machine-dialog>` : null}
         ${this.sessionCleanupDialog !== undefined ? html`<session-cleanup-dialog .preview=${this.sessionCleanupDialog.preview} .previewRequest=${this.sessionCleanupDialog.previewRequest} .result=${this.sessionCleanupDialog.result} .loading=${this.sessionCleanupDialog.loading === true} .running=${this.sessionCleanupDialog.running === true} .error=${this.sessionCleanupDialog.error ?? ""} .onPreview=${(request: SessionCleanupRequest) => { void this.previewSessionCleanup(request); }} .onRun=${(request: SessionCleanupRequest) => { void this.runSessionCleanup(request); }} .onClose=${() => { this.closeSessionCleanupDialog(); }}></session-cleanup-dialog>` : null}
         ${this.settingsSection !== undefined ? html`<settings-dialog .section=${this.settingsSection} .machine=${state.selectedMachine} .machineRuntime=${this.selectedMachineRuntime()} .actions=${this.getDefaultActions()} .themes=${this.plugins.getThemes()} .themePreference=${this.themePreference} .activeThemeId=${this.activeThemeId} .hasLocalThemeOverride=${this.localThemePreference !== undefined} .onUseLocalTheme=${(preference: ThemePreference) => { this.pickTheme(preference); }} .onUseDefaultTheme=${() => { this.useDefaultTheme(); }} .onNavigate=${(section: SettingsSection) => { this.navigateSettings(section); }} .onClose=${() => { this.closeSettings(); }} .onConfigSaved=${(config: PiWebConfigValues) => { this.applyClientConfig(config); }} .onRefreshMachineRuntime=${async (machineId: string) => { await this.machines.refreshMachineRuntime(machineId); }}></settings-dialog>` : null}
       </div>
@@ -3820,6 +3895,14 @@ function machineActivitySubscriptionInputsChanged(previous: AppState, next: AppS
   return previous.machines !== next.machines
     || previous.machineStatuses !== next.machineStatuses
     || (previous.selectedMachine?.id ?? "local") !== (next.selectedMachine?.id ?? "local");
+}
+
+/** The session an attention signal belongs to, for events that carry one. */
+function desktopNotificationSessionId(event: BrowserRealtimeEvent): string | undefined {
+  if (event.type === "activity.update") return event.activity.sessionId;
+  if (event.type === "status.update") return event.status.sessionId;
+  if (event.type === "session.ask.opened" || event.type === "session.dialog.opened") return event.sessionId;
+  return undefined;
 }
 
 function shouldSubscribeToMachineActivity(machine: Machine, health: MachineHealth | undefined): boolean {

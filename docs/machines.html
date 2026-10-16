@@ -94,6 +94,7 @@
             <a href="#when-to-use">When to use it</a>
             <a href="#prepare-machines">Set up another runtime</a>
             <a href="#add-machine">Add a machine</a>
+            <a href="#ssh-machines">SSH connections</a>
             <a href="#instance-identity">Which instance is this?</a>
             <a href="#what-is-proxied">What works remotely</a>
             <a href="#auth-credentials">Credentials</a>
@@ -203,6 +204,43 @@ PI WEB gateway you opened
                 Removing a remote machine only removes it from this gateway's registry. It does not stop the remote PI WEB
                 service or delete projects, workspaces, sessions, or credentials on the target machine.
               </div>
+            </section>
+
+            <section id="ssh-machines">
+              <h2>SSH machine connections</h2>
+              <p>
+                When the remote PI WEB is not directly reachable (a home lab box, a machine behind a firewall), add the
+                machine with the <strong>SSH</strong> connection mode. The remote still runs PI WEB as usual; the gateway
+                creates an <code>ssh -N -L</code> tunnel on demand and proxies HTTP and WebSocket traffic through it.
+              </p>
+              <ol>
+                <li>
+                  In <strong>Actions → Add Machine</strong>, enter the remote PI WEB base URL as reachable
+                  <em>from the SSH host</em> — usually <code>http://127.0.0.1:8505</code>.
+                </li>
+                <li>Choose <strong>SSH — reach the URL through an SSH tunnel</strong>.</li>
+                <li>
+                  Pick a host alias from your <code>~/.ssh/config</code> (offered as autocomplete) or type one. Port,
+                  user, identity files, and jump hosts from that config apply automatically.
+                </li>
+                <li>
+                  Optionally set an explicit port, user, or identity file, or a password. Identity file and password are
+                  mutually exclusive; prefer keys.
+                </li>
+              </ol>
+              <p>
+                Requirements and behavior:
+              </p>
+              <ul>
+                <li>An OpenSSH client (<code>ssh</code>) must be on the gateway's <code>PATH</code>; password auth needs OpenSSH 8.4+.</li>
+                <li>Host keys are accepted on first connect and verified afterwards (changed keys are rejected).</li>
+                <li>
+                  A password, like the machine bearer token, is stored in <code>~/.pi-web/machines.json</code> with
+                  owner-only file permissions. Prefer key-based auth when possible.
+                </li>
+                <li>Tunnels start lazily, reconnect with a backoff window, and shut down with the gateway process.</li>
+                <li>The machine list shows an <strong>SSH</strong> badge and the tunnel state (up / connecting / failed) with the failure reason.</li>
+              </ul>
             </section>
 
             <section id="instance-identity">

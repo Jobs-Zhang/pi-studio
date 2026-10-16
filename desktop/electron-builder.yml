@@ -1,0 +1,25 @@
+appId: dev.pi.desktop
+productName: PI Desktop
+# Single config source for electron-builder (the npm scripts pass --config);
+# keep the runtime file allowlist here so tests and preview pages never ship.
+files:
+  - main.cjs
+  - preload.cjs
+  - connect.html
+  - sshConfig.cjs
+  - tunnel.cjs
+  - history.cjs
+  - icon.png
+win:
+  signAndEditExecutable: false
+  icon: icon.png
+  target:
+    - target: nsis
+      arch:
+        - x64
+# Installed builds only: the NSIS installer creates Start Menu/Desktop
+# shortcuts carrying the AppUserModelID, which Windows requires before toast
+# notifications can show. The portable target registers no shortcut, so toasts
+# from a portable exe are silently dropped.
+nsis:
+  artifactName: PI Desktop Setup.exe

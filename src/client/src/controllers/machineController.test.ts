@@ -90,6 +90,38 @@ describe("MachineController", () => {
     expect(runtime).toHaveBeenCalledWith(addedMachine.id, true);
   });
 
+  it("forwards ssh connection details when adding a machine", async () => {
+    let state: AppState = initialAppState();
+    const setState = (patch: Partial<AppState>) => { state = { ...state, ...patch }; };
+    const projects = { loadProjects: vi.fn() };
+    const addedMachine: Machine = { ...remoteMachine, id: "ssh-machine", name: "SSH Remote", connection: { mode: "ssh", ssh: { host: "home", hasPassword: true } } };
+    const input = {
+      name: "SSH Remote",
+      baseUrl: "http://127.0.0.1:8505",
+      connection: { mode: "ssh" as const, ssh: { host: "home", user: "jobs", password: "pw" } },
+    };
+    const addMachine = vi.spyOn(api, "addMachine").mockResolvedValue(addedMachine);
+    vi.spyOn(api, "health").mockResolvedValue({ machineId: addedMachine.id, ok: true, checkedAt: "2026-05-27T00:00:01.000Z", status: "online", tunnel: { state: "up" } });
+    vi.spyOn(api, "runtime").mockResolvedValue({ machineId: addedMachine.id, ok: true, checkedAt: "2026-05-27T00:00:02.000Z" });
+
+    const controller = new MachineController(() => state, setState, vi.fn(), projects);
+    const machine = await controller.addMachine(input);
+
+    expect(machine).toEqual(addedMachine);
+    expect(addMachine).toHaveBeenCalledWith(input);
+  });
+
+  it("returns ssh config hosts and tolerates a missing config", async () => {
+    let state: AppState = initialAppState();
+    const controller = new MachineController(() => state, (patch) => { state = { ...state, ...patch }; }, vi.fn(), { loadProjects: vi.fn() });
+    const sshConfigHosts = vi.spyOn(api, "sshConfigHosts").mockResolvedValue(["alpha", "beta"]);
+
+    await expect(controller.sshConfigHosts()).resolves.toEqual(["alpha", "beta"]);
+
+    sshConfigHosts.mockRejectedValue(new Error("no config"));
+    await expect(controller.sshConfigHosts()).resolves.toEqual([]);
+  });
+
   it("keeps machine status snapshots when switching machines", async () => {
     // Machine rows and their project rows now read the same snapshot, so
     // selecting a machine can no longer leave a lit machine dot standing over

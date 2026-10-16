@@ -90,6 +90,19 @@ describe("notification socket guards", () => {
     })).toBeUndefined();
   });
 
+  it("accepts the global ask and dialog mirrors that name their session", () => {
+    const ask = { askId: "ask-1", askedAt: "2026-07-18T00:00:00.000Z", questions: [{ id: "q1", question: "Which?", options: [] }] };
+    expect(parseRealtimeSocketEvent({ type: "session.ask.opened", sessionId: "session-1", ask }))
+      .toMatchObject({ type: "session.ask.opened", sessionId: "session-1", ask: { askId: "ask-1" } });
+
+    const dialog = { dialogId: "dialog-1", kind: "confirm", title: "Proceed?", askedAt: "2026-07-18T00:00:00.000Z", runScoped: false };
+    expect(parseRealtimeSocketEvent({ type: "session.dialog.opened", sessionId: "session-1", dialog }))
+      .toMatchObject({ type: "session.dialog.opened", sessionId: "session-1", dialog: { dialogId: "dialog-1" } });
+
+    // Without a session id a cross-session consumer cannot attribute the signal.
+    expect(parseRealtimeSocketEvent({ type: "session.ask.opened", ask })).toBeUndefined();
+  });
+
   it("carries the startup marker through the socket boundary, marker and all", () => {
     const activity = { sessionId: "session-1", phase: "active", label: "Opening session", detail: "Starting the Pi session", at: "2026-07-20T00:00:01.000Z", startup: true };
 

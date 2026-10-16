@@ -3,11 +3,25 @@ import { chmod, mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { piWebDataDir } from "../../config.js";
 
+/** SSH connection details persisted for `mode: "ssh"` machines. The optional `password` is stored in plaintext next to `token`. */
+export interface StoredSshConnection {
+  host: string;
+  port?: number;
+  user?: string;
+  identityFile?: string;
+  password?: string;
+}
+
+export type StoredMachineConnection =
+  | { mode: "direct" }
+  | { mode: "ssh"; ssh: StoredSshConnection };
+
 export interface StoredMachine {
   id: string;
   name: string;
   kind: "remote";
   baseUrl: string;
+  connection: StoredMachineConnection;
   token?: string;
   headers?: Record<string, string>;
   createdAt: string;
@@ -37,7 +51,7 @@ export class MachineStore {
     return (await this.read()).machines;
   }
 
-  async add(input: { name: string; baseUrl: string; token?: string; headers?: Record<string, string> }): Promise<StoredMachine> {
+  async add(input: { name: string; baseUrl: string; connection: StoredMachineConnection; token?: string; headers?: Record<string, string> }): Promise<StoredMachine> {
     const data = await this.read();
     const now = new Date().toISOString();
     const machine: StoredMachine = {
@@ -45,6 +59,7 @@ export class MachineStore {
       name: input.name,
       kind: "remote",
       baseUrl: input.baseUrl,
+      connection: input.connection,
       ...(input.token === undefined ? {} : { token: input.token }),
       ...(input.headers === undefined ? {} : { headers: input.headers }),
       createdAt: now,
@@ -55,7 +70,7 @@ export class MachineStore {
     return machine;
   }
 
-  async update(id: string, patch: Partial<Pick<StoredMachine, "name" | "baseUrl" | "token" | "headers">>): Promise<StoredMachine | undefined> {
+  async update(id: string, patch: Partial<Pick<StoredMachine, "name" | "baseUrl" | "connection" | "token" | "headers">>): Promise<StoredMachine | undefined> {
     const data = await this.read();
     const index = data.machines.findIndex((machine) => machine.id === id);
     if (index < 0) return undefined;
@@ -110,7 +125,32 @@ function parseStoredMachine(value: unknown): StoredMachine {
   if (typeof id !== "string" || typeof name !== "string" || kind !== "remote" || typeof baseUrl !== "string" || typeof createdAt !== "string" || typeof updatedAt !== "string") throw new Error("Invalid machine");
   const token = optionalString(value["token"], "token");
   const headers = optionalStringRecord(value["headers"], "headers");
-  return { id, name, kind, baseUrl, createdAt, updatedAt, ...(token === undefined ? {} : { token }), ...(headers === undefined ? {} : { headers }) };
+  return { id, name, kind, baseUrl, connection: parseStoredConnection(value["connection"]), createdAt, updatedAt, ...(token === undefined ? {} : { token }), ...(headers === undefined ? {} : { headers }) };
+}
+
+function parseStoredConnection(value: unknown): StoredMachineConnection {
+  if (value === undefined) return { mode: "direct" };
+  if (!isRecord(value) || value["mode"] !== "ssh") return { mode: "direct" };
+  const ssh = value["ssh"];
+  if (!isRecord(ssh) || typeof ssh["host"] !== "string") throw new Error("Invalid machine connection");
+  const port = ssh["port"];
+  const user = ssh["user"];
+  const identityFile = ssh["identityFile"];
+  const password = ssh["password"];
+  if (port !== undefined && typeof port !== "number") throw new Error("Invalid machine connection port");
+  if (user !== undefined && typeof user !== "string") throw new Error("Invalid machine connection user");
+  if (identityFile !== undefined && typeof identityFile !== "string") throw new Error("Invalid machine connection identityFile");
+  if (password !== undefined && typeof password !== "string") throw new Error("Invalid machine connection password");
+  return {
+    mode: "ssh",
+    ssh: {
+      host: ssh["host"],
+      ...(port === undefined ? {} : { port }),
+      ...(user === undefined ? {} : { user }),
+      ...(identityFile === undefined ? {} : { identityFile }),
+      ...(password === undefined ? {} : { password }),
+    },
+  };
 }
 
 function optionalString(value: unknown, key: string): string | undefined {

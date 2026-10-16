@@ -1,4 +1,4 @@
-import { PI_WEB_PLUGIN_LIFECYCLE_VERSION, ASK_USER_ID_MAX_LENGTH, ASK_USER_OPTION_LIMIT, ASK_USER_OTHER_TEXT_MAX_LENGTH, ASK_USER_QUESTION_LIMIT, ASK_USER_TEXT_MAX_LENGTH, EXTENSION_DIALOG_ID_MAX_LENGTH, EXTENSION_DIALOG_INPUT_MAX_LENGTH, EXTENSION_DIALOG_OPTION_LIMIT, EXTENSION_DIALOG_TEXT_MAX_LENGTH, SESSION_NOTIFICATION_LIMIT, SESSION_NOTIFICATION_MESSAGE_BYTES, SESSION_UNREAD_CATALOG_ID_MAX_LENGTH, SESSION_UNREAD_COMPLETED_AT_MAX_LENGTH, SESSION_UNREAD_CWD_MAX_LENGTH, SESSION_UNREAD_LIMIT, SESSION_UNREAD_SESSION_ID_MAX_LENGTH, type ArchiveSessionsResponse, type AskUserCloseReason, type AskUserCloseResponse, type AskUserOutcome, type AskUserQuestion, type AskUserQuestionOption, type AskUserQuestionRecord, type PendingAskUser, type PendingExtensionDialog, type AuthProviderOption, type AuthProviderStatus, type AuthProvidersResponse, type AuthStatusSource, type AuthType, type CommandOption, type CommandResult, type DeleteWorkspaceFileResponse, type ExtensionDialogAnswer, type ExtensionDialogCloseReason, type ExtensionDialogCloseResponse, type ExtensionDialogKind, type ExtensionDialogOutcome, type FileContentResponse, type FileSuggestion, type FileTreeEntry, type FileTreeResponse, type GlobalSessionEvent, type Machine, type MachineHealth, type MachineKind, type MachineRuntime, type MachineStatus, type MessagePage, type ModelSelectionResponse, type MoveWorkspaceFileResponse, type OAuthFlowState, type PiWebCapability, type PiWebComponentStatus, type PiWebConfigEnvOverrides, type PiWebConfigResponse, type PiWebConfigValues, type PiWebDeprecatedAgentInput, type PiWebInstallationInfo, type PiWebPluginConfigMap, type PiWebPluginInfo, type PiWebPluginsResponse, type PiWebPluginScope, type PiWebReleaseStatus, type PiWebRuntimeComponent, type PiWebRuntimeResponse, type PiWebServiceComponent, type PiWebShortcutConfig, type PiWebStatusMessage, type PiWebStatusResponse, type PiWebStatusSeverity, type Project, type QueuedSessionMessage, type SavedPromptAttachment, type SessionBulkArchiveResponse, type SessionBulkDeleteArchivedResponse, type SessionBulkFailure, type SessionCleanupExecuteResponse, type SessionCleanupPreviewResponse, type SessionCleanupProjectSummary, type SessionCleanupThresholds, type SessionCleanupTotals, type SessionInfo, type SessionModel, type SessionModelCatalogEntry, type SessionModelCatalogResponse, type SessionNotification, type SessionNotificationClearReason, type SessionNotificationDismissThrough, type SessionNotificationInboxDelta, type SessionNotificationInboxEvent, type SessionNotificationInboxSnapshot, type SessionNotificationSeverity, type SessionNotificationSummary, type ServerNotice, type ServerNoticeEvent, type ServerNoticeSeverity, type ServerNoticeSnapshot, type SessionStatus, type SessionStreamSnapshot, type SessionTranscriptSnapshot, type SessionUiEvent, type SessionUnreadCatalogSnapshot, type SessionUnreadEvent, type SessionUnreadSummary, type SessionWarning, type SessionWarningSeverity, type SlashCommand, type ThinkingLevelsResponse, type WriteWorkspaceFileResponse, type Workspace, type WorkspaceEffectiveConfig, type WorkspaceTrustResponse } from "../../../shared/apiTypes";
+import { PI_WEB_PLUGIN_LIFECYCLE_VERSION, ASK_USER_ID_MAX_LENGTH, ASK_USER_OPTION_LIMIT, ASK_USER_OTHER_TEXT_MAX_LENGTH, ASK_USER_QUESTION_LIMIT, ASK_USER_TEXT_MAX_LENGTH, EXTENSION_DIALOG_ID_MAX_LENGTH, EXTENSION_DIALOG_INPUT_MAX_LENGTH, EXTENSION_DIALOG_OPTION_LIMIT, EXTENSION_DIALOG_TEXT_MAX_LENGTH, SESSION_NOTIFICATION_LIMIT, SESSION_NOTIFICATION_MESSAGE_BYTES, SESSION_UNREAD_CATALOG_ID_MAX_LENGTH, SESSION_UNREAD_COMPLETED_AT_MAX_LENGTH, SESSION_UNREAD_CWD_MAX_LENGTH, SESSION_UNREAD_LIMIT, SESSION_UNREAD_SESSION_ID_MAX_LENGTH, type ArchiveSessionsResponse, type AskUserCloseReason, type AskUserCloseResponse, type AskUserOutcome, type AskUserQuestion, type AskUserQuestionOption, type AskUserQuestionRecord, type PendingAskUser, type PendingExtensionDialog, type AuthProviderOption, type AuthProviderStatus, type AuthProvidersResponse, type AuthStatusSource, type AuthType, type CommandOption, type CommandResult, type DeleteWorkspaceFileResponse, type ExtensionDialogAnswer, type ExtensionDialogCloseReason, type ExtensionDialogCloseResponse, type ExtensionDialogKind, type ExtensionDialogOutcome, type FileContentResponse, type FileSuggestion, type FileTreeEntry, type FileTreeResponse, type GlobalSessionEvent, type Machine, type MachineConnection, type MachineHealth, type MachineKind, type MachineTunnelStatus, type MachineRuntime, type MachineStatus, type MessagePage, type ModelSelectionResponse, type MoveWorkspaceFileResponse, type OAuthFlowState, type PiWebCapability, type PiWebComponentStatus, type PiWebConfigEnvOverrides, type PiWebConfigResponse, type PiWebConfigValues, type PiWebDeprecatedAgentInput, type PiWebInstallationInfo, type PiWebPluginConfigMap, type PiWebPluginInfo, type PiWebPluginsResponse, type PiWebPluginScope, type PiWebReleaseStatus, type PiWebRuntimeComponent, type PiWebRuntimeResponse, type PiWebServiceComponent, type PiWebShortcutConfig, type PiWebStatusMessage, type PiWebStatusResponse, type PiWebStatusSeverity, type Project, type QueuedSessionMessage, type SavedPromptAttachment, type SessionBulkArchiveResponse, type SessionBulkDeleteArchivedResponse, type SessionBulkFailure, type SessionCleanupExecuteResponse, type SessionCleanupPreviewResponse, type SessionCleanupProjectSummary, type SessionCleanupThresholds, type SessionCleanupTotals, type SessionInfo, type SessionModel, type SessionModelCatalogEntry, type SessionModelCatalogResponse, type SessionNotification, type SessionNotificationClearReason, type SessionNotificationDismissThrough, type SessionNotificationInboxDelta, type SessionNotificationInboxEvent, type SessionNotificationInboxSnapshot, type SessionNotificationSeverity, type SessionNotificationSummary, type ServerNotice, type ServerNoticeEvent, type ServerNoticeSeverity, type ServerNoticeSnapshot, type SessionStatus, type SessionStreamSnapshot, type SessionTranscriptSnapshot, type SessionUiEvent, type SessionUnreadCatalogSnapshot, type SessionUnreadEvent, type SessionUnreadSummary, type SessionWarning, type SessionWarningSeverity, type SlashCommand, type ThinkingLevelsResponse, type WriteWorkspaceFileResponse, type Workspace, type WorkspaceEffectiveConfig, type WorkspaceTrustResponse } from "../../../shared/apiTypes";
 import { parseMachineStatusSnapshot, type MachineStatusSnapshot, type MachineStatusUiEvent } from "../../../shared/machineStatus";
 import type { JsonValue, PiPackageInfo, PiPackageInstallableSuggestion, PiPackageMutationAction, PiPackageMutationResponse, PiPackageScope, PiPackagesResponse, SessionActivity, SessionStartupProgressEvent, SessionTreeForkResult, SessionTreeNavigateResult, SessionTreeNode, SessionTreeNodeKind, SessionTreeSnapshot, WorkspaceProviderDiagnostic, WorkspaceProviderDiagnosticCode, WorkspaceProviderResolution, WorkspaceProviderResolutionStatus, WorkspaceProviderTier } from "../../../shared/apiTypes";
 
@@ -82,11 +82,13 @@ export function parseMachine(value: unknown): Machine {
   const baseUrl = optionalString(record, "baseUrl");
   const status = optionalMachineStatus(record, "status");
   const statusMessage = optionalString(record, "statusMessage");
+  const connection = optionalMachineConnection(record);
   return {
     id: requireString(record, "id"),
     name: requireString(record, "name"),
     kind,
     ...(baseUrl === undefined ? {} : { baseUrl }),
+    ...(connection === undefined ? {} : { connection }),
     createdAt: requireString(record, "createdAt"),
     updatedAt: requireString(record, "updatedAt"),
     ...(status === undefined ? {} : { status }),
@@ -94,10 +96,45 @@ export function parseMachine(value: unknown): Machine {
   };
 }
 
+function optionalMachineConnection(record: Record<string, unknown>): MachineConnection | undefined {
+  if (record["connection"] === undefined) return undefined;
+  const connection = requireRecord(record["connection"]);
+  const mode = connection["mode"];
+  if (mode === "direct") return { mode: "direct" };
+  if (mode !== "ssh") throw new Error("Invalid machine connection mode");
+  const ssh = requireRecord(connection["ssh"]);
+  const port = ssh["port"];
+  const user = ssh["user"];
+  const identityFile = ssh["identityFile"];
+  if (port !== undefined && typeof port !== "number") throw new Error("Invalid machine ssh port");
+  if (user !== undefined && typeof user !== "string") throw new Error("Invalid machine ssh user");
+  if (identityFile !== undefined && typeof identityFile !== "string") throw new Error("Invalid machine ssh identityFile");
+  return {
+    mode: "ssh",
+    ssh: {
+      host: requireString(ssh, "host"),
+      ...(port === undefined ? {} : { port }),
+      ...(user === undefined ? {} : { user }),
+      ...(identityFile === undefined ? {} : { identityFile }),
+      hasPassword: requireBoolean(ssh, "hasPassword"),
+    },
+  };
+}
+
+function optionalMachineTunnelStatus(record: Record<string, unknown>): MachineTunnelStatus | undefined {
+  if (record["tunnel"] === undefined) return undefined;
+  const tunnel = requireRecord(record["tunnel"]);
+  const state = tunnel["state"];
+  if (state !== "connecting" && state !== "up" && state !== "failed") throw new Error("Invalid machine tunnel state");
+  const error = optionalString(tunnel, "error");
+  return { state, ...(error === undefined ? {} : { error }) };
+}
+
 export function parseMachineHealth(value: unknown): MachineHealth {
   const record = requireRecord(value);
   const status = optionalMachineStatus(record, "status");
   const error = optionalString(record, "error");
+  const tunnel = optionalMachineTunnelStatus(record);
   return {
     machineId: requireString(record, "machineId"),
     ok: requireBoolean(record, "ok"),
@@ -105,6 +142,7 @@ export function parseMachineHealth(value: unknown): MachineHealth {
     ...(status === undefined ? {} : { status }),
     ...(record["web"] === undefined ? {} : { web: parsePiWebComponentStatus(record["web"]) }),
     ...(record["sessiond"] === undefined ? {} : { sessiond: parsePiWebComponentStatus(record["sessiond"]) }),
+    ...(tunnel === undefined ? {} : { tunnel }),
     ...(error === undefined ? {} : { error }),
   };
 }
@@ -781,6 +819,7 @@ export function parseSessionStreamEvent(value: unknown): SessionUiEvent {
 
 type RealtimeStreamEvent =
   | Extract<GlobalSessionEvent, { type: "status.update" | "activity.update" | "session.name" | "session.created" | "models.changed" | "notices.updated" }>
+  | Extract<GlobalSessionEvent, { type: "session.ask.opened" | "session.dialog.opened" }>
   | MachineStatusUiEvent;
 
 export function parseRealtimeStreamEvent(value: unknown): RealtimeStreamEvent {
@@ -800,6 +839,10 @@ export function parseRealtimeStreamEvent(value: unknown): RealtimeStreamEvent {
       return parseServerNoticeEvent(record);
     case "machine.status":
       return { type: "machine.status", status: requireMachineStatusSnapshot(record["status"]) };
+    case "session.ask.opened":
+      return { type: "session.ask.opened", sessionId: requireString(record, "sessionId"), ask: parsePendingAskUser(record["ask"]) };
+    case "session.dialog.opened":
+      return { type: "session.dialog.opened", sessionId: requireString(record, "sessionId"), dialog: parsePendingExtensionDialog(record["dialog"]) };
     default:
       throw new Error("Unsupported realtime stream event type");
   }

@@ -1,12 +1,14 @@
-import type { Machine, MachineHealth, MachineRuntime, PiWebComponentStatus, PiWebDeprecatedAgentInput, PiWebRuntimeComponent, PiWebRuntimeResponse, PiWebStatusResponse } from "../../shared/apiTypes.js";
+import type { Machine, MachineConnection, MachineConnectionInput, MachineHealth, MachineRuntime, PiWebComponentStatus, PiWebDeprecatedAgentInput, PiWebRuntimeComponent, PiWebRuntimeResponse, PiWebStatusResponse } from "../../shared/apiTypes.js";
 import { parsePiWebRuntimeResponse } from "../../shared/piWebStatusParsing.js";
 import { getPiWebRuntime } from "../piWebStatus.js";
 import { DEFAULT_REMOTE_HEALTH_TIMEOUT_MS, RemoteMachineClient, type MachineClient, validateConfiguredMachineHeaders } from "./machineClient.js";
-import { MachineStore, type StoredMachine } from "./machineStore.js";
+import { MachineStore, type StoredMachine, type StoredMachineConnection } from "./machineStore.js";
+import { SshTunnelManager, type SshConnectionSpec, type SshTunnelHandle, type SshTunnelStatus, type SshTunnelTarget } from "./sshTunnelManager.js";
 
 export interface CreateMachineInput {
   name?: string;
   baseUrl?: string;
+  connection?: MachineConnectionInput;
   token?: string;
   headers?: Record<string, string>;
 }
@@ -19,6 +21,18 @@ export interface MachineServiceDependencies {
   now?: () => Date;
   healthCacheTtlMs?: number;
   runtimeCacheTtlMs?: number;
+  /** Test seam for the SSH tunnel lifecycle; defaults to a real manager. */
+  tunnels?: MachineTunnels;
+}
+
+/** The tunnel surface MachineService depends on; satisfied by SshTunnelManager. */
+export interface MachineTunnels {
+  ensure(machineId: string, spec: SshConnectionSpec, target: SshTunnelTarget): Promise<SshTunnelHandle>;
+  status(machineId: string): SshTunnelStatus | undefined;
+  /** Tears down the tunnel for one machine, killing its ssh child. */
+  closeMachine(machineId: string): Promise<void>;
+  /** Tears down all tunnels; called on server shutdown. */
+  close(): Promise<void>;
 }
 
 const LOCAL_MACHINE_TIMESTAMP = "1970-01-01T00:00:00.000Z";
@@ -27,8 +41,11 @@ const DEFAULT_HEALTH_CACHE_TTL_MS = 5_000;
 export class MachineService {
   private readonly healthCache = new Map<string, { expiresAt: number; health: MachineHealth }>();
   private readonly runtimeCache = new Map<string, { expiresAt: number; runtime: MachineRuntime }>();
+  private readonly tunnels: MachineTunnels;
 
-  constructor(private readonly store = new MachineStore(), private readonly deps: MachineServiceDependencies = {}) {}
+  constructor(private readonly store = new MachineStore(), private readonly deps: MachineServiceDependencies = {}) {
+    this.tunnels = deps.tunnels ?? new SshTunnelManager();
+  }
 
   async list(): Promise<Machine[]> {
     return [localMachine(), ...(await this.store.list()).map(publicMachine)];
@@ -43,21 +60,24 @@ export class MachineService {
   async add(input: CreateMachineInput): Promise<Machine> {
     const name = validateName(input.name);
     const baseUrl = validateBaseUrl(input.baseUrl);
-    const stored = await this.store.add({ name, baseUrl, ...optionalSecrets(input) });
+    const connection = validateConnection(input.connection);
+    const stored = await this.store.add({ name, baseUrl, connection, ...optionalSecrets(input) });
     return publicMachine(stored);
   }
 
   async update(id: string, input: UpdateMachineInput): Promise<Machine | undefined> {
     if (id === "local") throw new Error("Local machine cannot be changed");
-    const patch: Partial<Pick<StoredMachine, "name" | "baseUrl" | "token" | "headers">> = {};
+    const patch: Partial<Pick<StoredMachine, "name" | "baseUrl" | "connection" | "token" | "headers">> = {};
     if (input.name !== undefined) patch.name = validateName(input.name);
     if (input.baseUrl !== undefined) patch.baseUrl = validateBaseUrl(input.baseUrl);
+    if (input.connection !== undefined) patch.connection = validateConnection(input.connection);
     if (input.token !== undefined) patch.token = input.token;
     if (input.headers !== undefined) patch.headers = validateHeaders(input.headers);
     const stored = await this.store.update(id, patch);
     if (stored !== undefined) {
       this.healthCache.delete(id);
       this.runtimeCache.delete(id);
+      if (patch.connection !== undefined) await this.tunnels.closeMachine(id);
     }
     return stored === undefined ? undefined : publicMachine(stored);
   }
@@ -68,8 +88,14 @@ export class MachineService {
     if (removed) {
       this.healthCache.delete(id);
       this.runtimeCache.delete(id);
+      await this.tunnels.closeMachine(id);
     }
     return removed;
+  }
+
+  /** Tears down SSH tunnels owned by this service; called on server shutdown. */
+  async close(): Promise<void> {
+    await this.tunnels.close();
   }
 
   async storedRemote(id: string): Promise<StoredMachine | undefined> {
@@ -125,14 +151,37 @@ export class MachineService {
     const machine = await this.storedRemote(id);
     if (machine === undefined) return undefined;
     const checkedAt = this.now().toISOString();
+    const isSsh = machine.connection.mode === "ssh";
     try {
-      const response = await this.clientFor(machine).requestJson("GET", "/api/pi-web/status", undefined, { timeoutMs: DEFAULT_REMOTE_HEALTH_TIMEOUT_MS });
+      const response = await (await this.clientFor(machine)).requestJson("GET", "/api/pi-web/status", undefined, { timeoutMs: DEFAULT_REMOTE_HEALTH_TIMEOUT_MS });
       if (response.statusCode >= 200 && response.statusCode < 300 && isPiWebStatusResponse(response.body)) {
-        return { machineId: id, ok: true, checkedAt, status: "online", web: response.body.components.web, sessiond: response.body.components.sessiond };
+        return {
+          machineId: id,
+          ok: true,
+          checkedAt,
+          status: "online",
+          web: response.body.components.web,
+          sessiond: response.body.components.sessiond,
+          ...(isSsh ? { tunnel: { state: "up" as const } } : {}),
+        };
       }
-      return { machineId: id, ok: false, checkedAt, status: "error", error: `Remote health returned HTTP ${String(response.statusCode)}` };
+      return {
+        machineId: id,
+        ok: false,
+        checkedAt,
+        status: "error",
+        error: `Remote health returned HTTP ${String(response.statusCode)}`,
+        ...(isSsh ? { tunnel: { state: "up" as const } } : {}),
+      };
     } catch (error) {
-      return { machineId: id, ok: false, checkedAt, status: "offline", error: errorMessage(error) };
+      return {
+        machineId: id,
+        ok: false,
+        checkedAt,
+        status: isSsh && this.tunnels.status(id)?.state === "failed" ? "error" : "offline",
+        error: errorMessage(error),
+        ...(isSsh ? { tunnel: this.tunnels.status(id) ?? { state: "failed" as const, error: errorMessage(error) } } : {}),
+      };
     }
   }
 
@@ -150,7 +199,7 @@ export class MachineService {
     if (machine === undefined) return undefined;
     const checkedAt = this.now().toISOString();
     try {
-      const response = await this.clientFor(machine).requestJson("GET", "/api/pi-web/runtime", undefined, { timeoutMs: DEFAULT_REMOTE_HEALTH_TIMEOUT_MS });
+      const response = await (await this.clientFor(machine)).requestJson("GET", "/api/pi-web/runtime", undefined, { timeoutMs: DEFAULT_REMOTE_HEALTH_TIMEOUT_MS });
       const runtime = parsePiWebRuntimeResponse(response.body);
       if (response.statusCode >= 200 && response.statusCode < 300 && runtime !== undefined) return machineRuntime(id, checkedAt, runtime);
       return { machineId: id, ok: false, checkedAt, error: `Remote runtime returned HTTP ${String(response.statusCode)}` };
@@ -159,8 +208,19 @@ export class MachineService {
     }
   }
 
-  private clientFor(machine: StoredMachine): MachineClient {
-    return this.deps.remoteClientFactory?.(machine) ?? new RemoteMachineClient(machine);
+  /**
+   * Returns the client for a machine's effective transport. SSH machines first
+   * ensure a local tunnel exists and then talk to it on 127.0.0.1, so HTTP and
+   * WebSocket proxying need no mode-specific handling.
+   */
+  private async clientFor(machine: StoredMachine): Promise<MachineClient> {
+    let effective: StoredMachine = machine;
+    if (machine.connection.mode === "ssh") {
+      const target = sshTunnelTargetFromBaseUrl(machine.baseUrl);
+      const { localPort } = await this.tunnels.ensure(machine.id, machine.connection.ssh, target);
+      effective = { ...machine, baseUrl: tunnelLocalBaseUrl(machine.baseUrl, localPort) };
+    }
+    return this.deps.remoteClientFactory?.(effective) ?? new RemoteMachineClient(effective);
   }
 
   private now(): Date {
@@ -173,7 +233,64 @@ export function localMachine(): Machine {
 }
 
 function publicMachine(machine: StoredMachine): Machine {
-  return { id: machine.id, name: machine.name, kind: "remote", baseUrl: machine.baseUrl, createdAt: machine.createdAt, updatedAt: machine.updatedAt };
+  return {
+    id: machine.id,
+    name: machine.name,
+    kind: "remote",
+    baseUrl: machine.baseUrl,
+    connection: publicConnection(machine.connection),
+    createdAt: machine.createdAt,
+    updatedAt: machine.updatedAt,
+  };
+}
+
+function publicConnection(connection: StoredMachineConnection): MachineConnection {
+  if (connection.mode === "direct") return { mode: "direct" };
+  return {
+    mode: "ssh",
+    ssh: {
+      host: connection.ssh.host,
+      ...(connection.ssh.port === undefined ? {} : { port: connection.ssh.port }),
+      ...(connection.ssh.user === undefined ? {} : { user: connection.ssh.user }),
+      ...(connection.ssh.identityFile === undefined ? {} : { identityFile: connection.ssh.identityFile }),
+      hasPassword: connection.ssh.password !== undefined,
+    },
+  };
+}
+
+function validateConnection(value: MachineConnectionInput | undefined): StoredMachineConnection {
+  if (value === undefined || value.mode === "direct") return { mode: "direct" };
+  const ssh = value.ssh;
+  const host = ssh.host.trim();
+  if (host === "") throw new Error("Machine ssh host is required");
+  if (ssh.port !== undefined && (!Number.isInteger(ssh.port) || ssh.port < 1 || ssh.port > 65_535)) throw new Error("Machine ssh port must be an integer between 1 and 65535");
+  if (ssh.identityFile !== undefined && ssh.identityFile.trim() !== "" && ssh.password !== undefined) throw new Error("Machine ssh connection cannot set both identityFile and password");
+  const user = ssh.user?.trim();
+  const identityFile = ssh.identityFile?.trim();
+  return {
+    mode: "ssh",
+    ssh: {
+      host,
+      ...(ssh.port === undefined ? {} : { port: ssh.port }),
+      ...(user === undefined || user === "" ? {} : { user }),
+      ...(identityFile === undefined || identityFile === "" ? {} : { identityFile }),
+      ...(ssh.password === undefined || ssh.password === "" ? {} : { password: ssh.password }),
+    },
+  };
+}
+
+/** The forwarded destination of an SSH machine's baseUrl, as reachable from the SSH host. */
+export function sshTunnelTargetFromBaseUrl(baseUrl: string): SshTunnelTarget {
+  const url = new URL(baseUrl);
+  const port = url.port === "" ? (url.protocol === "https:" ? 443 : 80) : Number(url.port);
+  return { host: url.hostname, port };
+}
+
+function tunnelLocalBaseUrl(baseUrl: string, localPort: number): string {
+  const url = new URL(baseUrl);
+  url.hostname = "127.0.0.1";
+  url.port = String(localPort);
+  return url.href.replace(/\/$/u, "");
 }
 
 function validateName(value: string | undefined): string {

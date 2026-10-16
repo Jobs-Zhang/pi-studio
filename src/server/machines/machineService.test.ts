@@ -121,6 +121,164 @@ describe("MachineService", () => {
     await expect(service.add({ name: "Bad", baseUrl: "https://example.test", headers: { Connection: "close" } })).rejects.toThrow("not allowed");
   });
 
+  it("adds ssh machines with a sanitized connection and a persisted password", async () => {
+    const machine = await service.add({
+      name: "Home Dev",
+      baseUrl: "http://127.0.0.1:8505",
+      connection: { mode: "ssh", ssh: { host: "home", user: "jobs", password: "secret-pass" } },
+    });
+
+    expect(machine.connection).toEqual({ mode: "ssh", ssh: { host: "home", user: "jobs", hasPassword: true } });
+
+    const raw: unknown = JSON.parse(await readFile(storePath, "utf8"));
+    expect(raw).toMatchObject({ machines: [expect.objectContaining({
+      connection: { mode: "ssh", ssh: { host: "home", user: "jobs", password: "secret-pass" } },
+    })] });
+  });
+
+  it("defaults missing connections to direct", async () => {
+    const machine = await service.add({ name: "Plain", baseUrl: "https://plain.example.test" });
+    expect(machine.connection).toEqual({ mode: "direct" });
+  });
+
+  it("rejects invalid ssh connections", async () => {
+    await expect(service.add({ name: "No Host", baseUrl: "http://127.0.0.1:8505", connection: { mode: "ssh", ssh: { host: "  " } } }))
+      .rejects.toThrow("Machine ssh host is required");
+    await expect(service.add({
+      name: "Both Auths",
+      baseUrl: "http://127.0.0.1:8505",
+      connection: { mode: "ssh", ssh: { host: "home", identityFile: "/keys/id", password: "pw" } },
+    })).rejects.toThrow("cannot set both identityFile and password");
+    await expect(service.add({
+      name: "Bad Port",
+      baseUrl: "http://127.0.0.1:8505",
+      connection: { mode: "ssh", ssh: { host: "home", port: 70_000 } },
+    })).rejects.toThrow("port must be an integer");
+  });
+
+  it("routes ssh machine traffic through an ensured tunnel with a rewritten baseUrl", async () => {
+    const ensure = vi.fn(() => Promise.resolve({ localPort: 47_123 }));
+    const requestJson = vi.fn<MachineClient["requestJson"]>(() => Promise.resolve({ statusCode: 200, headers: {}, body: remoteRuntimeBody() }));
+    const factoryMachines: unknown[] = [];
+    const sshService = new MachineService(new MachineStore(storePath), {
+      tunnels: { ensure, status: () => undefined, closeMachine: () => Promise.resolve(), close: () => Promise.resolve() },
+      remoteClientFactory: (machine) => {
+        factoryMachines.push(machine);
+        return fakeRemoteClient({ requestJson });
+      },
+    });
+    const machine = await sshService.add({
+      name: "Tunneled",
+      baseUrl: "http://127.0.0.1:8505",
+      token: "remote-token",
+      connection: { mode: "ssh", ssh: { host: "home", port: 2222, user: "jobs" } },
+    });
+
+    await sshService.remoteClient(machine.id);
+
+    expect(ensure).toHaveBeenCalledWith(machine.id, { host: "home", port: 2222, user: "jobs" }, { host: "127.0.0.1", port: 8505 });
+    expect(factoryMachines).toEqual([expect.objectContaining({ baseUrl: "http://127.0.0.1:47123", token: "remote-token" })]);
+  });
+
+  it("reports tunnel state in ssh machine health", async () => {
+    const statusBody = {
+      components: {
+        web: { component: "web" as const, label: "Web", stale: false, available: true },
+        sessiond: { component: "sessiond" as const, label: "Sessiond", stale: false, available: true },
+      },
+    };
+    const requestJson = vi.fn<MachineClient["requestJson"]>(() => Promise.resolve({ statusCode: 200, headers: {}, body: statusBody }));
+    const sshService = new MachineService(new MachineStore(storePath), {
+      tunnels: { ensure: () => Promise.resolve({ localPort: 47_123 }), status: () => undefined, closeMachine: () => Promise.resolve(), close: () => Promise.resolve() },
+      remoteClientFactory: () => fakeRemoteClient({ requestJson }),
+    });
+    const machine = await sshService.add({
+      name: "Tunneled",
+      baseUrl: "http://127.0.0.1:8505",
+      connection: { mode: "ssh", ssh: { host: "home" } },
+    });
+
+    expect(await sshService.health(machine.id)).toMatchObject({ ok: true, status: "online", tunnel: { state: "up" } });
+  });
+
+  it("reports ssh machine health as an error with the tunnel failure when ensure fails", async () => {
+    const ensure = vi.fn(() => Promise.reject(new Error("Permission denied (publickey)")));
+    const sshService = new MachineService(new MachineStore(storePath), {
+      tunnels: {
+        ensure,
+        status: () => ({ state: "failed", error: "Permission denied (publickey)" }),
+        closeMachine: () => Promise.resolve(),
+        close: () => Promise.resolve(),
+      },
+      remoteClientFactory: () => { throw new Error("client factory must not be reached"); },
+    });
+    const machine = await sshService.add({
+      name: "Unreachable",
+      baseUrl: "http://127.0.0.1:8505",
+      connection: { mode: "ssh", ssh: { host: "home" } },
+    });
+
+    expect(await sshService.health(machine.id)).toMatchObject({
+      ok: false,
+      status: "error",
+      error: "Permission denied (publickey)",
+      tunnel: { state: "failed", error: "Permission denied (publickey)" },
+    });
+  });
+
+  it("tears down an ssh tunnel when update changes the connection", async () => {
+    const closeMachine = vi.fn(() => Promise.resolve());
+    const tunneledService = new MachineService(new MachineStore(storePath), {
+      tunnels: {
+        ensure: () => Promise.resolve({ localPort: 47_123 }),
+        status: () => undefined,
+        closeMachine,
+        close: () => Promise.resolve(),
+      },
+    });
+    const machine = await tunneledService.add({
+      name: "SSH Box",
+      baseUrl: "http://127.0.0.1:8505",
+      connection: { mode: "ssh", ssh: { host: "home" } },
+    });
+
+    await tunneledService.update(machine.id, { connection: { mode: "ssh", ssh: { host: "new-host" } } });
+
+    expect(closeMachine).toHaveBeenCalledWith(machine.id);
+  });
+
+  it("tears down an ssh tunnel when the machine is removed", async () => {
+    const closeMachine = vi.fn(() => Promise.resolve());
+    const tunneledService = new MachineService(new MachineStore(storePath), {
+      tunnels: {
+        ensure: () => Promise.resolve({ localPort: 47_123 }),
+        status: () => undefined,
+        closeMachine,
+        close: () => Promise.resolve(),
+      },
+    });
+    const machine = await tunneledService.add({
+      name: "SSH Box",
+      baseUrl: "http://127.0.0.1:8505",
+      connection: { mode: "ssh", ssh: { host: "home" } },
+    });
+
+    await tunneledService.remove(machine.id);
+
+    expect(closeMachine).toHaveBeenCalledWith(machine.id);
+  });
+
+  it("closes owned tunnels on close", async () => {
+    const close = vi.fn(() => Promise.resolve());
+    const closeService = new MachineService(new MachineStore(storePath), {
+      tunnels: { ensure: () => Promise.resolve({ localPort: 1 }), status: () => undefined, closeMachine: () => Promise.resolve(), close },
+    });
+
+    await closeService.close();
+
+    expect(close).toHaveBeenCalledTimes(1);
+  });
+
   it("uses the lightweight runtime check for local machine health", async () => {
     const localRuntime = vi.fn(() => Promise.resolve({
       packageName: "@jmfederico/pi-web",

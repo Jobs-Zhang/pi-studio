@@ -39,9 +39,101 @@ describe("machine-dialog modal surface", () => {
   });
 });
 
-async function mountDialog(props: { onCancel?: () => void } = {}): Promise<MachineDialog> {
+describe("machine-dialog connection modes", () => {
+  it("submits a direct connection by default", async () => {
+    const onSubmit = vi.fn<(input: unknown) => void>();
+    const dialog = await mountDialog({ onSubmit });
+    await fillMachineForm(dialog, { mode: "direct" });
+
+    submit(dialog);
+
+    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ connection: { mode: "direct" } }));
+  });
+
+  it("switches to SSH mode, loads ssh config hosts, and submits the ssh connection", async () => {
+    const onLoadSshHosts = vi.fn(() => Promise.resolve(["alpha", "beta"]));
+    const onSubmit = vi.fn<(input: unknown) => void>();
+    const dialog = await mountDialog({ onSubmit, onLoadSshHosts });
+
+    const sshRadio = requiredElement(dialog.shadowRoot?.querySelector<HTMLInputElement>("input[value='ssh']"), "ssh mode radio");
+    sshRadio.click();
+    await settleRenderedDialog(dialog);
+
+    expect(onLoadSshHosts).toHaveBeenCalledOnce();
+    const options = dialog.shadowRoot?.querySelectorAll("datalist#ssh-config-hosts option");
+    expect(options?.length).toBe(2);
+
+    await fillMachineForm(dialog, { mode: "ssh", host: "home", port: "2222", user: "jobs", password: "pw" });
+    submit(dialog);
+
+    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({
+      connection: { mode: "ssh", ssh: { host: "home", port: 2222, user: "jobs", password: "pw" } },
+    }));
+  });
+
+  it("requires an ssh host before submitting", async () => {
+    const onSubmit = vi.fn<(input: unknown) => void>();
+    const dialog = await mountDialog({ onSubmit });
+    requiredElement(dialog.shadowRoot?.querySelector<HTMLInputElement>("input[value='ssh']"), "ssh mode radio").click();
+    await settleRenderedDialog(dialog);
+
+    await fillMachineForm(dialog, { mode: "ssh" });
+    submit(dialog);
+
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(submitButton(dialog).disabled).toBe(true);
+  });
+
+  it("rejects identity file and password together", async () => {
+    const onSubmit = vi.fn<(input: unknown) => void>();
+    const dialog = await mountDialog({ onSubmit });
+    requiredElement(dialog.shadowRoot?.querySelector<HTMLInputElement>("input[value='ssh']"), "ssh mode radio").click();
+    await settleRenderedDialog(dialog);
+
+    await fillMachineForm(dialog, { mode: "ssh", host: "home", identityFile: "/keys/id", password: "pw" });
+    submit(dialog);
+
+    expect(onSubmit).not.toHaveBeenCalled();
+    expect(dialog.shadowRoot?.textContent).toContain("not both");
+  });
+});
+
+async function fillMachineForm(dialog: MachineDialog, values: { mode: "direct" | "ssh"; host?: string; port?: string; user?: string; identityFile?: string; password?: string }): Promise<void> {
+  const setInput = (input: HTMLInputElement | undefined, value: string): void => {
+    if (input === undefined) throw new Error("missing input");
+    input.value = value;
+    input.dispatchEvent(new Event("input", { bubbles: true, composed: true }));
+  };
+  setInput(urlInput(dialog), "http://127.0.0.1:8505");
+  await settleRenderedDialog(dialog);
+  setInput(nameInput(dialog), "Dev");
+  if (values.mode === "ssh") {
+    setInput(sshInput(dialog, "sshHost"), values.host ?? "");
+    setInput(sshInput(dialog, "sshPort"), values.port ?? "");
+    setInput(sshInput(dialog, "sshUser"), values.user ?? "");
+    setInput(sshInput(dialog, "sshIdentityFile"), values.identityFile ?? "");
+    setInput(sshInput(dialog, "sshPassword"), values.password ?? "");
+  }
+  await settleRenderedDialog(dialog);
+}
+
+function sshInput(dialog: MachineDialog, name: string): HTMLInputElement | undefined {
+  return dialog.shadowRoot?.querySelector<HTMLInputElement>(`input[name='${name}']`) ?? undefined;
+}
+
+function submitButton(dialog: MachineDialog): HTMLButtonElement {
+  return requiredElement(dialog.shadowRoot?.querySelector<HTMLButtonElement>("button[type='submit']"), "machine-dialog submit button");
+}
+
+function submit(dialog: MachineDialog): void {
+  submitButton(dialog).click();
+}
+
+async function mountDialog(props: { onCancel?: () => void; onSubmit?: (input: unknown) => void; onLoadSshHosts?: () => Promise<string[]> } = {}): Promise<MachineDialog> {
   const dialog = new MachineDialog();
   if (props.onCancel !== undefined) dialog.onCancel = props.onCancel;
+  if (props.onSubmit !== undefined) dialog.onSubmit = props.onSubmit;
+  if (props.onLoadSshHosts !== undefined) dialog.onLoadSshHosts = props.onLoadSshHosts;
   document.body.append(dialog);
   await settleRenderedDialog(dialog);
   return dialog;

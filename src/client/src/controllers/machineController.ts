@@ -1,4 +1,4 @@
-import { api, type Machine, type MachineHealth, type MachineRuntime } from "../api";
+import { api, type Machine, type MachineConnectionInput, type MachineHealth, type MachineRuntime } from "../api";
 import { resetWorkspaceScopedState } from "../appState";
 import { BrowserErrorReporter, machineBrowserErrorScope } from "../browserErrors";
 import type { GetState, NavigationDestinationOptions, NavigationSelection, SetState, UpdateUrl } from "./types";
@@ -82,7 +82,7 @@ export class MachineController {
     void this.refreshMachineRuntime(machine.id);
   }
 
-  async addMachine(input: { name: string; baseUrl: string; token?: string }): Promise<Machine | undefined> {
+  async addMachine(input: { name: string; baseUrl: string; connection?: MachineConnectionInput; token?: string }): Promise<Machine | undefined> {
     const expected = navigationSelection(this.getState(), this.captureNavigation);
     this.setState({ error: "" });
     try {
@@ -94,6 +94,16 @@ export class MachineController {
     } catch (error) {
       this.setState({ error: String(error) });
       return undefined;
+    }
+  }
+
+  async sshConfigHosts(): Promise<string[]> {
+    try {
+      return await api.sshConfigHosts();
+    } catch {
+      // A missing or unreadable ~/.ssh/config is normal; the dialog simply
+      // offers no autocomplete.
+      return [];
     }
   }
 

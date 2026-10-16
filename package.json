@@ -169,5 +169,12 @@
       "./extensions"
     ],
     "image": "https://raw.githubusercontent.com/jmfederico/pi-web/main/docs/assets/pi-web-banner.png"
+  },
+  "allowScripts": {
+    "node-pty@1.1.0": true,
+    "esbuild@0.28.2": true,
+    "protobufjs@7.6.6": true,
+    "electron@38.8.6": true,
+    "electron-builder@26.0.0": true
   }
 }

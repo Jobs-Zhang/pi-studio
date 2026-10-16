@@ -1835,6 +1835,7 @@ export class PiSessionService implements SessionRouteService {
     // that before they hear about its replacement.
     if (result.superseded !== undefined) this.publishAskClosed(input.sessionId, result.superseded);
     this.events.publish(input.sessionId, { type: "ask.opened", ask: result.ask });
+    this.events.publishGlobal({ type: "session.ask.opened", sessionId: input.sessionId, ask: result.ask });
     this.publishStatusForSessionId(input.sessionId);
     return result;
   }
@@ -1974,6 +1975,7 @@ export class PiSessionService implements SessionRouteService {
       runScoped: session.isStreaming,
     });
     this.events.publish(session.sessionId, { type: "dialog.opened", dialog });
+    this.events.publishGlobal({ type: "session.dialog.opened", sessionId: session.sessionId, dialog });
     this.publishStatus(session);
     return this.dialogWaiters.park(dialog, {
       ...(timeoutMs === undefined ? {} : { timeoutMs }),

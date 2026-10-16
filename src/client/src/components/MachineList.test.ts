@@ -10,6 +10,33 @@ afterEach(() => {
   document.body.replaceChildren();
 });
 
+describe("machine connection display", () => {
+  it("marks ssh machines with a badge and tunnel state, and direct machines without", async () => {
+    const sshMachine = { ...machine("ssh-box", "remote"), connection: { mode: "ssh" as const, ssh: { host: "home", hasPassword: false } } };
+    const directMachine = machine("plain-box", "remote");
+    const list = await mountMachineList([sshMachine, directMachine], {}, {
+      "ssh-box": { ...machineHealth("ssh-box", "online"), tunnel: { state: "up" } },
+    });
+
+    const sshRow = rowFor(list, "ssh-box");
+    expect(sshRow.querySelector(".machine-mode-badge")?.textContent).toBe("SSH");
+    expect(sshRow.textContent).toContain("tunnel up");
+
+    const directRow = rowFor(list, "plain-box");
+    expect(directRow.querySelector(".machine-mode-badge")).toBeNull();
+    expect(directRow.textContent).not.toContain("tunnel");
+  });
+
+  it("surfaces tunnel failure details in the row title", async () => {
+    const sshMachine = { ...machine("broken-box", "remote"), connection: { mode: "ssh" as const, ssh: { host: "home", hasPassword: false } } };
+    const list = await mountMachineList([sshMachine], {}, {
+      "broken-box": { machineId: "broken-box", ok: false, checkedAt: "2026-06-04T00:00:00.000Z", status: "error", tunnel: { state: "failed", error: "Permission denied (publickey)" } },
+    });
+
+    expect(rowFor(list, "broken-box").getAttribute("title")).toContain("Permission denied (publickey)");
+  });
+});
+
 describe("canRemoveMachine", () => {
   it("only allows remote machines to be removed from the machine list", () => {
     expect(canRemoveMachine(machine("local", "local"))).toBe(false);

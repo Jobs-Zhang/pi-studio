@@ -82,10 +82,43 @@ export interface Machine {
   name: string;
   kind: MachineKind;
   baseUrl?: string;
+  connection?: MachineConnection;
   createdAt: string;
   updatedAt: string;
   status?: MachineStatus;
   statusMessage?: string;
+}
+
+export type MachineConnectionMode = "direct" | "ssh";
+
+/** SSH connection details accepted on machine create/update. `password` is write-only. */
+export interface MachineSshConnectionInput {
+  host: string;
+  port?: number;
+  user?: string;
+  identityFile?: string;
+  password?: string;
+}
+
+export type MachineConnectionInput =
+  | { mode: "direct" }
+  | { mode: "ssh"; ssh: MachineSshConnectionInput };
+
+/** Sanitized connection info returned by machine reads; secrets never leave the server. */
+export interface MachineConnection {
+  mode: MachineConnectionMode;
+  ssh?: {
+    host: string;
+    port?: number;
+    user?: string;
+    identityFile?: string;
+    hasPassword: boolean;
+  };
+}
+
+export interface MachineTunnelStatus {
+  state: "connecting" | "up" | "failed";
+  error?: string;
 }
 
 export interface MachineHealth {
@@ -95,6 +128,7 @@ export interface MachineHealth {
   status?: MachineStatus;
   web?: PiWebComponentStatus;
   sessiond?: PiWebComponentStatus;
+  tunnel?: MachineTunnelStatus;
   error?: string;
 }
 
@@ -1394,6 +1428,14 @@ export interface ModelScopeChangedEvent {
 
 export type GlobalSessionEvent =
   | Extract<SessionUiEventBody, { type: "status.update" | "activity.update" | "session.name" | "session.created" }>
+  /**
+   * Global mirrors of the per-session ask/dialog frames. A per-session socket
+   * already knows its session, but a cross-session consumer (desktop
+   * notifications, attention indicators) does not, so the daemon broadcasts
+   * the same payload with the session it belongs to.
+   */
+  | { type: "session.ask.opened"; sessionId: string; ask: PendingAskUser }
+  | { type: "session.dialog.opened"; sessionId: string; dialog: PendingExtensionDialog }
   | SessionNotificationSummaryEvent
   | SessionUnreadEvent
   | SessionStartupProgressEvent

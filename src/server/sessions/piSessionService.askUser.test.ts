@@ -74,6 +74,17 @@ describe("PiSessionService.openAsk", () => {
     await service.dispose();
   });
 
+  it("mirrors the open ask on the global stream for cross-session consumers", async () => {
+    const { service, events } = askService();
+
+    await service.openAsk({ sessionId: "session-1", questions });
+
+    const mirrored = events.globalEvents.filter((event) => event.type === "session.ask.opened");
+    expect(mirrored).toHaveLength(1);
+    expect(mirrored[0]).toMatchObject({ sessionId: "session-1", ask: { askId: "ask-1" } });
+    await service.dispose();
+  });
+
   it("supersedes the session's earlier unanswered ask and reports its outcome", async () => {
     const { service, store } = askService();
     await service.openAsk({ sessionId: "session-1", questions });

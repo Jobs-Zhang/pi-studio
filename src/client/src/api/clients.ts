@@ -1,5 +1,5 @@
 import { parseSessionDefaults } from "../../../shared/sessionDefaults";
-import type { SessionDefaultsUpdate } from "../../../shared/apiTypes";
+import type { SessionDefaultsUpdate, MachineConnectionInput } from "../../../shared/apiTypes";
 import type { AskUserSubmission, DeleteWorkspaceFileResponse, ExtensionDialogAnswer, FileSuggestion, MoveWorkspaceFileOptions, PiPackageInstallRequest, PiPackageRemoveRequest, PiPackageScope, PiPackageUpdateRequest, PiWebConfigValues, PromptAttachment, ServerNoticeDismissRequest, SessionBulkMutationRef, SessionCleanupRequest, SessionModelScopeMode, SessionNotificationDismissThrough, SessionRef, SessionTreeForkRequest, SessionTreeForkResult, SessionTreeNavigateRequest, SessionUnreadAcknowledgeRequest, WorkspaceRemovalRequest, WriteWorkspaceFileOptions } from "../../../shared/apiTypes";
 import { resolveAppUrl } from "../appUrl";
 import { request } from "./http";
@@ -102,11 +102,24 @@ export const piWebApi = {
 
 export const machinesApi = {
   machines: () => request("api/machines", parseMachinesResponse),
-  addMachine: (input: { name: string; baseUrl: string; token?: string }) => request("api/machines", parseMachine, { method: "POST", body: JSON.stringify(input) }),
+  addMachine: (input: { name: string; baseUrl: string; connection?: MachineConnectionInput; token?: string }) => request("api/machines", parseMachine, { method: "POST", body: JSON.stringify(input) }),
   deleteMachine: (machineId: string) => request(`api/machines/${encodeURIComponent(machineId)}`, (value) => value, { method: "DELETE" }),
   health: (machineId: string) => request(`api/machines/${encodeURIComponent(machineId)}/health`, parseMachineHealth),
   runtime: (machineId: string, refresh = false) => request(`api/machines/${encodeURIComponent(machineId)}/runtime${refresh ? "?refresh=1" : ""}`, parseMachineRuntime, refresh ? { cache: "no-store" } : {}),
+  sshConfigHosts: () => request("api/machines/ssh-config/hosts", parseSshConfigHostsResponse),
 };
+
+function parseSshConfigHostsResponse(value: unknown): string[] {
+  if (typeof value !== "object" || value === null || !("hosts" in value)) throw new Error("Invalid ssh config hosts response");
+  const hosts = value.hosts;
+  if (!Array.isArray(hosts)) throw new Error("Invalid ssh config hosts response");
+  const parsed: string[] = [];
+  for (const host of hosts) {
+    if (typeof host !== "string") throw new Error("Invalid ssh config hosts response");
+    parsed.push(host);
+  }
+  return parsed;
+}
 
 function configPath(machineId?: string): string {
   return machineId === undefined ? "api/config" : `${machinePrefix(machineId)}/config`;

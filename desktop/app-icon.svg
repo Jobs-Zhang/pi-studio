@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0d1117"/>
+      <stop offset="100%" style="stop-color:#161b22"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#58a6ff"/>
+      <stop offset="100%" style="stop-color:#1f6feb"/>
+    </linearGradient>
+    <linearGradient id="green" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3fb950"/>
+      <stop offset="100%" style="stop-color:#238636"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#000" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  
+  <!-- Background with rounded corners -->
+  <rect width="512" height="512" rx="96" ry="96" fill="url(#bg)"/>
+  
+  <!-- Subtle grid pattern -->
+  <g opacity="0.05" stroke="#fff" stroke-width="1">
+    <line x1="0" y1="128" x2="512" y2="128"/>
+    <line x1="0" y1="256" x2="512" y2="256"/>
+    <line x1="0" y1="384" x2="512" y2="384"/>
+    <line x1="128" y1="0" x2="128" y2="512"/>
+    <line x1="256" y1="0" x2="256" y2="512"/>
+    <line x1="384" y1="0" x2="384" y2="512"/>
+  </g>
+  
+  <!-- Terminal window shape -->
+  <g filter="url(#shadow)">
+    <rect x="80" y="120" width="352" height="280" rx="16" fill="#161b22" stroke="#30363d" stroke-width="2"/>
+    
+    <!-- Title bar -->
+    <rect x="80" y="120" width="352" height="40" rx="16" fill="#21262d"/>
+    <rect x="80" y="144" width="352" height="16" fill="#21262d"/>
+    
+    <!-- Window controls -->
+    <circle cx="108" cy="140" r="6" fill="#f85149"/>
+    <circle cx="132" cy="140" r="6" fill="#d29922"/>
+    <circle cx="156" cy="140" r="6" fill="#3fb950"/>
+  </g>
+  
+  <!-- Code lines -->
+  <g transform="translate(110, 185)">
+    <!-- Line 1 -->
+    <rect x="0" y="0" width="60" height="12" rx="6" fill="url(#accent)" opacity="0.9"/>
+    <rect x="70" y="0" width="100" height="12" rx="6" fill="#8b949e" opacity="0.5"/>
+    
+    <!-- Line 2 -->
+    <rect x="20" y="28" width="80" height="12" rx="6" fill="url(#green)" opacity="0.9"/>
+    <rect x="110" y="28" width="60" height="12" rx="6" fill="#e6edf3" opacity="0.4"/>
+    
+    <!-- Line 3 -->
+    <rect x="40" y="56" width="120" height="12" rx="6" fill="#d2a8ff" opacity="0.7"/>
+    
+    <!-- Line 4 -->
+    <rect x="20" y="84" width="40" height="12" rx="6" fill="#8b949e" opacity="0.5"/>
+    <rect x="70" y="84" width="90" height="12" rx="6" fill="url(#accent)" opacity="0.6"/>
+    
+    <!-- Line 5 -->
+    <rect x="0" y="112" width="50" height="12" rx="6" fill="url(#green)" opacity="0.8"/>
+    <rect x="60" y="112" width="70" height="12" rx="6" fill="#e6edf3" opacity="0.3"/>
+  </g>
+  
+  <!-- Cursor blink -->
+  <rect x="140" y="325" width="3" height="20" rx="1" fill="#58a6ff">
+    <animate attributeName="opacity" values="1;0;1" dur="1s" repeatCount="indefinite"/>
+  </rect>
+  
+  <!-- PI text -->
+  <text x="256" y="470" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="48" font-weight="700" fill="#e6edf3" opacity="0.9">PI WEB</text>
+</svg>

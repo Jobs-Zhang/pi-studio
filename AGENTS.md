@@ -11,6 +11,17 @@ If you make changes that affect `src/server/sessiond.ts`, session runtime owners
 
 Changes to the web/API/UI side generally only require the `pi-web-ui-dev.service` autoreload/restart path.
 
+## Current branch and focus
+
+Active development happens on the long-lived `feat/desktop-and-app` branch, not on `main`. Do not treat `main` as the integration base while this branch is in flight, and do not open new working branches off `main` for this work.
+
+Scope of that branch:
+
+- Desktop and mobile app development for PI WEB (packaging, app shell, platform integration).
+- Remote connection features: SSH machines, SSH tunnels, and the related remote machine surfaces (`src/server/machines/`, `machineService`, `sshTunnelManager`).
+
+Keep this focus together on the branch; merge into `main` only once the feature set is complete.
+
 ## Documentation boundaries
 
 `README.md` is a concise landing page and quick start. Keep it focused on what PI WEB is, basic requirements, the shortest supported install path, essential commands, the core model, and links to detailed documentation.

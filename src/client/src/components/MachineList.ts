@@ -64,19 +64,24 @@ export class MachineList extends LitElement implements KeyboardNavigableSection 
   }
 
   private renderMachine(machine: Machine) {
-    const status = this.statuses[machine.id]?.status ?? machine.status ?? "unknown";
+    const health = this.statuses[machine.id];
+    const status = health?.status ?? machine.status ?? "unknown";
     const statusLabel = status === "online" ? "online" : status === "offline" ? "offline" : status === "error" ? "error" : "unknown";
+    const isSsh = machine.connection?.mode === "ssh";
+    const tunnel = health?.tunnel;
+    const tunnelLabel = !isSsh ? "" : tunnel === undefined ? " · tunnel" : tunnel.state === "up" ? " · tunnel up" : tunnel.state === "connecting" ? " · tunnel connecting…" : " · tunnel failed";
+    const rowTitle = [machine.baseUrl ?? machine.name, isSsh && tunnel?.state === "failed" ? tunnel.error : undefined].filter(Boolean).join("\n");
     const hasRemoveAction = canRemoveMachine(machine) && this.onRemove !== undefined;
     return html`
       <div
         class=${`action-row machine-row ${this.selected?.id === machine.id ? "selected" : ""} ${hasRemoveAction ? "" : "no-actions"}`}
         tabindex="0"
-        title=${machine.baseUrl ?? machine.name}
+        title=${rowTitle}
         @click=${(event: MouseEvent) => { activateSelectableRow(event, () => this.onSelect?.(machine)); }}
         @keydown=${(event: KeyboardEvent) => { this.handleMachineKeydown(event, machine); }}
       >
         <div class="action-main">
-          <span class="action-name machine-primary"><span class="machine-primary-label">${machine.name}</span></span><small>${machine.kind === "local" ? "Local Pi Web" : machine.baseUrl ?? "Remote Pi Web"} · ${statusLabel}</small>
+          <span class="action-name machine-primary"><span class="machine-primary-label">${machine.name}</span>${isSsh ? html`<span class="machine-mode-badge" title="Connected through an SSH tunnel">SSH</span>` : null}</span><small>${machine.kind === "local" ? "Local Pi Web" : machine.baseUrl ?? "Remote Pi Web"}${isSsh ? " · SSH" : ""} · ${statusLabel}${tunnelLabel}</small>
           ${this.renderActivity(machine)}
         </div>
         ${hasRemoveAction ? this.renderMachineMenu(machine) : null}
@@ -157,6 +162,7 @@ export class MachineList extends LitElement implements KeyboardNavigableSection 
       .machine-row.no-actions .action-main { border-radius: 8px; }
       .machine-primary { display: flex; align-items: baseline; gap: 6px; }
       .machine-primary-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+      .machine-mode-badge { flex: none; font-size: 10px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--pi-accent); border: 1px solid color-mix(in srgb, var(--pi-accent) 40%, transparent); border-radius: 4px; padding: 1px 4px; }
       .machine-menu-panel button.danger { color: var(--pi-danger); }
       .machine-menu-panel button.danger:hover, .machine-menu-panel button.danger:focus { background: color-mix(in srgb, var(--pi-danger) 14%, transparent); }
     `,

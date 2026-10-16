@@ -1,8 +1,18 @@
+import { homedir } from "node:os";
+import { join } from "node:path";
 import type { FastifyInstance } from "fastify";
 import { MachineService, type CreateMachineInput, type UpdateMachineInput } from "./machineService.js";
+import { listSshConfigHosts } from "./sshConfigParser.js";
 
-export function registerMachineRoutes(app: FastifyInstance, machines = new MachineService()): void {
+export interface MachineRoutesDependencies {
+  /** Test seam for the ssh config file to read host aliases from. */
+  sshConfigPath?: () => string;
+}
+
+export function registerMachineRoutes(app: FastifyInstance, machines = new MachineService(), deps: MachineRoutesDependencies = {}): void {
   app.get("/api/machines", async () => ({ machines: await machines.list() }));
+
+  app.get("/api/machines/ssh-config/hosts", async () => ({ hosts: await listSshConfigHosts((deps.sshConfigPath ?? defaultSshConfigPath)()) }));
 
   app.post<{ Body: CreateMachineInput }>("/api/machines", async (request, reply) => {
     try {
@@ -53,4 +63,8 @@ export function registerMachineRoutes(app: FastifyInstance, machines = new Machi
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
+}
+
+function defaultSshConfigPath(): string {
+  return join(homedir(), ".ssh", "config");
 }

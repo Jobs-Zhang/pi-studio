@@ -81,6 +81,10 @@ describe("PiSessionService extension dialog UI context", () => {
     expect(dialogEvents(events)).toEqual([
       { sessionId: ACTIVE_SESSION_ID, event: { type: "dialog.opened", dialog: openDialog(events) } },
     ]);
+    // The global mirror carries the session the per-session frame leaves implicit.
+    expect(events.globalEvents.filter((event) => event.type === "session.dialog.opened")).toEqual([
+      { type: "session.dialog.opened", sessionId: ACTIVE_SESSION_ID, dialog: openDialog(events) },
+    ]);
     await expect(settledValue(parked)).resolves.toEqual({ settled: false });
     await service.dispose();
   });

@@ -1,0 +1,27 @@
+{
+  "name": "pi-desktop",
+  "version": "0.1.0",
+  "private": true,
+  "author": "Federico Jaramillo Martinez",
+  "description": "Desktop client for PI WEB - Connect to your AI coding workspace",
+  "license": "MIT",
+  "main": "main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "start:dev": "electron . --url=http://127.0.0.1:8505",
+    "start:local": "electron . --url=http://127.0.0.1:8504",
+    "test": "node --test *.test.cjs",
+    "build": "electron-builder --win --config electron-builder.yml",
+    "build:icon": "node build-icon.js"
+  },
+  "devDependencies": {
+    "electron": "^38.0.0",
+    "electron-builder": "^26.0.0",
+    "sharp": "^0.35.5"
+  },
+  "allowScripts": {
+    "electron@38.8.6": true,
+    "electron-builder@26.0.0": true,
+    "electron-winstaller@5.4.0": true
+  }
+}

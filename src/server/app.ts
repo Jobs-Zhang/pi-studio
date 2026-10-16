@@ -192,6 +192,9 @@ export async function buildApp(deps: AppDependencies = {}): Promise<FastifyInsta
   const machines = deps.machines ?? new MachineService(undefined, {
     localRuntime: () => getPiWebRuntime(sessionDaemon),
   });
+  app.addHook("onClose", async () => {
+    await machines.close();
+  });
 
   app.get("/pi-web-plugins/manifest.json", async (_request, reply) => withProfileDependency(reply, () => piWebPlugins.manifest()));
 

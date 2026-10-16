@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>PI Desktop</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
+      color: #e0e6ed;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 2rem;
+      -webkit-app-region: drag;
+    }
+    .container {
+      text-align: center;
+      max-width: 460px;
+      width: 100%;
+      -webkit-app-region: no-drag;
+    }
+    .logo-container { margin-bottom: 1.5rem; }
+    .logo {
+      width: 72px;
+      height: 72px;
+      background: linear-gradient(135deg, #4cc9f0 0%, #7b61ff 100%);
+      border-radius: 18px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      box-shadow: 0 8px 32px rgba(76, 201, 240, 0.25);
+      animation: float 3s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-6px); }
+    }
+    h1 {
+      font-size: 26px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      background: linear-gradient(90deg, #e0e6ed 0%, #4cc9f0 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .subtitle {
+      color: #6b7a8d;
+      margin-bottom: 1.5rem;
+      font-size: 14px;
+    }
+    .mode-switch {
+      display: flex;
+      gap: 4px;
+      padding: 4px;
+      margin-bottom: 16px;
+      background: rgba(15, 15, 26, 0.6);
+      border: 1.5px solid rgba(76, 201, 240, 0.15);
+      border-radius: 12px;
+    }
+    .mode-btn {
+      flex: 1;
+      padding: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #6b7a8d;
+      background: transparent;
+      border: none;
+      border-radius: 9px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      letter-spacing: 0.02em;
+    }
+    .mode-btn.active {
+      background: linear-gradient(135deg, rgba(76, 201, 240, 0.18), rgba(123, 97, 255, 0.18));
+      color: #e0e6ed;
+      box-shadow: inset 0 0 0 1px rgba(76, 201, 240, 0.35);
+    }
+    .via-switch {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 12px;
+    }
+    .via-btn {
+      flex: 1;
+      padding: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #6b7a8d;
+      background: rgba(15, 15, 26, 0.4);
+      border: 1px solid rgba(76, 201, 240, 0.1);
+      border-radius: 9px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .via-btn.active {
+      background: rgba(76, 201, 240, 0.12);
+      color: #e0e6ed;
+      border-color: rgba(76, 201, 240, 0.35);
+    }
+    .input-wrapper {
+      position: relative;
+      margin-bottom: 12px;
+    }
+    .input-icon {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #4a5568;
+      font-size: 16px;
+    }
+    input {
+      width: 100%;
+      padding: 15px 16px 15px 44px;
+      font-size: 14px;
+      background: rgba(15, 15, 26, 0.6);
+      border: 1.5px solid rgba(76, 201, 240, 0.15);
+      border-radius: 12px;
+      color: #e0e6ed;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(10px);
+    }
+    input:focus {
+      outline: none;
+      border-color: #4cc9f0;
+      box-shadow: 0 0 0 3px rgba(76, 201, 240, 0.1);
+    }
+    input::placeholder { color: #4a5568; }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .grid-2 input { padding-left: 14px; }
+    .field-label {
+      display: block;
+      text-align: left;
+      font-size: 11px;
+      color: #6b7a8d;
+      margin: 0 2px 6px;
+      letter-spacing: 0.04em;
+    }
+    .hint-inline {
+      font-size: 11px;
+      color: #4a5568;
+      margin: -6px 2px 12px;
+      text-align: left;
+      line-height: 1.5;
+    }
+    .env-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin: -4px 2px 12px;
+      font-size: 11px;
+      color: #6b7a8d;
+      text-align: left;
+      flex-wrap: wrap;
+    }
+    .env-chip .ok { color: #4ade80; }
+    .env-chip .warn { color: #fbbf24; }
+    .env-chip .error { color: #f87171; }
+    .env-chip .sep { opacity: 0.4; }
+    .remember {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 2px 2px 14px;
+      font-size: 12px;
+      color: #6b7a8d;
+      text-align: left;
+      cursor: pointer;
+    }
+    .remember input { width: auto; accent-color: #4cc9f0; padding: 0; }
+    .remember.disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-connect {
+      width: 100%;
+      padding: 15px;
+      font-size: 15px;
+      font-weight: 600;
+      background: linear-gradient(135deg, #4cc9f0 0%, #7b61ff 100%);
+      border: none;
+      border-radius: 12px;
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      letter-spacing: 0.02em;
+    }
+    .btn-connect:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 28px rgba(76, 201, 240, 0.35);
+    }
+    .btn-connect:active { transform: translateY(0); }
+    .btn-connect:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    .status-line {
+      margin: 10px 2px 0;
+      font-size: 12px;
+      text-align: left;
+      color: #6b7a8d;
+      min-height: 18px;
+      line-height: 1.5;
+    }
+    .status-line.error { color: #f87171; }
+    .status-line.ok { color: #4ade80; }
+    .divider {
+      display: flex;
+      align-items: center;
+      margin: 1.5rem 0;
+      color: #4a5568;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: rgba(76, 201, 240, 0.1);
+    }
+    .divider span { padding: 0 12px; }
+    .history-section { text-align: left; }
+    .history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .history-title {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #6b7a8d;
+    }
+    .history-clear {
+      font-size: 11px;
+      color: #4a5568;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 6px;
+      transition: all 0.15s;
+    }
+    .history-clear:hover { color: #f87171; background: rgba(248, 113, 113, 0.1); }
+    .history-list {
+      list-style: none;
+      background: rgba(15, 15, 26, 0.5);
+      border: 1px solid rgba(76, 201, 240, 0.1);
+      border-radius: 12px;
+      overflow: hidden;
+      backdrop-filter: blur(10px);
+    }
+    .history-item {
+      padding: 12px 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid rgba(76, 201, 240, 0.05);
+      transition: all 0.15s;
+    }
+    .history-item:last-child { border-bottom: none; }
+    .history-item:hover { background: rgba(76, 201, 240, 0.05); }
+    .history-icon {
+      width: 32px;
+      height: 32px;
+      background: rgba(76, 201, 240, 0.1);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      flex-shrink: 0;
+      color: #4cc9f0;
+    }
+    .history-info { flex: 1; min-width: 0; }
+    .history-url {
+      font-size: 13px;
+      font-weight: 500;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: #c0c8d4;
+    }
+    .history-item:hover .history-url { color: #e0e6ed; }
+    .history-sub {
+      font-size: 11px;
+      color: #4a5568;
+      margin-top: 2px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .badge {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      color: #4cc9f0;
+      border: 1px solid rgba(76, 201, 240, 0.35);
+      border-radius: 5px;
+      padding: 2px 5px;
+      flex-shrink: 0;
+    }
+    .history-delete {
+      color: #4a5568;
+      cursor: pointer;
+      padding: 5px;
+      border-radius: 6px;
+      font-size: 11px;
+      opacity: 0;
+      transition: all 0.15s;
+    }
+    .history-item:hover .history-delete { opacity: 1; }
+    .history-delete:hover { color: #f87171; background: rgba(248, 113, 113, 0.1); }
+    .empty-state {
+      padding: 28px 16px;
+      text-align: center;
+      color: #4a5568;
+      font-size: 13px;
+    }
+    .dropdown {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      right: 0;
+      background: rgba(22, 22, 40, 0.95);
+      border: 1px solid rgba(76, 201, 240, 0.15);
+      border-radius: 12px;
+      max-height: 200px;
+      overflow-y: auto;
+      z-index: 100;
+      display: none;
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(20px);
+    }
+    .dropdown.show { display: block; }
+    .dropdown-item {
+      padding: 11px 14px;
+      cursor: pointer;
+      font-size: 13px;
+      border-bottom: 1px solid rgba(76, 201, 240, 0.05);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #8892a4;
+      transition: all 0.1s;
+    }
+    .dropdown-item:last-child { border-bottom: none; }
+    .dropdown-item:hover, .dropdown-item.selected { background: rgba(76, 201, 240, 0.15); color: #e0e6ed; }
+    .shortcut {
+      display: inline-flex;
+      align-items: center;
+      background: rgba(76, 201, 240, 0.08);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-family: monospace;
+      color: #6b7a8d;
+      border: 1px solid rgba(76, 201, 240, 0.1);
+    }
+    .tips {
+      margin-top: 20px;
+      font-size: 12px;
+      color: #4a5568;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo-container">
+      <div class="logo">⚡</div>
+    </div>
+    <h1>PI Desktop</h1>
+    <p class="subtitle">Connect to your AI workspace</p>
+
+    <div class="mode-switch">
+      <button class="mode-btn" id="tabDirect">🌐 直连</button>
+      <button class="mode-btn" id="tabSsh">🔗 SSH</button>
+    </div>
+
+    <div id="panelDirect">
+      <div class="input-wrapper">
+        <span class="input-icon">🔗</span>
+        <input id="url" type="text" placeholder="http://your-server:8504" autocomplete="off" />
+        <div id="urlDropdown" class="dropdown"></div>
+      </div>
+    </div>
+
+    <div id="panelSsh" style="display:none">
+      <div class="via-switch">
+        <button class="via-btn" id="viaConfig">~/.ssh/config</button>
+        <button class="via-btn" id="viaManual">账户密码</button>
+      </div>
+
+      <div id="viaConfigPanel">
+        <div class="input-wrapper">
+          <span class="input-icon">🖥</span>
+          <input id="sshHost" type="text" placeholder="选择 ~/.ssh/config 里的主机" autocomplete="off" />
+          <div id="hostDropdown" class="dropdown"></div>
+        </div>
+        <div class="env-chip" id="envChip"></div>
+      </div>
+
+      <div id="viaManualPanel" style="display:none">
+        <div class="input-wrapper">
+          <span class="input-icon">🖥</span>
+          <input id="manualHost" type="text" placeholder="SSH 地址（user@host 或 IP）" autocomplete="off" />
+        </div>
+        <div class="grid-2">
+          <div>
+            <label class="field-label" for="manualPort">端口</label>
+            <input id="manualPort" type="text" inputmode="numeric" placeholder="22" autocomplete="off" />
+          </div>
+          <div>
+            <label class="field-label" for="manualUser">用户</label>
+            <input id="manualUser" type="text" placeholder="登录用户" autocomplete="off" />
+          </div>
+        </div>
+        <div class="input-wrapper">
+          <span class="input-icon">🔒</span>
+          <input id="manualPassword" type="password" placeholder="密码（与密钥文件二选一）" autocomplete="off" />
+        </div>
+        <div class="input-wrapper">
+          <span class="input-icon">🔑</span>
+          <input id="manualIdentity" type="text" placeholder="密钥文件（可选，与密码二选一）" autocomplete="off" />
+        </div>
+        <label class="remember" id="rememberRow">
+          <input id="manualRemember" type="checkbox" /> 记住密码（本地加密存储）
+        </label>
+      </div>
+
+      <div class="input-wrapper">
+        <span class="input-icon">🌐</span>
+        <input id="sshTarget" type="text" value="http://127.0.0.1:8504" placeholder="远程网关地址" autocomplete="off" />
+      </div>
+      <div class="hint-inline">远程网关 = PI WEB 在 SSH 主机上可被访问的地址，通常为本机回环地址。</div>
+    </div>
+
+    <button class="btn-connect" id="connectBtn"><span id="connectLabel">连接</span><span>→</span></button>
+    <div class="status-line" id="statusLine"></div>
+
+    <div id="historySection" style="display:none">
+      <div class="divider"><span>Recent</span></div>
+      <div class="history-section">
+        <div class="history-header">
+          <span class="history-title">Connections</span>
+          <span class="history-clear" id="clearAll">Clear all</span>
+        </div>
+        <ul id="historyList" class="history-list"></ul>
+      </div>
+    </div>
+
+    <div class="tips">
+      <span class="shortcut">↑</span>
+      <span class="shortcut">↓</span> navigate
+      &nbsp;&nbsp;
+      <span class="shortcut">Enter</span> connect
+    </div>
+  </div>
+
+  <script>
+    const api = window.piWebDesktop;
+
+    const els = {
+      tabDirect: document.getElementById('tabDirect'),
+      tabSsh: document.getElementById('tabSsh'),
+      panelDirect: document.getElementById('panelDirect'),
+      panelSsh: document.getElementById('panelSsh'),
+      url: document.getElementById('url'),
+      urlDropdown: document.getElementById('urlDropdown'),
+      viaConfig: document.getElementById('viaConfig'),
+      viaManual: document.getElementById('viaManual'),
+      viaConfigPanel: document.getElementById('viaConfigPanel'),
+      viaManualPanel: document.getElementById('viaManualPanel'),
+      sshHost: document.getElementById('sshHost'),
+      hostDropdown: document.getElementById('hostDropdown'),
+      envChip: document.getElementById('envChip'),
+      manualHost: document.getElementById('manualHost'),
+      manualPort: document.getElementById('manualPort'),
+      manualUser: document.getElementById('manualUser'),
+      manualPassword: document.getElementById('manualPassword'),
+      manualIdentity: document.getElementById('manualIdentity'),
+      manualRemember: document.getElementById('manualRemember'),
+      sshTarget: document.getElementById('sshTarget'),
+      rememberRow: document.getElementById('rememberRow'),
+      connectBtn: document.getElementById('connectBtn'),
+      connectLabel: document.getElementById('connectLabel'),
+      statusLine: document.getElementById('statusLine'),
+      historySection: document.getElementById('historySection'),
+      historyList: document.getElementById('historyList'),
+      clearAll: document.getElementById('clearAll'),
+    };
+
+    let mode = 'direct';
+    let via = 'config';
+    let history = [];
+    let sshHosts = [];
+    let sshClientAvailable = true;
+    let passwordStorageAvailable = true;
+    let connecting = false;
+
+    // ------------------------------------------------------------------
+    // Init
+    // ------------------------------------------------------------------
+
+    async function init() {
+      try {
+        const state = await api.getHistory();
+        history = state.history || [];
+        mode = state.lastMode === 'ssh' ? 'ssh' : 'direct';
+        passwordStorageAvailable = state.passwordStorageAvailable !== false;
+      } catch {}
+      renderHistory();
+      renderMode();
+      renderVia();
+      renderRemember();
+      if (!passwordStorageAvailable) {
+        els.manualRemember.checked = false;
+        els.manualRemember.disabled = true;
+      }
+      if (mode === 'direct') {
+        if (history.length > 0) {
+          const first = history[0];
+          els.url.value = first.type === 'direct' ? first.url : '';
+        }
+        if (els.url.value === '') els.url.value = 'http://';
+        els.url.focus();
+        els.url.setSelectionRange(els.url.value.length, els.url.value.length);
+      } else {
+        focusViaField();
+      }
+      // Environment detection is independent of the visible panel.
+      try {
+        const env = await api.detectEnvironment();
+        sshClientAvailable = env.client?.available !== false;
+        sshHosts = env.hosts || [];
+      } catch {}
+      renderEnvChip();
+      // Hosts may have arrived after the first render; open the list if the
+      // config tab is already in front.
+      if (mode === 'ssh' && via === 'config') renderHostDropdown();
+    }
+
+    // ------------------------------------------------------------------
+    // Mode switching
+    // ------------------------------------------------------------------
+
+    function renderMode() {
+      const isSsh = mode === 'ssh';
+      els.panelDirect.style.display = isSsh ? 'none' : 'block';
+      els.panelSsh.style.display = isSsh ? 'block' : 'none';
+      els.tabDirect.classList.toggle('active', !isSsh);
+      els.tabSsh.classList.toggle('active', isSsh);
+    }
+
+    function switchMode(next) {
+      if (mode === next) return;
+      mode = next;
+      renderMode();
+      setStatus('');
+      try { api.saveMode(mode); } catch {}
+      if (mode === 'ssh') focusViaField();
+      else els.url.focus();
+    }
+
+    // SSH sub-tabs: ~/.ssh/config aliases vs fully manual account/password.
+    function renderVia() {
+      const isConfig = via === 'config';
+      els.viaConfigPanel.style.display = isConfig ? 'block' : 'none';
+      els.viaManualPanel.style.display = isConfig ? 'none' : 'block';
+      els.viaConfig.classList.toggle('active', isConfig);
+      els.viaManual.classList.toggle('active', !isConfig);
+    }
+
+    function focusViaField() {
+      if (via === 'config') {
+        els.sshHost.focus();
+        // Picking a connection is the primary action here: open the list at once.
+        renderHostDropdown();
+      } else {
+        els.manualHost.focus();
+      }
+    }
+
+    function switchVia(next) {
+      if (via === next) return;
+      via = next;
+      renderVia();
+      setStatus('');
+      focusViaField();
+    }
+
+    function renderEnvChip() {
+      if (!sshClientAvailable) {
+        els.envChip.innerHTML = '<span class="error">✗ 未找到 ssh 客户端，请安装 OpenSSH</span>';
+        return;
+      }
+      if (sshHosts.length === 0) {
+        els.envChip.innerHTML = '<span class="warn">未检测到 ~/.ssh/config 主机，可切换到「账户密码」手动连接</span>';
+        return;
+      }
+      els.envChip.innerHTML = `<span class="ok">✓</span><span>已检测到 ~/.ssh/config · ${sshHosts.length} 个主机</span>`;
+    }
+
+    function renderRemember() {
+      els.rememberRow.classList.toggle('disabled', !passwordStorageAvailable);
+    }
+
+    // ------------------------------------------------------------------
+    // Status line
+    // ------------------------------------------------------------------
+
+    function setStatus(message, kind) {
+      els.statusLine.textContent = message;
+      els.statusLine.className = `status-line${kind ? ` ${kind}` : ''}`;
+    }
+
+    function setConnecting(active) {
+      connecting = active;
+      els.connectBtn.disabled = active;
+      els.connectLabel.textContent = active ? '连接中…' : '连接';
+    }
+
+    // ------------------------------------------------------------------
+    // SSH config host dropdown and auto-fill
+    // ------------------------------------------------------------------
+
+    function hostMatches() {
+      const filter = els.sshHost.value.trim().toLowerCase();
+      return filter === '' ? sshHosts : sshHosts.filter((host) => host.toLowerCase().includes(filter));
+    }
+
+    function renderHostDropdown() {
+      const matches = hostMatches();
+      // The full alias list shows directly; typing only narrows it down.
+      if (matches.length === 0) {
+        els.hostDropdown.classList.remove('show');
+        return;
+      }
+      els.hostDropdown.innerHTML = matches.map((host) =>
+        `<div class="dropdown-item" data-host="${escapeHtml(host)}"><span>🖥</span><span>${escapeHtml(host)}</span></div>`
+      ).join('');
+      els.hostDropdown.querySelectorAll('.dropdown-item').forEach((item) => {
+        item.addEventListener('mousedown', (event) => {
+          event.preventDefault();
+          selectSshHost(item.dataset.host);
+        });
+      });
+      dropdownSelection = -1;
+      els.hostDropdown.classList.add('show');
+    }
+
+    function selectSshHost(alias) {
+      // The alias alone drives the connection; ssh config owns the rest.
+      els.sshHost.value = alias;
+      els.hostDropdown.classList.remove('show');
+    }
+
+    // ------------------------------------------------------------------
+    // Direct URL dropdown (recent direct entries)
+    // ------------------------------------------------------------------
+
+    function directHistory() {
+      return history.map((entry, index) => ({ entry, index })).filter(({ entry }) => entry.type === 'direct');
+    }
+
+    function renderUrlDropdown() {
+      const filter = els.url.value.toLowerCase();
+      const matches = directHistory().filter(({ entry }) => entry.url.toLowerCase().includes(filter));
+      if (matches.length === 0 || filter === '') {
+        els.urlDropdown.classList.remove('show');
+        return;
+      }
+      els.urlDropdown.innerHTML = matches.map(({ entry }) => {
+        const domain = entry.url.replace(/^https?:\/\//, '').split('/')[0];
+        return `<div class="dropdown-item" data-url="${escapeHtml(entry.url)}"><span>⚡</span><span>${escapeHtml(domain)}</span></div>`;
+      }).join('');
+      els.urlDropdown.querySelectorAll('.dropdown-item').forEach((item) => {
+        item.addEventListener('mousedown', (event) => {
+          event.preventDefault();
+          els.url.value = item.dataset.url;
+          els.urlDropdown.classList.remove('show');
+          void connect();
+        });
+      });
+      dropdownSelection = -1;
+      els.urlDropdown.classList.add('show');
+    }
+
+    // ------------------------------------------------------------------
+    // Recent connections
+    // ------------------------------------------------------------------
+
+    function timeAgo(iso) {
+      if (typeof iso !== 'string') return '';
+      const then = Date.parse(iso);
+      if (Number.isNaN(then)) return '';
+      const minutes = Math.floor((Date.now() - then) / 60000);
+      if (minutes < 1) return '刚刚';
+      if (minutes < 60) return `${minutes} 分钟前`;
+      const hours = Math.floor(minutes / 60);
+      if (hours < 24) return `${hours} 小时前`;
+      const days = Math.floor(hours / 24);
+      return days === 1 ? '昨天' : `${days} 天前`;
+    }
+
+    function renderHistory() {
+      if (history.length === 0) {
+        els.historySection.style.display = 'none';
+        return;
+      }
+      els.historySection.style.display = 'block';
+      els.historyList.innerHTML = history.map((entry, index) => {
+        const time = timeAgo(entry.lastUsedAt);
+        if (entry.type === 'ssh') {
+          const detail = entry.via === 'config'
+            ? '来自 ~/.ssh/config'
+            : `${entry.user ? `${escapeHtml(entry.user)}@` : ''}${escapeHtml(entry.host)}:${entry.port ?? 22} → ${escapeHtml(entry.targetUrl.replace(/^https?:\/\//, ''))}`;
+          return `
+            <li class="history-item" data-index="${index}">
+              <div class="history-icon">🔗</div>
+              <div class="history-info">
+                <div class="history-url">${escapeHtml(entry.host)}</div>
+                <div class="history-sub">${detail}${time ? ` · ${time}` : ''}</div>
+              </div>
+              <span class="badge">SSH</span>
+              <span class="history-delete" data-delete="${index}">✕</span>
+            </li>
+          `;
+        }
+        const domain = entry.url.replace(/^https?:\/\//, '').split('/')[0];
+        const path = entry.url.replace(/^https?:\/\/[^/]+/, '') || '/';
+        return `
+          <li class="history-item" data-index="${index}">
+            <div class="history-icon">⚡</div>
+            <div class="history-info">
+              <div class="history-url">${escapeHtml(domain)}</div>
+              <div class="history-sub">${escapeHtml(path)}${time ? ` · ${time}` : ''}</div>
+            </div>
+            <span class="history-delete" data-delete="${index}">✕</span>
+          </li>
+        `;
+      }).join('');
+      els.historyList.querySelectorAll('.history-item').forEach((item) => {
+        item.addEventListener('click', () => { void connectRecent(Number(item.dataset.index)); });
+      });
+      els.historyList.querySelectorAll('.history-delete').forEach((del) => {
+        del.addEventListener('click', (event) => {
+          event.stopPropagation();
+          void deleteHistory(Number(del.dataset.delete));
+        });
+      });
+    }
+
+    async function deleteHistory(index) {
+      try { history = await api.deleteConnection(index); } catch {}
+      renderHistory();
+    }
+
+    async function clearHistory() {
+      try { history = await api.clearHistory(); } catch {}
+      renderHistory();
+    }
+
+    // ------------------------------------------------------------------
+    // Connecting
+    // ------------------------------------------------------------------
+
+    function sshPayload() {
+      const targetUrl = els.sshTarget.value.trim();
+      if (via === 'config') {
+        return { type: 'ssh', via: 'config', host: els.sshHost.value.trim(), targetUrl };
+      }
+      const portText = els.manualPort.value.trim();
+      const port = portText === '' ? undefined : Number(portText);
+      return {
+        type: 'ssh',
+        via: 'manual',
+        host: els.manualHost.value.trim(),
+        ...(port === undefined ? {} : { port }),
+        user: els.manualUser.value.trim(),
+        identityFile: els.manualIdentity.value.trim(),
+        password: els.manualPassword.value,
+        rememberPassword: els.manualRemember.checked,
+        targetUrl,
+      };
+    }
+
+    function validate(payload) {
+      if (payload.type === 'direct') {
+        const url = payload.url.trim();
+        if (url === '' || url === 'http://' || url === 'https://') return '请输入 PI WEB 网关地址';
+        return undefined;
+      }
+      if (payload.via === 'config') {
+        if (payload.host === '') return '请选择或输入 ~/.ssh/config 主机别名';
+      } else {
+        if (payload.host === '') return '请输入 SSH 地址（user@host 或 IP）';
+        if (payload.port !== undefined && (!Number.isInteger(payload.port) || payload.port < 1 || payload.port > 65535)) {
+          return '端口需为 1-65535 之间的数字';
+        }
+        if (payload.identityFile !== '' && payload.password !== '') return '密钥文件与密码只能二选一';
+      }
+      let target;
+      try { target = new URL(payload.targetUrl); } catch { return '远程网关地址无效，请填写 http(s)://host:port'; }
+      if (target.protocol !== 'http:' && target.protocol !== 'https:') return '远程网关地址无效，请填写 http(s)://host:port';
+      return undefined;
+    }
+
+    async function connect() {
+      if (connecting) return;
+      const payload = mode === 'ssh' ? sshPayload() : { type: 'direct', url: els.url.value.trim() };
+      const error = validate(payload);
+      if (error !== undefined) { setStatus(error, 'error'); return; }
+
+      setConnecting(true);
+      setStatus(mode === 'ssh' ? '正在建立 SSH 隧道…' : '正在连接…');
+      let result;
+      try {
+        result = await api.connect(payload);
+      } catch {
+        result = { ok: false, error: '连接失败' };
+      }
+      setConnecting(false);
+
+      if (result.ok) {
+        setStatus('连接成功，正在打开…', 'ok');
+        window.location.href = result.url;
+        return;
+      }
+      setStatus(result.error || '连接失败', 'error');
+    }
+
+    async function connectRecent(index) {
+      if (connecting) return;
+      const entry = history[index];
+      if (entry === undefined) return;
+
+      setConnecting(true);
+      setStatus(entry.type === 'ssh' ? '正在建立 SSH 隧道…' : '正在连接…');
+      let result;
+      try {
+        result = await api.connectRecent(index);
+      } catch {
+        result = { ok: false, error: '连接失败' };
+      }
+      setConnecting(false);
+
+      if (result.ok) {
+        setStatus('连接成功，正在打开…', 'ok');
+        window.location.href = result.url;
+        return;
+      }
+      if (result.needsPassword && entry.type === 'ssh') {
+        // No usable stored password: refill the manual form so only the
+        // password is missing.
+        switchMode('ssh');
+        switchVia('manual');
+        els.manualHost.value = entry.host;
+        els.manualPort.value = entry.port === undefined ? '' : String(entry.port);
+        els.manualUser.value = entry.user || '';
+        els.manualIdentity.value = entry.identityFile || '';
+        els.sshTarget.value = entry.targetUrl;
+        els.manualPassword.value = '';
+        els.manualPassword.focus();
+        setStatus(result.error || '该连接未保存密码，请输入密码后点击连接', 'error');
+        return;
+      }
+      setStatus(result.error || '连接失败', 'error');
+    }
+
+    // ------------------------------------------------------------------
+    // Events
+    // ------------------------------------------------------------------
+
+    els.tabDirect.addEventListener('click', () => switchMode('direct'));
+    els.tabSsh.addEventListener('click', () => switchMode('ssh'));
+    els.viaConfig.addEventListener('click', () => switchVia('config'));
+    els.viaManual.addEventListener('click', () => switchVia('manual'));
+    els.connectBtn.addEventListener('click', () => { void connect(); });
+    els.clearAll.addEventListener('click', () => { void clearHistory(); });
+
+    els.url.addEventListener('input', () => renderUrlDropdown());
+    els.url.addEventListener('focus', () => renderUrlDropdown());
+    els.url.addEventListener('blur', () => setTimeout(() => els.urlDropdown.classList.remove('show'), 200));
+
+    els.sshHost.addEventListener('input', () => renderHostDropdown());
+    els.sshHost.addEventListener('focus', () => renderHostDropdown());
+    els.sshHost.addEventListener('blur', () => setTimeout(() => els.hostDropdown.classList.remove('show'), 200));
+
+    // Arrow-key navigation over whichever dropdown is currently open. Enter
+    // picks the highlighted row like a click; otherwise Enter connects.
+    let dropdownSelection = -1;
+
+    function activeDropdown() {
+      if (els.hostDropdown.classList.contains('show')) return els.hostDropdown;
+      if (els.urlDropdown.classList.contains('show')) return els.urlDropdown;
+      return undefined;
+    }
+
+    function highlightDropdown(dropdown, index) {
+      const items = [...dropdown.querySelectorAll('.dropdown-item')];
+      if (items.length === 0) return -1;
+      const clamped = Math.max(0, Math.min(index, items.length - 1));
+      items.forEach((item, i) => item.classList.toggle('selected', i === clamped));
+      return clamped;
+    }
+
+    document.addEventListener('keydown', (event) => {
+      const dropdown = activeDropdown();
+      if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+        if (dropdown === undefined) return;
+        event.preventDefault();
+        dropdownSelection = highlightDropdown(dropdown, dropdownSelection + (event.key === 'ArrowDown' ? 1 : -1));
+        return;
+      }
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        const selected = dropdown?.querySelector('.dropdown-item.selected');
+        if (selected !== undefined && selected !== null) {
+          selected.dispatchEvent(new MouseEvent('mousedown'));
+          dropdownSelection = -1;
+          return;
+        }
+        void connect();
+      }
+      if (event.key === 'Escape') {
+        els.urlDropdown.classList.remove('show');
+        els.hostDropdown.classList.remove('show');
+        dropdownSelection = -1;
+      }
+    });
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = String(text);
+      // Quotes must go too: escaped values also feed data-* attributes.
+      return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    init();
+  </script>
+</body>
+</html>
